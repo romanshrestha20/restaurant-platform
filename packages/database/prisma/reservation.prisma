@@ -1,0 +1,52 @@
+enum ReservationStatus {
+  PENDING
+  CONFIRMED
+  SEATED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum ReservationSource {
+  WEBSITE
+  PHONE
+  WALK_IN
+  ADMIN
+}
+
+model Reservation {
+  id String @id @default(cuid())
+
+  restaurantId String
+  userId       String?
+  tableId      String?
+
+  guestName  String
+  guestEmail String?
+  guestPhone String?
+
+  guestCount Int
+
+  reservationAt DateTime
+
+  duration Int @default(120)
+
+  status ReservationStatus @default(PENDING)
+
+  source ReservationSource @default(WEBSITE)
+
+  specialRequest String?
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  table RestaurantTable? @relation(fields: [tableId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([restaurantId, reservationAt])
+  @@index([status])
+  @@map("reservations")
+}

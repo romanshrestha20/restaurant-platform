@@ -1,0 +1,211 @@
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+model User {
+  id           String  @id @default(cuid())
+  email        String  @unique
+  phone        String? @unique
+  passwordHash String?
+
+  emailVerified Boolean @default(false)
+  phoneVerified Boolean @default(false)
+  isActive      Boolean @default(true)
+
+  profile Profile?
+  media   UserMedia[]
+
+  roles                 UserRole[]
+  restaurantMemberships RestaurantMember[]
+
+  orders             Order[]
+  reservations       Reservation[]
+  reviews            Review[]
+  addresses          Address[]
+  sessions           Session[]
+  verificationTokens VerificationToken[]
+  oauthAccounts      OAuthAccount[]
+  loginHistory       LoginHistory[]
+  favorites          Favorite[]
+  carts              Cart[]
+  orderStatusChanges OrderStatusHistory[]
+  couponUsages       CouponUsage[]
+  activityLogs       ActivityLog[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([deletedAt])
+  @@map("users")
+}
+
+model Profile {
+  id     String @id @default(cuid())
+  userId String @unique
+
+  firstName String
+  lastName  String
+
+  bio         String?
+  gender      Gender?
+  dateOfBirth DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([firstName, lastName])
+  @@map("profiles")
+}
+
+model Role {
+  id String @id @default(cuid())
+
+  name        String  @unique
+  description String?
+
+  users             UserRole[]
+  permissions       RolePermission[]
+  restaurantMembers RestaurantMember[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("roles")
+}
+
+model Permission {
+  id String @id @default(cuid())
+
+  name        String  @unique
+  description String?
+
+  roles RolePermission[]
+
+  createdAt DateTime @default(now())
+
+  @@map("permissions")
+}
+
+model UserRole {
+  userId String
+  roleId String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  assignedAt DateTime @default(now())
+
+  @@id([userId, roleId])
+  @@map("user_roles")
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+enum OAuthProvider {
+  GOOGLE
+  APPLE
+  GITHUB
+  FACEBOOK
+}
+
+enum TokenType {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+}
+
+model Session {
+  id String @id @default(cuid())
+
+  userId String
+
+  refreshTokenHash String @unique
+
+  ipAddress String?
+  userAgent String?
+
+  expiresAt DateTime
+
+  lastUsedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model VerificationToken {
+  id String @id @default(cuid())
+
+  userId String
+
+  token String @unique
+
+  type TokenType
+
+  expiresAt DateTime
+
+  usedAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("verification_tokens")
+}
+
+model OAuthAccount {
+  id String @id @default(cuid())
+
+  userId String
+
+  provider OAuthProvider
+
+  providerAccountId String
+
+  accessToken  String?
+  refreshToken String?
+
+  expiresAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([provider, providerAccountId])
+  @@map("oauth_accounts")
+}
+
+model LoginHistory {
+  id String @id @default(cuid())
+
+  userId String
+
+  ipAddress String?
+  userAgent String?
+
+  success Boolean
+
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("login_history")
+}

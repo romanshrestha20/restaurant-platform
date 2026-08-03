@@ -1,0 +1,204 @@
+enum OrderType {
+  DINE_IN
+  TAKEAWAY
+  DELIVERY
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  READY
+  SERVED
+  COMPLETED
+  CANCELLED
+  REFUNDED
+}
+
+enum CartStatus {
+  ACTIVE
+  CHECKED_OUT
+  ABANDONED
+}
+
+model Cart {
+  id String @id @default(cuid())
+
+  userId       String
+  restaurantId String
+
+  status CartStatus @default(ACTIVE)
+
+  subtotal Decimal @default(0) @db.Decimal(10, 2)
+  tax      Decimal @default(0) @db.Decimal(10, 2)
+  discount Decimal @default(0) @db.Decimal(10, 2)
+  total    Decimal @default(0) @db.Decimal(10, 2)
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+
+  items CartItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("carts")
+}
+
+model CartItem {
+  id String @id @default(cuid())
+
+  cartId     String
+  menuItemId String
+  variantId  String?
+
+  quantity Int
+
+  unitPrice Decimal @db.Decimal(10, 2)
+
+  totalPrice Decimal @db.Decimal(10, 2)
+
+  cart Cart @relation(fields: [cartId], references: [id], onDelete: Cascade)
+
+  menuItem MenuItem @relation(fields: [menuItemId], references: [id])
+
+  variant VariantOption? @relation(fields: [variantId], references: [id])
+
+  addOns CartItemAddOn[]
+
+  createdAt DateTime @default(now())
+
+  @@map("cart_items")
+}
+
+model CartItemAddOn {
+  cartItemId String
+  addOnId    String
+
+  quantity Int @default(1)
+
+  price Decimal @db.Decimal(10, 2)
+
+  cartItem CartItem @relation(fields: [cartItemId], references: [id], onDelete: Cascade)
+
+  addOn AddOn @relation(fields: [addOnId], references: [id])
+
+  @@id([cartItemId, addOnId])
+  @@map("cart_item_addons")
+}
+
+model Order {
+  id String @id @default(cuid())
+
+  orderNumber String @unique
+
+  userId String
+
+  restaurantId String
+
+  tableId           String?
+  deliveryAddressId String?
+
+  type OrderType
+
+  status OrderStatus @default(PENDING)
+
+  notes String?
+
+  subtotal Decimal @db.Decimal(10, 2)
+
+  tax Decimal @db.Decimal(10, 2)
+
+  discount Decimal @db.Decimal(10, 2)
+
+  total Decimal @db.Decimal(10, 2)
+
+  user User @relation(fields: [userId], references: [id])
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+
+  table RestaurantTable? @relation(fields: [tableId], references: [id])
+
+  deliveryAddress Address? @relation(fields: [deliveryAddressId], references: [id], onDelete: SetNull)
+
+  items OrderItem[]
+
+  payment Payment?
+
+  history OrderStatusHistory[]
+
+  review      Review?
+  couponUsage CouponUsage?
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([restaurantId])
+  @@index([deliveryAddressId])
+  @@map("orders")
+}
+
+model OrderItem {
+  id String @id @default(cuid())
+
+  orderId String
+
+  menuItemId String
+
+  variantId String?
+
+  quantity Int
+
+  unitPrice Decimal @db.Decimal(10, 2)
+
+  totalPrice Decimal @db.Decimal(10, 2)
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  menuItem MenuItem @relation(fields: [menuItemId], references: [id])
+
+  variant VariantOption? @relation(fields: [variantId], references: [id])
+
+  addOns OrderItemAddOn[]
+
+  @@map("order_items")
+}
+
+model OrderItemAddOn {
+  orderItemId String
+
+  addOnId String
+
+  quantity Int @default(1)
+
+  price Decimal @db.Decimal(10, 2)
+
+  orderItem OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+
+  addOn AddOn @relation(fields: [addOnId], references: [id])
+
+  @@id([orderItemId, addOnId])
+  @@map("order_item_addons")
+}
+
+model OrderStatusHistory {
+  id String @id @default(cuid())
+
+  orderId String
+
+  status OrderStatus
+
+  changedById String?
+
+  notes String?
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  changedBy User? @relation(fields: [changedById], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@map("order_status_history")
+}

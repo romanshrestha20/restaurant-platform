@@ -1,0 +1,67 @@
+model Media {
+  id String @id @default(cuid())
+
+  url      String
+  publicId String @unique
+
+  fileName String?
+  mimeType String?
+
+  width  Int?
+  height Int?
+  size   Int?
+
+  createdAt DateTime @default(now())
+
+  users       UserMedia[]
+  restaurants RestaurantMedia[]
+  menuItems   MenuItemMedia[]
+
+  @@map("media")
+}
+
+model UserMedia {
+  userId  String
+  mediaId String
+
+  alt       String?
+  sortOrder Int     @default(0)
+  isPrimary Boolean @default(false)
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  media Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@id([userId, mediaId])
+  @@index([mediaId])
+  @@map("user_media")
+}
+
+model RestaurantMedia {
+  restaurantId String
+  mediaId      String
+
+  alt       String?
+  sortOrder Int     @default(0)
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  media      Media      @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@id([restaurantId, mediaId])
+  @@index([mediaId])
+  @@map("restaurant_media")
+}
+
+model MenuItemMedia {
+  menuItemId String
+  mediaId    String
+
+  alt       String?
+  sortOrder Int     @default(0)
+
+  menuItem MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  media    Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@id([menuItemId, mediaId])
+  @@index([mediaId])
+  @@map("menu_item_media")
+}

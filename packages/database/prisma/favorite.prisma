@@ -1,0 +1,13 @@
+model Favorite {
+  userId     String
+  menuItemId String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  menuItem MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@id([userId, menuItemId])
+  @@map("favorites")
+}

@@ -1,0 +1,127 @@
+enum RestaurantStatus {
+  ACTIVE
+  INACTIVE
+  CLOSED
+}
+
+enum TableStatus {
+  AVAILABLE
+  RESERVED
+  OCCUPIED
+  OUT_OF_SERVICE
+}
+
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+model Restaurant {
+  id String @id @default(cuid())
+
+  name String
+  slug String @unique
+
+  description String?
+
+  email String?
+  phone String?
+
+  address    String
+  city       String
+  state      String?
+  postalCode String?
+  country    String
+
+  currency String @default("EUR")
+  timezone String @default("Europe/Helsinki")
+
+  isActive Boolean          @default(true)
+  status   RestaurantStatus @default(ACTIVE)
+
+  members      RestaurantMember[]
+  media        RestaurantMedia[]
+  openingHours OpeningHour[]
+  tables       RestaurantTable[]
+
+  categories   Category[]
+  menuItems    MenuItem[]
+  addOnGroups  AddOnGroup[]
+  carts        Cart[]
+  orders       Order[]
+  reservations Reservation[]
+  reviews      Review[]
+  activityLogs ActivityLog[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([slug])
+  @@index([deletedAt])
+  @@map("restaurants")
+}
+
+model RestaurantMember {
+  restaurantId String
+  userId       String
+  roleId       String
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Restrict)
+
+  joinedAt DateTime @default(now())
+
+  @@id([restaurantId, userId])
+  @@index([userId])
+  @@index([roleId])
+  @@map("restaurant_members")
+}
+
+model OpeningHour {
+  id String @id @default(cuid())
+
+  restaurantId String
+
+  day DayOfWeek
+
+  opensAt  String
+  closesAt String
+
+  isClosed Boolean @default(false)
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@unique([restaurantId, day])
+  @@map("opening_hours")
+}
+
+model RestaurantTable {
+  id String @id @default(cuid())
+
+  restaurantId String
+
+  tableNumber String
+  capacity    Int
+
+  status TableStatus @default(AVAILABLE)
+
+  qrCode String?
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  reservations Reservation[]
+  orders       Order[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([restaurantId, tableNumber])
+  @@map("restaurant_tables")
+}

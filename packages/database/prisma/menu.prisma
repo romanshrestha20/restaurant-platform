@@ -1,0 +1,176 @@
+enum CategoryStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum MenuItemStatus {
+  AVAILABLE
+  UNAVAILABLE
+  HIDDEN
+}
+
+enum DietaryType {
+  VEGAN
+  VEGETARIAN
+  HALAL
+  GLUTEN_FREE
+  DAIRY_FREE
+  NUT_FREE
+  SPICY
+}
+
+model Category {
+  id String @id @default(cuid())
+
+  restaurantId String
+
+  name        String
+  description String?
+
+  sortOrder Int @default(0)
+
+  status CategoryStatus @default(ACTIVE)
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  menuItems MenuItem[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([restaurantId, name])
+  @@index([deletedAt])
+  @@map("categories")
+}
+
+model MenuItem {
+  id String @id @default(cuid())
+
+  restaurantId String
+  categoryId   String
+
+  name        String
+  description String?
+
+  sku String?
+
+  basePrice Decimal @db.Decimal(10, 2)
+
+  preparationTime Int?
+
+  calories Int?
+
+  isFeatured Boolean @default(false)
+
+  status MenuItemStatus @default(AVAILABLE)
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  media MenuItemMedia[]
+
+  variants Variant[]
+
+  addOnGroups MenuItemAddOnGroup[]
+
+  orderItems OrderItem[]
+  cartItems  CartItem[]
+  favorites  Favorite[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([restaurantId])
+  @@index([categoryId])
+  @@index([deletedAt])
+  @@map("menu_items")
+}
+
+model Variant {
+  id String @id @default(cuid())
+
+  menuItemId String
+
+  name String
+
+  sortOrder Int @default(0)
+
+  menuItem MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+
+  options VariantOption[]
+
+  @@map("variants")
+}
+
+model VariantOption {
+  id String @id @default(cuid())
+
+  variantId String
+
+  name String
+
+  price Decimal @db.Decimal(10, 2)
+
+  variant Variant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  orderItems OrderItem[]
+  cartItems  CartItem[]
+
+  @@map("variant_options")
+}
+
+model AddOnGroup {
+  id String @id @default(cuid())
+
+  restaurantId String
+
+  name String
+
+  required Boolean @default(false)
+
+  minSelection Int @default(0)
+
+  maxSelection Int @default(1)
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  addOns AddOn[]
+
+  menuItems MenuItemAddOnGroup[]
+
+  @@map("addon_groups")
+}
+
+model AddOn {
+  id String @id @default(cuid())
+
+  groupId String
+
+  name String
+
+  price Decimal @db.Decimal(10, 2)
+
+  isAvailable Boolean @default(true)
+
+  group AddOnGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  orderItems OrderItemAddOn[]
+  cartItems  CartItemAddOn[]
+
+  @@map("addons")
+}
+
+model MenuItemAddOnGroup {
+  menuItemId String
+  groupId    String
+
+  menuItem MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+
+  group AddOnGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@id([menuItemId, groupId])
+  @@map("menu_item_addon_groups")
+}

@@ -1,0 +1,58 @@
+enum ActivityType {
+  AUTH
+  USER
+  RESTAURANT
+  MENU
+  CART
+  ORDER
+  PAYMENT
+  RESERVATION
+  REVIEW
+  SYSTEM
+}
+
+enum ActivityAction {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  REGISTER
+  PASSWORD_RESET
+  EMAIL_VERIFIED
+  STATUS_CHANGED
+  PAYMENT_COMPLETED
+  PAYMENT_REFUNDED
+}
+
+model ActivityLog {
+  id String @id @default(cuid())
+
+  userId       String?
+  restaurantId String?
+
+  type   ActivityType
+  action ActivityAction
+
+  entityType String
+  entityId   String
+
+  description String?
+  metadata    Json?
+
+  ipAddress String?
+  userAgent String?
+
+  createdAt DateTime @default(now())
+
+  user       User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  restaurant Restaurant? @relation(fields: [restaurantId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([restaurantId])
+  @@index([entityType, entityId])
+  @@index([type])
+  @@index([action])
+  @@index([createdAt])
+  @@map("activity_logs")
+}

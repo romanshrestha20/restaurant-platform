@@ -1,0 +1,114 @@
+enum PaymentMethod {
+  CASH
+  CARD
+  APPLE_PAY
+  GOOGLE_PAY
+  STRIPE
+  PAYTRAIL
+  KLARNA
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  PAID
+  FAILED
+  CANCELLED
+  REFUNDED
+}
+
+enum CouponType {
+  PERCENTAGE
+  FIXED_AMOUNT
+}
+
+model Payment {
+  id String @id @default(cuid())
+
+  orderId String @unique
+
+  method PaymentMethod
+
+  status PaymentStatus @default(PENDING)
+
+  amount Decimal @db.Decimal(10, 2)
+
+  currency String @default("EUR")
+
+  transactionId String?
+
+  provider String?
+
+  providerData Json?
+
+  paidAt DateTime?
+
+  refundedAt DateTime?
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@map("payments")
+}
+
+model Coupon {
+  id String @id @default(cuid())
+
+  code String @unique
+
+  name String?
+
+  description String?
+
+  type CouponType
+
+  value Decimal @db.Decimal(10, 2)
+
+  minimumOrder Decimal? @db.Decimal(10, 2)
+
+  maximumDiscount Decimal? @db.Decimal(10, 2)
+
+  usageLimit Int?
+
+  usedCount Int @default(0)
+
+  startsAt DateTime?
+
+  expiresAt DateTime?
+
+  isActive Boolean @default(true)
+
+  usages CouponUsage[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([deletedAt])
+  @@map("coupons")
+}
+
+model CouponUsage {
+  id String @id @default(cuid())
+
+  couponId String
+
+  orderId String @unique
+
+  userId String
+
+  discount Decimal @db.Decimal(10, 2)
+
+  coupon Coupon @relation(fields: [couponId], references: [id])
+
+  order Order @relation(fields: [orderId], references: [id])
+
+  user User @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@map("coupon_usages")
+}
