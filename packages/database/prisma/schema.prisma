@@ -1,0 +1,68 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  ADMIN
+  OWNER
+  MANAGER
+  CHEF
+  WAITER
+  CUSTOMER
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+model User {
+  id String @id @default(uuid())
+
+  email String @unique
+  phone String? @unique
+
+  passwordHash String?
+
+  role UserRole @default(CUSTOMER)
+
+  emailVerified Boolean @default(false)
+  phoneVerified Boolean @default(false)
+
+  profile Profile?
+
+  orders Order[]
+  reservations Reservation[]
+  reviews Review[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Profile {
+  id          String    @id @default(uuid())
+  userId      String    @unique
+
+  firstName   String
+  lastName    String
+
+  bio         String?
+  avatarUrl   String?
+  dateOfBirth DateTime?
+  gender      Gender?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("profiles")
+}

@@ -16,6 +16,8 @@ build
 .next
 coverage
 
+generated
+
 # Turborepo
 .turbo
 
