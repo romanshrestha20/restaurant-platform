@@ -553,6 +553,24 @@ CREATE TABLE "restaurants" (
 );
 
 -- CreateTable
+CREATE TABLE "restaurant_settings" (
+    "id" TEXT NOT NULL,
+    "restaurantId" TEXT NOT NULL,
+    "acceptsOrders" BOOLEAN NOT NULL DEFAULT true,
+    "acceptsReservations" BOOLEAN NOT NULL DEFAULT true,
+    "autoAcceptOrders" BOOLEAN NOT NULL DEFAULT false,
+    "estimatedPrepMinutes" INTEGER NOT NULL DEFAULT 30,
+    "minimumOrder" DECIMAL(10,2) NOT NULL DEFAULT 0,
+    "deliveryFee" DECIMAL(10,2) NOT NULL DEFAULT 0,
+    "serviceFee" DECIMAL(10,2) NOT NULL DEFAULT 0,
+    "taxRate" DECIMAL(5,2) NOT NULL DEFAULT 14,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "restaurant_settings_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "restaurant_members" (
     "restaurantId" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
@@ -725,6 +743,9 @@ CREATE INDEX "restaurants_slug_idx" ON "restaurants"("slug");
 
 -- CreateIndex
 CREATE INDEX "restaurants_deletedAt_idx" ON "restaurants"("deletedAt");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "restaurant_settings_restaurantId_key" ON "restaurant_settings"("restaurantId");
 
 -- CreateIndex
 CREATE INDEX "restaurant_members_userId_idx" ON "restaurant_members"("userId");
@@ -905,6 +926,9 @@ ALTER TABLE "reservations" ADD CONSTRAINT "reservations_userId_fkey" FOREIGN KEY
 
 -- AddForeignKey
 ALTER TABLE "reservations" ADD CONSTRAINT "reservations_tableId_fkey" FOREIGN KEY ("tableId") REFERENCES "restaurant_tables"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "restaurant_settings" ADD CONSTRAINT "restaurant_settings_restaurantId_fkey" FOREIGN KEY ("restaurantId") REFERENCES "restaurants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "restaurant_members" ADD CONSTRAINT "restaurant_members_restaurantId_fkey" FOREIGN KEY ("restaurantId") REFERENCES "restaurants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
