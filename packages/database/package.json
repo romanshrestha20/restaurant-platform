@@ -9,14 +9,19 @@
     "generate": "prisma generate",
     "migrate": "prisma migrate dev",
     "deploy": "prisma migrate deploy",
+    "seed": "prisma db seed",
     "studio": "prisma studio",
     "push": "prisma db push"
   },
   "dependencies": {
-    "@prisma/client": "^7.9.1"
+    "@prisma/adapter-pg": "^7.9.1",
+    "@prisma/client": "^7.9.1",
+    "pg": "^8.22.0"
   },
   "devDependencies": {
+    "@types/node": "^24.0.0",
     "dotenv": "^17.4.2",
-    "prisma": "^7.9.1"
+    "prisma": "^7.9.1",
+    "tsx": "^4.23.4"
   }
 }
