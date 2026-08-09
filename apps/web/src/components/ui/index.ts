@@ -6,3 +6,4 @@ export * from './layout';
 export * from './navigation';
 export * from './overlay';
 export * from './primitives';
+export * from './theme';

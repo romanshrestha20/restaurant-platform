@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Brand } from '../brand';
+import { ThemeSelector } from '../theme';
 import { classNames } from '@/lib/class-names';
 
 type AuthShellProps = {
@@ -34,6 +35,9 @@ export function AuthShell({
         <p className="login-brand__foot">{footnote}</p>
       </section>
       <section className={classNames('login-panel', compact && 'register-panel')}>
+        <div className="auth-theme-control">
+          <ThemeSelector compact />
+        </div>
         <div className={classNames('login-form-wrap', compact && 'register-form-wrap')}>
           {children}
         </div>
