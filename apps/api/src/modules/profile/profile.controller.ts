@@ -21,6 +21,7 @@ import { ProfileService } from './profile.service';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { REFRESH_TOKEN_COOKIE } from '../auth/constants/auth.constants';
 import type { AppEnvironment } from '../../config/env';
+import { MAX_IMAGE_SIZE } from '../../common/upload/upload.service';
 
 @Controller('profile')
 @UseGuards(AccessTokenGuard)
@@ -44,7 +45,12 @@ export class ProfileController {
   }
 
   @Post('photo')
-  @UseInterceptors(FileInterceptor('photo'))
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  @UseInterceptors(
+    FileInterceptor('photo', {
+      limits: { fileSize: MAX_IMAGE_SIZE, files: 1, fields: 0 },
+    }),
+  )
   uploadPhoto(
     @CurrentUser() user: AccessAuthUser,
     @UploadedFile() file: Express.Multer.File,

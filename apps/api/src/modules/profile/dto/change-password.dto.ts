@@ -2,31 +2,11 @@ import {
   IsString,
   MaxLength,
   MinLength,
-  ValidateBy,
   registerDecorator,
   type ValidationArguments,
   type ValidationOptions,
 } from 'class-validator';
-
-const MaxUtf8Bytes = (maximum: number, validationOptions?: ValidationOptions) =>
-  ValidateBy(
-    {
-      name: 'maxUtf8Bytes',
-      constraints: [maximum],
-      validator: {
-        validate(value: unknown) {
-          return (
-            typeof value === 'string' &&
-            Buffer.byteLength(value, 'utf8') <= maximum
-          );
-        },
-        defaultMessage(args: ValidationArguments) {
-          return `${args.property} must not exceed ${maximum} UTF-8 bytes`;
-        },
-      },
-    },
-    validationOptions,
-  );
+import { MaxUtf8Bytes } from '../../../common/validation/password.validators';
 
 const MatchesProperty =
   (property: string, validationOptions?: ValidationOptions) =>

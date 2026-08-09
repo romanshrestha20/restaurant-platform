@@ -9,6 +9,7 @@ import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { AppEnvironment } from './config/env';
 import { getLogLevels, logStartup } from './config/logger';
+import { createSameOriginMiddleware } from './common/security/same-origin.middleware';
 
 async function bootstrap(): Promise<void> {
   const environment = process.env.NODE_ENV ?? 'development';
@@ -35,6 +36,7 @@ async function bootstrap(): Promise<void> {
     origin: clientUrl,
     credentials: true,
   });
+  app.use(createSameOriginMiddleware(clientUrl));
   app.use(helmet());
   app.use(compression());
   app.use(cookieParser());

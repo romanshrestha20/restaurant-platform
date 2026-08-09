@@ -1,4 +1,5 @@
-import { IsString, Length, MinLength } from 'class-validator';
+import { IsString, Length, MaxLength, MinLength } from 'class-validator';
+import { MaxUtf8Bytes } from '../../../common/validation/password.validators';
 
 export class ResetPasswordDto {
   @IsString()
@@ -7,5 +8,7 @@ export class ResetPasswordDto {
 
   @IsString()
   @MinLength(12)
+  @MaxLength(72)
+  @MaxUtf8Bytes(72)
   password!: string;
 }

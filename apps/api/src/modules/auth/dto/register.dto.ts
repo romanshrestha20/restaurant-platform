@@ -4,8 +4,10 @@ import {
   IsString,
   Length,
   Matches,
+  MaxLength,
   MinLength,
 } from 'class-validator';
+import { MaxUtf8Bytes } from '../../../common/validation/password.validators';
 
 export class RegisterDto {
   @IsString()
@@ -21,6 +23,8 @@ export class RegisterDto {
 
   @IsString()
   @MinLength(12)
+  @MaxLength(72)
+  @MaxUtf8Bytes(72)
   password!: string;
 
   @IsOptional()

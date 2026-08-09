@@ -16,7 +16,7 @@ import type {
   UploadImageOptions,
 } from './types/upload-result.type';
 
-const MAX_IMAGE_SIZE = 5_000_000;
+export const MAX_IMAGE_SIZE = 5_000_000;
 const MAX_IMAGE_DIMENSION = 4096;
 const MIME_BY_FORMAT: Record<string, string> = {
   jpeg: 'image/jpeg',
