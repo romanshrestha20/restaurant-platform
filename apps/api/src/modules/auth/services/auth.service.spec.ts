@@ -9,6 +9,9 @@ import { AuthRepository } from '../repositories/auth.repository';
 import { CreateUserData } from '../types/create-user.type';
 import { AuthService } from './auth.service';
 import { AuthTokenService } from './auth-token.service';
+import { PasswordService } from './password.service';
+
+const passwordService = new PasswordService();
 
 const hashToken = (token: string) =>
   createHash('sha256').update(token).digest('hex');
@@ -53,6 +56,7 @@ describe('AuthService registration', () => {
     const service = new AuthService(
       repository as unknown as AuthRepository,
       tokenService as unknown as AuthTokenService,
+      passwordService,
     );
 
     const result = await service.register({
@@ -96,6 +100,7 @@ describe('AuthService registration', () => {
     const service = new AuthService(
       repository as unknown as AuthRepository,
       createTokenService() as unknown as AuthTokenService,
+      passwordService,
     );
 
     await expect(
@@ -131,6 +136,7 @@ describe('AuthService login', () => {
     const service = new AuthService(
       repository as unknown as AuthRepository,
       tokenService as unknown as AuthTokenService,
+      passwordService,
     );
     const context = { ipAddress: '127.0.0.1', userAgent: 'test-agent' };
 
@@ -165,6 +171,7 @@ describe('AuthService login', () => {
     const service = new AuthService(
       repository as unknown as AuthRepository,
       tokenService as unknown as AuthTokenService,
+      passwordService,
     );
 
     await expect(
@@ -187,6 +194,7 @@ describe('AuthService login', () => {
     const service = new AuthService(
       repository as unknown as AuthRepository,
       createTokenService() as unknown as AuthTokenService,
+      passwordService,
     );
 
     await expect(
@@ -225,6 +233,7 @@ describe('AuthService sessions', () => {
     const service = new AuthService(
       repository as unknown as AuthRepository,
       tokenService as unknown as AuthTokenService,
+      passwordService,
     );
 
     const result = await service.refresh({
@@ -251,6 +260,7 @@ describe('AuthService sessions', () => {
     const service = new AuthService(
       repository as unknown as AuthRepository,
       createTokenService() as unknown as AuthTokenService,
+      passwordService,
     );
 
     await expect(
@@ -272,6 +282,7 @@ describe('AuthService sessions', () => {
     const service = new AuthService(
       repository as unknown as AuthRepository,
       createTokenService() as unknown as AuthTokenService,
+      passwordService,
     );
 
     await service.logout({

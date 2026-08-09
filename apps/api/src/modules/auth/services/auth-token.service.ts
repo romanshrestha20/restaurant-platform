@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { createHash, randomUUID, timingSafeEqual } from 'node:crypto';
 import { AppEnvironment } from '../../../config/env';
+import { isPlatformRole } from '@restaurant/database/authorization';
 import type {
   AccessTokenPayload,
   RefreshTokenPayload,
@@ -28,6 +29,7 @@ const isAccessTokenPayload = (value: unknown): value is AccessTokenPayload =>
   typeof value.email === 'string' &&
   Array.isArray(value.roles) &&
   value.roles.every((role) => typeof role === 'string') &&
+  value.roles.every(isPlatformRole) &&
   hasValidJwtTimestamps(value);
 
 const isRefreshTokenPayload = (value: unknown): value is RefreshTokenPayload =>
@@ -64,7 +66,7 @@ export class AuthTokenService {
       {
         sub: user.id,
         email: user.email,
-        roles: user.roles.map(({ role }) => role.name),
+        roles: user.roles.map(({ role }) => role.name).filter(isPlatformRole),
         tokenType: 'access',
       },
       {

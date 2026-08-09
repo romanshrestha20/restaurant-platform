@@ -9,6 +9,8 @@ import { AuthTokenService } from './services/auth-token.service';
 import { AccessTokenStrategy } from './strategies/access-token.strategy';
 import { RefreshTokenStrategy } from './strategies/refresh-token.strategy';
 import { RolesGuard } from '../../common/guards/roles.guard';
+import { RestaurantRolesGuard } from '../../common/guards/restaurant-roles.guard';
+import { PasswordService } from './services/password.service';
 
 @Module({
   imports: [
@@ -25,11 +27,19 @@ import { RolesGuard } from '../../common/guards/roles.guard';
   providers: [
     AuthService,
     AuthTokenService,
+    PasswordService,
     AuthRepository,
     AccessTokenStrategy,
     RefreshTokenStrategy,
     RolesGuard,
+    RestaurantRolesGuard,
   ],
-  exports: [AuthService, AuthTokenService, JwtModule, RolesGuard],
+  exports: [
+    AuthService,
+    AuthTokenService,
+    JwtModule,
+    RolesGuard,
+    RestaurantRolesGuard,
+  ],
 })
 export class AuthModule {}

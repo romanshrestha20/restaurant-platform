@@ -4,6 +4,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { AppEnvironment } from '../../../config/env';
 import { AccessTokenPayload } from '../interfaces/jwt-payload.interface';
+import { isPlatformRole } from '@restaurant/database/authorization';
 
 @Injectable()
 export class AccessTokenStrategy extends PassportStrategy(Strategy, 'jwt') {
@@ -16,7 +17,13 @@ export class AccessTokenStrategy extends PassportStrategy(Strategy, 'jwt') {
   }
 
   validate(payload: AccessTokenPayload) {
-    if (payload.tokenType !== 'access') {
+    if (
+      payload.tokenType !== 'access' ||
+      typeof payload.sub !== 'string' ||
+      typeof payload.email !== 'string' ||
+      !Array.isArray(payload.roles) ||
+      !payload.roles.every(isPlatformRole)
+    ) {
       throw new UnauthorizedException('Invalid access token');
     }
 

@@ -3,7 +3,6 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { compare, hash } from 'bcrypt';
 import { AuthRepository } from '../repositories/auth.repository';
 import { LoginDto } from '../dto/login.dto';
 import { RegisterDto } from '../dto/register.dto';
@@ -14,8 +13,8 @@ import {
 } from '../types/auth-response.type';
 import { LoginContext } from '../types/login-context.type';
 import { AuthTokenService } from './auth-token.service';
+import { PasswordService } from './password.service';
 
-const PASSWORD_SALT_ROUNDS = 12;
 const INVALID_PASSWORD_HASH =
   '$2b$12$NQhfkaL70f.NppT3XQx9LO1SFMLocU.a9GigbRtGGU7xntazI/aqm';
 
@@ -24,6 +23,7 @@ export class AuthService {
   constructor(
     private readonly authRepository: AuthRepository,
     private readonly tokenService: AuthTokenService,
+    private readonly passwordService: PasswordService,
   ) {}
 
   async register(
@@ -38,7 +38,7 @@ export class AuthService {
       throw new ConflictException('An account with this email already exists');
     }
 
-    const passwordHash = await hash(dto.password, PASSWORD_SALT_ROUNDS);
+    const passwordHash = await this.passwordService.hashPassword(dto.password);
 
     try {
       const user = await this.authRepository.createUser({
@@ -73,7 +73,10 @@ export class AuthService {
     const email = dto.email.trim().toLowerCase();
     const user = await this.authRepository.findUserForLogin(email);
     const passwordHash = user?.passwordHash ?? INVALID_PASSWORD_HASH;
-    const passwordMatches = await compare(dto.password, passwordHash);
+    const passwordMatches = await this.passwordService.verifyPassword(
+      dto.password,
+      passwordHash,
+    );
 
     if (
       !user ||
