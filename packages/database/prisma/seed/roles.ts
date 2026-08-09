@@ -1,19 +1,14 @@
 import type { PrismaClient } from "../../src/generated";
+import {
+  ROLE_DESCRIPTIONS,
+  ROLE_NAMES,
+  type RoleName,
+} from "../../src/authorization.cjs";
 import type {
   PermissionName,
   SeededPermissions,
 } from "./permissions";
 
-const ROLES = [
-  ["ADMIN", "Platform administrator"],
-  ["OWNER", "Restaurant owner"],
-  ["MANAGER", "Restaurant manager"],
-  ["CHEF", "Kitchen staff"],
-  ["WAITER", "Front-of-house staff"],
-  ["CUSTOMER", "Restaurant customer"],
-] as const;
-
-export type RoleName = (typeof ROLES)[number][0];
 export type SeededRoles = Record<RoleName, string>;
 
 const ALL_PERMISSIONS: PermissionName[] = [
@@ -51,7 +46,8 @@ const ROLE_PERMISSIONS: Record<RoleName, PermissionName[]> = {
 export async function seedRoles(prisma: PrismaClient): Promise<SeededRoles> {
   const seeded = {} as SeededRoles;
 
-  for (const [name, description] of ROLES) {
+  for (const name of ROLE_NAMES) {
+    const description = ROLE_DESCRIPTIONS[name];
     const role = await prisma.role.upsert({
       where: { name },
       update: { description },

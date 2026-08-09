@@ -1,19 +1,7 @@
-import { randomBytes, scryptSync } from "node:crypto";
+import { hash } from "bcrypt";
 import type { PrismaClient } from "../../src/generated";
 
 const DEFAULT_ADMIN_EMAIL = "admin@restaurant.local";
-
-function hashPassword(password: string) {
-  const salt = randomBytes(16);
-  const hash = scryptSync(password, salt, 64, {
-    N: 16_384,
-    r: 8,
-    p: 1,
-    maxmem: 32 * 1024 * 1024,
-  });
-
-  return `scrypt$16384$8$1$${salt.toString("hex")}$${hash.toString("hex")}`;
-}
 
 export async function seedAdmin(prisma: PrismaClient, adminRoleId: string) {
   const email = (process.env.SEED_ADMIN_EMAIL ?? DEFAULT_ADMIN_EMAIL)
@@ -25,7 +13,7 @@ export async function seedAdmin(prisma: PrismaClient, adminRoleId: string) {
       "SEED_ADMIN_PASSWORD must be set and contain at least 12 characters.",
     );
   }
-  const passwordHash = hashPassword(password);
+  const passwordHash = await hash(password, 12);
 
   const admin = await prisma.user.upsert({
     where: { email },
