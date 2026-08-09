@@ -38,8 +38,40 @@ export const envValidationSchema = Joi.object({
   SMTP_SECURE: Joi.boolean().default(false),
   SMTP_USER: Joi.string().empty('').optional(),
   SMTP_PASSWORD: Joi.string().empty('').optional(),
+  UPLOAD_STORAGE_PROVIDER: Joi.string()
+    .valid('cloudinary', 'local')
+    .when('NODE_ENV', {
+      is: 'test',
+      then: Joi.string().default('local'),
+      otherwise: Joi.string().default('cloudinary'),
+    }),
+  UPLOAD_LOCAL_DIR: Joi.string().default('uploads'),
+  UPLOAD_PUBLIC_URL: Joi.string()
+    .uri()
+    .default('http://localhost:3001/uploads'),
+  CLOUDINARY_CLOUD_NAME: Joi.string()
+    .empty('')
+    .when('UPLOAD_STORAGE_PROVIDER', {
+      is: 'cloudinary',
+      then: Joi.required(),
+      otherwise: Joi.optional(),
+    }),
+  CLOUDINARY_API_KEY: Joi.string().empty('').when('UPLOAD_STORAGE_PROVIDER', {
+    is: 'cloudinary',
+    then: Joi.required(),
+    otherwise: Joi.optional(),
+  }),
+  CLOUDINARY_API_SECRET: Joi.string()
+    .empty('')
+    .when('UPLOAD_STORAGE_PROVIDER', {
+      is: 'cloudinary',
+      then: Joi.required(),
+      otherwise: Joi.optional(),
+    }),
   HEALTH_DATABASE_TIMEOUT_MS: Joi.number().integer().positive().default(3_000),
-}).and('SMTP_USER', 'SMTP_PASSWORD');
+})
+  .and('SMTP_USER', 'SMTP_PASSWORD')
+  .and('CLOUDINARY_CLOUD_NAME', 'CLOUDINARY_API_KEY', 'CLOUDINARY_API_SECRET');
 
 export interface AppEnvironment {
   NODE_ENV: 'development' | 'test' | 'production';
@@ -59,5 +91,11 @@ export interface AppEnvironment {
   SMTP_SECURE: boolean;
   SMTP_USER?: string;
   SMTP_PASSWORD?: string;
+  UPLOAD_STORAGE_PROVIDER: 'cloudinary' | 'local';
+  UPLOAD_LOCAL_DIR: string;
+  UPLOAD_PUBLIC_URL: string;
+  CLOUDINARY_CLOUD_NAME?: string;
+  CLOUDINARY_API_KEY?: string;
+  CLOUDINARY_API_SECRET?: string;
   HEALTH_DATABASE_TIMEOUT_MS: number;
 }
