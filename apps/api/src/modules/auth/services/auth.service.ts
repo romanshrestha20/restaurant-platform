@@ -3,13 +3,17 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 import { compare, hash } from 'bcrypt';
 import { AuthRepository } from '../repositories/auth.repository';
 import { LoginDto } from '../dto/login.dto';
 import { RegisterDto } from '../dto/register.dto';
-import { AuthResponse, AuthUserResponse } from '../types/auth-response.type';
+import { RefreshAuthUser } from '../interfaces/auth-user.interface';
+import {
+  AuthSessionResponse,
+  AuthUserResponse,
+} from '../types/auth-response.type';
 import { LoginContext } from '../types/login-context.type';
+import { AuthTokenService } from './auth-token.service';
 
 const PASSWORD_SALT_ROUNDS = 12;
 const INVALID_PASSWORD_HASH =
@@ -19,10 +23,13 @@ const INVALID_PASSWORD_HASH =
 export class AuthService {
   constructor(
     private readonly authRepository: AuthRepository,
-    private readonly jwtService: JwtService,
+    private readonly tokenService: AuthTokenService,
   ) {}
 
-  async register(dto: RegisterDto): Promise<AuthResponse> {
+  async register(
+    dto: RegisterDto,
+    context: LoginContext = {},
+  ): Promise<AuthSessionResponse> {
     const email = dto.email.trim().toLowerCase();
     const phone = dto.phone?.trim();
     const existingUser = await this.authRepository.findUserByEmail(email);
@@ -42,9 +49,9 @@ export class AuthService {
         ...(phone ? { phone } : {}),
       });
 
-      const accessToken = await this.signAccessToken(user);
+      const tokens = await this.createSessionTokens(user, context);
 
-      return { user, accessToken };
+      return { user, ...tokens };
     } catch (error: unknown) {
       if (
         typeof error === 'object' &&
@@ -62,7 +69,7 @@ export class AuthService {
   async login(
     dto: LoginDto,
     context: LoginContext = {},
-  ): Promise<AuthResponse> {
+  ): Promise<AuthSessionResponse> {
     const email = dto.email.trim().toLowerCase();
     const user = await this.authRepository.findUserForLogin(email);
     const passwordHash = user?.passwordHash ?? INVALID_PASSWORD_HASH;
@@ -95,20 +102,109 @@ export class AuthService {
       profile: user.profile,
       roles: user.roles,
     };
-    const accessToken = await this.signAccessToken(safeUser);
+    const tokens = await this.createSessionTokens(safeUser, context);
 
-    return { user: safeUser, accessToken };
+    return { user: safeUser, ...tokens };
   }
 
-  private signAccessToken(user: {
-    id: string;
-    email: string;
-    roles: Array<{ role: { name: string } }>;
-  }): Promise<string> {
-    return this.jwtService.signAsync({
-      sub: user.id,
-      email: user.email,
-      roles: user.roles.map(({ role }) => role.name),
+  async refresh(
+    authUser: RefreshAuthUser,
+    context: LoginContext = {},
+  ): Promise<AuthSessionResponse> {
+    const session = await this.authRepository.findSessionWithUser(
+      authUser.sessionId,
+    );
+
+    if (
+      !session ||
+      session.userId !== authUser.id ||
+      session.expiresAt.getTime() <= Date.now() ||
+      !session.user.isActive ||
+      session.user.deletedAt !== null
+    ) {
+      if (session) {
+        await this.authRepository.deleteSession(session.id, session.userId);
+      }
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+
+    const currentRefreshTokenHash = this.tokenService.hashRefreshToken(
+      authUser.refreshToken,
+    );
+
+    if (
+      !this.tokenService.refreshTokenMatches(
+        authUser.refreshToken,
+        session.refreshTokenHash,
+      )
+    ) {
+      await this.authRepository.deleteSession(session.id, session.userId);
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+
+    const user = this.toSafeUser(session.user);
+    const [accessToken, refreshToken] = await Promise.all([
+      this.tokenService.signAccessToken(user),
+      this.tokenService.signRefreshToken(user.id, session.id),
+    ]);
+    const nextRefreshTokenHash =
+      this.tokenService.hashRefreshToken(refreshToken);
+    const expiresAt = this.tokenService.getRefreshExpiration();
+    const rotation = await this.authRepository.rotateSession({
+      id: session.id,
+      currentRefreshTokenHash,
+      nextRefreshTokenHash,
+      expiresAt,
+      context,
     });
+
+    if (rotation.count !== 1) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+
+    return { user, accessToken, refreshToken };
+  }
+
+  async logout(authUser: RefreshAuthUser): Promise<void> {
+    await this.authRepository.deleteSession(authUser.sessionId, authUser.id);
+  }
+
+  async logoutAll(userId: string): Promise<void> {
+    await this.authRepository.deleteAllSessions(userId);
+  }
+
+  private async createSessionTokens(
+    user: AuthUserResponse,
+    context: LoginContext,
+  ) {
+    const sessionId = this.tokenService.createSessionId();
+    const [accessToken, refreshToken] = await Promise.all([
+      this.tokenService.signAccessToken(user),
+      this.tokenService.signRefreshToken(user.id, sessionId),
+    ]);
+
+    await this.authRepository.createSession({
+      id: sessionId,
+      userId: user.id,
+      refreshTokenHash: this.tokenService.hashRefreshToken(refreshToken),
+      expiresAt: this.tokenService.getRefreshExpiration(),
+      context,
+    });
+
+    return { accessToken, refreshToken };
+  }
+
+  private toSafeUser(user: AuthUserResponse & { deletedAt?: Date | null }) {
+    return {
+      id: user.id,
+      email: user.email,
+      phone: user.phone,
+      emailVerified: user.emailVerified,
+      phoneVerified: user.phoneVerified,
+      isActive: user.isActive,
+      createdAt: user.createdAt,
+      profile: user.profile,
+      roles: user.roles,
+    };
   }
 }

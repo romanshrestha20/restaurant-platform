@@ -116,6 +116,98 @@ export class AuthRepository {
     });
   }
 
+  async createSession(data: {
+    id: string;
+    userId: string;
+    refreshTokenHash: string;
+    expiresAt: Date;
+    context: LoginContext;
+  }) {
+    return this.prisma.session.create({
+      data: {
+        id: data.id,
+        userId: data.userId,
+        refreshTokenHash: data.refreshTokenHash,
+        expiresAt: data.expiresAt,
+        ...(data.context.ipAddress
+          ? { ipAddress: data.context.ipAddress }
+          : {}),
+        ...(data.context.userAgent
+          ? { userAgent: data.context.userAgent }
+          : {}),
+      },
+    });
+  }
+
+  async findSessionWithUser(sessionId: string) {
+    return this.prisma.session.findUnique({
+      where: { id: sessionId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            phone: true,
+            emailVerified: true,
+            phoneVerified: true,
+            isActive: true,
+            deletedAt: true,
+            createdAt: true,
+            profile: {
+              select: {
+                firstName: true,
+                lastName: true,
+              },
+            },
+            roles: {
+              select: {
+                role: {
+                  select: { name: true },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+  }
+
+  async rotateSession(data: {
+    id: string;
+    currentRefreshTokenHash: string;
+    nextRefreshTokenHash: string;
+    expiresAt: Date;
+    context: LoginContext;
+  }) {
+    return this.prisma.session.updateMany({
+      where: {
+        id: data.id,
+        refreshTokenHash: data.currentRefreshTokenHash,
+      },
+      data: {
+        refreshTokenHash: data.nextRefreshTokenHash,
+        expiresAt: data.expiresAt,
+        lastUsedAt: new Date(),
+        ...(data.context.ipAddress
+          ? { ipAddress: data.context.ipAddress }
+          : {}),
+        ...(data.context.userAgent
+          ? { userAgent: data.context.userAgent }
+          : {}),
+      },
+    });
+  }
+
+  async deleteSession(sessionId: string, userId: string) {
+    return this.prisma.session.deleteMany({
+      where: { id: sessionId, userId },
+    });
+  }
+
+  async deleteAllSessions(userId: string) {
+    return this.prisma.session.deleteMany({ where: { userId } });
+  }
+
   async updateUserById(id: string, data: Partial<UpdateUserData>) {
     return this.prisma.user.update({
       where: { id },

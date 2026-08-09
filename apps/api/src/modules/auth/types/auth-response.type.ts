@@ -21,3 +21,7 @@ export type AuthResponse = {
   user: AuthUserResponse;
   accessToken: string;
 };
+
+export type AuthSessionResponse = AuthResponse & {
+  refreshToken: string;
+};
