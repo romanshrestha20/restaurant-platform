@@ -1,0 +1,32 @@
+/*
+ * Brand primitives are mode-aware inputs, not component styles. A new tenant
+ * adds one [data-brand] block and supplies both light and dark values.
+ */
+:root,
+[data-brand='tablefolk'] {
+  --brand-font-body: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --brand-font-display: Georgia, "Times New Roman", serif;
+  --brand-radius-sm: 0.35rem;
+  --brand-radius-md: 0.4rem;
+  --brand-radius-lg: 1.25rem;
+
+  --brand-light-accent: #315b4c;
+  --brand-light-accent-strong: #24463b;
+  --brand-light-accent-soft: #e2ebe5;
+  --brand-light-on-accent: #ffffff;
+  --brand-light-panel: #23483d;
+  --brand-light-panel-text: #f8f3e8;
+  --brand-light-panel-muted: #cbd6d0;
+  --brand-light-panel-subtle: #aebfb6;
+  --brand-light-panel-glow: rgba(235, 214, 168, 0.14);
+
+  --brand-dark-accent: #8fc3aa;
+  --brand-dark-accent-strong: #acd4c0;
+  --brand-dark-accent-soft: #263c31;
+  --brand-dark-on-accent: #102018;
+  --brand-dark-panel: #0d2118;
+  --brand-dark-panel-text: #f2eee4;
+  --brand-dark-panel-muted: #bfcec6;
+  --brand-dark-panel-subtle: #a9bbb1;
+  --brand-dark-panel-glow: rgba(143, 195, 170, 0.13);
+}

@@ -1,0 +1,44 @@
+:root {
+  /* Focus */
+  --focus-outline: 3px solid var(--color-focus);
+  --focus-ring: 0 0 0 3px color-mix(in srgb, var(--color-focus) 24%, transparent);
+
+  /* Buttons */
+  --button-primary-background: var(--color-accent);
+  --button-primary-background-hover: var(--color-accent-strong);
+  --button-primary-foreground: var(--color-on-accent);
+  --button-secondary-background-hover: var(--color-interaction-hover);
+  --button-danger-background: var(--color-danger);
+  --button-danger-background-hover: var(--color-danger-strong);
+  --button-danger-foreground: var(--color-on-danger);
+
+  /* Form controls */
+  --input-background: var(--color-control-background);
+  --input-background-focus: var(--color-control-background-hover);
+  --input-background-disabled: var(--color-control-background-disabled);
+  --input-border: var(--color-control-border);
+  --input-border-focus: var(--color-accent);
+  --input-border-invalid: var(--color-danger);
+  --input-foreground: var(--color-foreground);
+  --input-placeholder: var(--color-placeholder);
+
+  /* Feedback and overlays */
+  --toast-background: var(--color-toast-surface);
+  --toast-border: var(--color-border);
+  --toast-shadow: var(--shadow-toast);
+  --dialog-background: var(--color-surface);
+  --dialog-border: var(--color-overlay-border);
+  --dialog-shadow: var(--shadow-overlay);
+}
+
+[data-theme='dark'] {
+  --focus-ring: 0 0 0 3px color-mix(in srgb, var(--color-focus) 34%, transparent);
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --color-border: var(--color-border-strong);
+    --focus-outline: 4px solid var(--color-focus);
+    --focus-ring: 0 0 0 4px var(--color-focus);
+  }
+}
