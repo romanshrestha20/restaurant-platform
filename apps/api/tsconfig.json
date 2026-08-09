@@ -1,9 +1,9 @@
-
 {
   "extends": "../../packages/typescript-config/nestjs.json",
   "compilerOptions": {
     "baseUrl": ".",
-    "sourceMap": true
+    "sourceMap": true,
+    "types": ["node", "jest"]
   },
   "include": ["src/**/*.ts", "test/**/*.ts"]
 }
