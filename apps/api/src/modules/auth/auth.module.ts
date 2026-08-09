@@ -43,6 +43,7 @@ import { AuthMailService } from './services/auth-mail.service';
   exports: [
     AuthService,
     AuthTokenService,
+    PasswordService,
     JwtModule,
     RolesGuard,
     RestaurantRolesGuard,
