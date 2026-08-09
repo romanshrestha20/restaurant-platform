@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { CreateUserData } from '../types/create-user.type';
 import { LoginContext } from '../types/login-context.type';
-import { UpdateUserData } from '../types/update-user.type';
+import { UpdateUserInput } from '../types/update-user.type';
 import type { AccountTokenType } from '../types/account-token.type';
 
 @Injectable()
@@ -342,7 +342,7 @@ export class AuthRepository {
     });
   }
 
-  async updateUserById(id: string, data: Partial<UpdateUserData>) {
+  async updateUserById(id: string, data: Partial<UpdateUserInput>) {
     return this.prisma.user.update({
       where: { id },
       data,
