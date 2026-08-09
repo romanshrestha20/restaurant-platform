@@ -1,13 +1,17 @@
 # Theme architecture
 
-Tablefolk uses semantic CSS tokens and a single runtime theme preference.
+Tablefolk uses layered CSS tokens and a single runtime theme preference.
 Components consume roles such as `--color-background`, `--color-foreground`,
-and `--color-control-border`; raw colors live only in `styles/tokens.css`.
+and `--color-control-border`; raw colors live only in `styles/tokens/`.
+
+The public `tokens.css` entrypoint loads four layers in order: brand primitives,
+foundations, light/dark semantic roles, and stable component contracts. Brand
+selection is documented separately in `lib/brand/README.md`.
 
 ## Load sequence
 
 1. `ThemeScript` runs in the document head before hydration.
-2. It reads `tablefolk-theme` from local storage, resolves `system`, and applies
+2. It reads `restaurant-platform-theme` from local storage, resolves `system`, and applies
    `data-theme`, `data-theme-mode`, the `.dark` class, and `color-scheme`.
 3. `ThemeProvider` hydrates from those document attributes without changing the
    initial visual theme.

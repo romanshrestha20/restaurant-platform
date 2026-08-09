@@ -12,7 +12,7 @@ import {
 } from 'react';
 import type { ResolvedTheme, ThemeMode } from './theme.types';
 
-const STORAGE_KEY = 'tablefolk-theme';
+const STORAGE_KEY = 'restaurant-platform-theme';
 const SYSTEM_QUERY = '(prefers-color-scheme: dark)';
 
 type ThemeContextValue = {
