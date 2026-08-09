@@ -38,3 +38,10 @@ Design tokens live in `src/styles/tokens.css`. Prefer semantic roles such as
 `components/ui` must stay data-source agnostic: no API clients, stores, feature
 validation, or routing workflows. Pass values and callbacks into primitives;
 keep auth and profile behavior in their respective modules.
+
+## Token contract
+
+Shared components use only semantic (`--color-*`) or component contract tokens
+(`--button-*`, `--input-*`, `--toast-*`, and `--dialog-*`). Raw colors and
+legacy aliases are rejected by `pnpm --filter web check:tokens`. Components do
+not inspect the active theme or brand; CSS token resolution owns presentation.
