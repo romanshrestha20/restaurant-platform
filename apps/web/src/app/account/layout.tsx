@@ -35,7 +35,7 @@ function AccountShell({ children }: { children: ReactNode }) {
         <Brand />
         <div className="account-header__actions">
           <span className="account-header__greeting">Hello, {firstName}</span>
-          <Button variant="text" onClick={handleSignOut}>Sign out</Button>
+          <Button variant="ghost" onClick={handleSignOut}>Sign out</Button>
         </div>
       </header>
 
