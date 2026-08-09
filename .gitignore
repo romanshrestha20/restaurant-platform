@@ -28,8 +28,10 @@ generated
 # macOS
 .DS_Store
 
-# pnpm
-pnpm-lock.yaml
+# Keep one reproducible workspace lockfile at the repository root.
+**/pnpm-lock.yaml
+!/pnpm-lock.yaml
+.pnpm-store/
 
 # Local upload storage
 apps/api/uploads/
