@@ -8,6 +8,7 @@ import { HealthModule } from './modules/health/health.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { ProfileModule } from './modules/profile/profile.module';
+import { RestaurantsModule } from './modules/restaurants/restaurants.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { ProfileModule } from './modules/profile/profile.module';
     HealthModule,
     AuthModule,
     ProfileModule,
+    RestaurantsModule,
   ],
   providers: [
     {
