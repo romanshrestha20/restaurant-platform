@@ -10,7 +10,7 @@ import {
 import { ApiError } from '@/lib/api';
 import { useAuth } from '@/modules/auth';
 import { useRouter } from 'next/navigation';
-import { Alert, Button, StatusBadge } from '@/components/ui';
+import { Alert, AvatarUpload, Button, Skeleton, StatusBadge } from '@/components/ui';
 import { useUser } from '../hooks/use-user';
 import type {
   Gender as UserGender,
@@ -294,9 +294,9 @@ export default function ProfilePage() {
   if (status === 'loading' || status === 'idle') {
     return (
       <section className="profile-loading" aria-label="Loading profile">
-        <div className="skeleton skeleton--title" />
-        <div className="skeleton skeleton--line" />
-        <div className="skeleton skeleton--form" />
+        <Skeleton className="skeleton--title" />
+        <Skeleton className="skeleton--line" />
+        <Skeleton className="skeleton--form" />
       </section>
     );
   }
@@ -327,27 +327,14 @@ export default function ProfilePage() {
             Last updated {new Intl.DateTimeFormat('en', { dateStyle: 'medium' }).format(new Date(profile.updatedAt))}
           </p>
         </div>
-        <div className="photo-control">
-          <div className={profile.photo ? 'avatar has-photo' : 'avatar'}>
-            {profile.photo ? (
-              <img src={profile.photo.url} alt={profile.photo.alt ?? 'Profile photo'} />
-            ) : (
-              <span aria-label={`Initials ${initials}`}>{initials}</span>
-            )}
-          </div>
-          <label className="photo-button" htmlFor="profile-photo">
-            {uploadingPhoto ? 'Uploading…' : profile.photo ? 'Change photo' : 'Add photo'}
-          </label>
-          <input
-            className="visually-hidden"
-            id="profile-photo"
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            onChange={handlePhotoChange}
-            disabled={uploadingPhoto}
-          />
-          {photoError ? <p className="photo-error" role="alert">{photoError}</p> : null}
-        </div>
+        <AvatarUpload
+          src={profile.photo?.url}
+          alt={profile.photo?.alt ?? 'Profile photo'}
+          fallback={initials}
+          loading={uploadingPhoto}
+          error={photoError}
+          onChange={handlePhotoChange}
+        />
       </header>
 
       <form className="profile-form" onSubmit={handleSubmit} noValidate>
