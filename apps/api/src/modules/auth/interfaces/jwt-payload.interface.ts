@@ -1,7 +1,9 @@
+import type { PlatformRoleName } from '@restaurant/database/authorization';
+
 export interface AccessTokenPayload {
   sub: string;
   email: string;
-  roles: string[];
+  roles: PlatformRoleName[];
   tokenType: 'access';
   iat?: number;
   exp?: number;
