@@ -7,6 +7,7 @@ import { envValidationSchema } from './config/env';
 import { HealthModule } from './modules/health/health.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
+import { ProfileModule } from './modules/profile/profile.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { GlobalExceptionFilter } from './common/filters/global-exception.filter'
     PrismaModule,
     HealthModule,
     AuthModule,
+    ProfileModule,
   ],
   providers: [
     {
