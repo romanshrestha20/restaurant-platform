@@ -7,6 +7,10 @@
   "types": "./src/client.ts",
   "exports": {
     ".": "./src/client.ts",
+    "./authorization": {
+      "types": "./src/authorization.d.cts",
+      "default": "./src/authorization.cjs"
+    },
     "./generated": {
       "types": "./src/generated/index.d.ts",
       "default": "./src/generated/index.js"
@@ -23,9 +27,11 @@
   "dependencies": {
     "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.9.1",
+    "bcrypt": "^6.0.0",
     "pg": "^8.22.0"
   },
   "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
     "@types/node": "^24.0.0",
     "dotenv": "^17.4.2",
     "prisma": "^7.9.1",
