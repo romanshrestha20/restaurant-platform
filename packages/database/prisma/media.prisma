@@ -1,3 +1,8 @@
+enum RestaurantMediaType {
+  LOGO
+  COVER
+}
+
 model Media {
   id String @id @default(cuid())
 
@@ -39,6 +44,7 @@ model UserMedia {
 model RestaurantMedia {
   restaurantId String
   mediaId      String
+  type         RestaurantMediaType
 
   alt       String?
   sortOrder Int     @default(0)
@@ -47,6 +53,7 @@ model RestaurantMedia {
   media      Media      @relation(fields: [mediaId], references: [id], onDelete: Cascade)
 
   @@id([restaurantId, mediaId])
+  @@unique([restaurantId, type])
   @@index([mediaId])
   @@map("restaurant_media")
 }

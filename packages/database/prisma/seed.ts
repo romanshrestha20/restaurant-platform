@@ -10,6 +10,7 @@ import {
 import { seedPermissions } from "./seed/permissions";
 import {
   seedRestaurant,
+  seedRestaurantAddress,
   seedRestaurantMember,
   seedRestaurantSettings,
 } from "./seed/restaurant";
@@ -36,6 +37,9 @@ async function main() {
 
   console.log("Seeding restaurant...");
   const restaurant = await seedRestaurant(prisma);
+
+  console.log("Seeding restaurant address...");
+  await seedRestaurantAddress(prisma, restaurant.id);
 
   console.log("Seeding restaurant settings...");
   await seedRestaurantSettings(prisma, restaurant.id);

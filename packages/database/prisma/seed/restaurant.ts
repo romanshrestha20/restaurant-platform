@@ -17,13 +17,35 @@ export async function seedRestaurant(prisma: PrismaClient) {
       description: "Seasonal Nordic cooking in central Helsinki.",
       email: "hello@nordictable.local",
       phone: "+358 9 123 4567",
-      address: "Aleksanterinkatu 12",
-      city: "Helsinki",
-      postalCode: "00100",
-      country: "FI",
       currency: "EUR",
       timezone: "Europe/Helsinki",
     },
+  });
+}
+
+const RESTAURANT_ADDRESS_ID = "seed-nordic-table-primary-address";
+
+export async function seedRestaurantAddress(
+  prisma: PrismaClient,
+  restaurantId: string,
+) {
+  const address = {
+    restaurantId,
+    label: "Primary",
+    street: "Aleksanterinkatu 12",
+    city: "Helsinki",
+    state: null,
+    postalCode: "00100",
+    country: "FI",
+    latitude: null,
+    longitude: null,
+    isPrimary: true,
+  };
+
+  return prisma.restaurantAddress.upsert({
+    where: { id: RESTAURANT_ADDRESS_ID },
+    update: address,
+    create: { id: RESTAURANT_ADDRESS_ID, ...address },
   });
 }
 
