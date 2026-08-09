@@ -2,6 +2,7 @@
 
 import { useCallback } from 'react';
 import { ApiError } from '@/lib/api';
+import { useToast } from '@/lib/toast';
 import { authStore, setAuthUser } from '@/modules/auth/store/auth.store';
 import { userService } from '../services/user.service';
 import {
@@ -41,6 +42,7 @@ function syncAuthUser(profile: UserProfile) {
 
 export function useUser() {
   const state = useUserStore();
+  const toast = useToast();
 
   const fetchCurrentUser = useCallback(async () => {
     setUserLoading();
@@ -56,21 +58,38 @@ export function useUser() {
   }, []);
 
   const updateProfile = useCallback(async (input: UpdateUserProfileInput) => {
-    const profile = await userService.updateProfile(input);
-    setUserProfile(profile);
-    syncAuthUser(profile);
-    return profile;
-  }, []);
+    try {
+      const profile = await userService.updateProfile(input);
+      setUserProfile(profile);
+      syncAuthUser(profile);
+      toast.success('Profile updated');
+      return profile;
+    } catch (error) {
+      toast.fromApiError(error, 'Failed to update profile');
+      throw error;
+    }
+  }, [toast]);
 
   const uploadPhoto = useCallback(async (file: File) => {
-    const profile = await userService.uploadPhoto(file);
-    setUserProfile(profile);
-    return profile;
-  }, []);
+    try {
+      const profile = await userService.uploadPhoto(file);
+      setUserProfile(profile);
+      toast.success('Profile photo updated');
+      return profile;
+    } catch (error) {
+      toast.fromApiError(error, 'Failed to upload photo');
+      throw error;
+    }
+  }, [toast]);
 
-  const changePassword = useCallback((input: ChangePasswordInput) => {
-    return userService.changePassword(input);
-  }, []);
+  const changePassword = useCallback(async (input: ChangePasswordInput) => {
+    try {
+      return await userService.changePassword(input);
+    } catch (error) {
+      toast.fromApiError(error, 'Failed to change password');
+      throw error;
+    }
+  }, [toast]);
 
   return {
     ...state,

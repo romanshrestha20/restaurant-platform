@@ -1,2 +1,3 @@
 export { apiClient } from './api-client';
-export { ApiError } from './api-error';
+export { ApiError, getApiErrorFeedback } from './api-error';
+export type { ApiErrorFeedback } from './api-error';

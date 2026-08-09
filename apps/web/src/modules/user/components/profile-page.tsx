@@ -267,7 +267,7 @@ export default function ProfilePage() {
 
     try {
       await changePassword(passwordForm);
-      await signOut();
+      await signOut({ notify: false });
       router.replace('/login?passwordChanged=1');
     } catch (error: unknown) {
       if (error instanceof ApiError) {
