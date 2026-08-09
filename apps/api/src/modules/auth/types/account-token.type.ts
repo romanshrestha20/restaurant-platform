@@ -1,0 +1,7 @@
+export const ACCOUNT_TOKEN_TYPES = {
+  EMAIL_VERIFICATION: 'EMAIL_VERIFICATION',
+  PASSWORD_RESET: 'PASSWORD_RESET',
+} as const;
+
+export type AccountTokenType =
+  (typeof ACCOUNT_TOKEN_TYPES)[keyof typeof ACCOUNT_TOKEN_TYPES];
