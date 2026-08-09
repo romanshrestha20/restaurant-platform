@@ -25,11 +25,15 @@ import { CurrentUser } from '../decorators/current-user.decorator';
 import { CurrentRestaurantMembership } from '../decorators/current-restaurant-membership.decorator';
 import { LoginDto } from '../dto/login.dto';
 import { RegisterDto } from '../dto/register.dto';
+import { ForgotPasswordDto } from '../dto/forgot-password.dto';
+import { ResetPasswordDto } from '../dto/reset-password.dto';
+import { VerifyEmailDto } from '../dto/verify-email.dto';
 import type {
   AccessAuthUser,
   RefreshAuthUser,
 } from '../interfaces/auth-user.interface';
 import { AuthService } from '../services/auth.service';
+import { AccountRecoveryService } from '../services/account-recovery.service';
 import { AuthSessionResponse } from '../types/auth-response.type';
 import { LoginContext } from '../types/login-context.type';
 
@@ -37,6 +41,7 @@ import { LoginContext } from '../types/login-context.type';
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
+    private readonly accountRecoveryService: AccountRecoveryService,
     private readonly config: ConfigService<AppEnvironment, true>,
   ) {}
 
@@ -51,7 +56,37 @@ export class AuthController {
       dto,
       this.getLoginContext(request),
     );
+    await this.accountRecoveryService.sendRegistrationVerification(result.user);
     return this.setRefreshCookie(response, result);
+  }
+
+  @Post('email-verification/request')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 3, ttl: 60 * 60_000 } })
+  @UseGuards(AccessTokenGuard)
+  requestEmailVerification(@CurrentUser() authUser: AccessAuthUser) {
+    return this.accountRecoveryService.requestEmailVerification(authUser.id);
+  }
+
+  @Post('email-verification/confirm')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  verifyEmail(@Body() dto: VerifyEmailDto) {
+    return this.accountRecoveryService.verifyEmail(dto.token);
+  }
+
+  @Post('password/forgot')
+  @HttpCode(HttpStatus.OK)
+ @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  forgotPassword(@Body() dto: ForgotPasswordDto) {
+    return this.accountRecoveryService.requestPasswordReset(dto.email);
+  }
+
+  @Post('password/reset')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 5, ttl: 60 * 60_000 } })
+  resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.accountRecoveryService.resetPassword(dto.token, dto.password);
   }
 
   @Post('login')
