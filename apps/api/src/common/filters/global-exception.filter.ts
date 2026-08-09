@@ -14,6 +14,7 @@ type ErrorDetails = {
   statusCode: number;
   message: ErrorMessage;
   error: string;
+  details?: Record<string, unknown>;
 };
 
 export type ApiErrorResponse = ErrorDetails & {
@@ -94,8 +95,16 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       typeof responseBody.error === 'string'
         ? responseBody.error
         : exception.name.replace(/Exception$/, '');
+    const details = isRecord(responseBody.details)
+      ? responseBody.details
+      : undefined;
 
-    return { statusCode, message, error };
+    return {
+      statusCode,
+      message,
+      error,
+      ...(details ? { details } : {}),
+    };
   }
 
   private fromPrismaError(code: string): ErrorDetails {
