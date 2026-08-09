@@ -30,3 +30,6 @@ generated
 
 # pnpm
 pnpm-lock.yaml
+
+# Local upload storage
+apps/api/uploads/

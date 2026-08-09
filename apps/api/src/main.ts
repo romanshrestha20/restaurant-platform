@@ -1,6 +1,8 @@
 import { Logger, ValidationPipe, VersioningType } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
+import type { NestExpressApplication } from '@nestjs/platform-express';
+import { resolve } from 'node:path';
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
@@ -10,10 +12,10 @@ import { getLogLevels, logStartup } from './config/logger';
 
 async function bootstrap(): Promise<void> {
   const environment = process.env.NODE_ENV ?? 'development';
-  const app = await NestFactory.create(AppModule, {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     logger: getLogLevels(environment),
   });
-  const config = app.get<ConfigService<AppEnvironment>>(ConfigService);
+  const config = app.get<ConfigService<AppEnvironment, true>>(ConfigService);
   const port = config.get('PORT', { infer: true }) ?? 3001;
   const clientUrl = config.get('CLIENT_URL', { infer: true });
 
@@ -36,6 +38,12 @@ async function bootstrap(): Promise<void> {
   app.use(helmet());
   app.use(compression());
   app.use(cookieParser());
+  if (config.get('UPLOAD_STORAGE_PROVIDER', { infer: true }) === 'local') {
+    app.useStaticAssets(
+      resolve(process.cwd(), config.get('UPLOAD_LOCAL_DIR', { infer: true })),
+      { prefix: '/uploads/' },
+    );
+  }
   app.enableShutdownHooks();
 
   await app.listen(port);
