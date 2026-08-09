@@ -1,0 +1,47 @@
+:root {
+  /* Color roles */
+  --color-ink: #1b211d;
+  --color-muted: #667069;
+  --color-paper: #f5f2ea;
+  --color-surface: #fcfaf5;
+  --color-line: #dcd8cc;
+  --color-accent: #315b4c;
+  --color-accent-strong: #24463b;
+  --color-accent-soft: #e2ebe5;
+  --color-danger: #a13f36;
+  --color-danger-soft: #f7e8e5;
+  --color-white: #ffffff;
+
+  /* Backwards-compatible semantic aliases */
+  --ink: var(--color-ink);
+  --muted: var(--color-muted);
+  --paper: var(--color-paper);
+  --surface: var(--color-surface);
+  --line: var(--color-line);
+  --accent: var(--color-accent);
+  --accent-deep: var(--color-accent-strong);
+  --accent-soft: var(--color-accent-soft);
+  --danger: var(--color-danger);
+  --danger-soft: var(--color-danger-soft);
+  --white: var(--color-white);
+
+  /* Typography */
+  --font-body: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: Georgia, "Times New Roman", serif;
+  --text-xs: 0.72rem;
+  --text-sm: 0.82rem;
+  --text-md: 0.95rem;
+
+  /* Shape and motion */
+  --radius-sm: 0.35rem;
+  --radius-md: 0.4rem;
+  --radius-round: 999px;
+  --focus-ring: 0 0 0 3px rgba(49, 91, 76, 0.16);
+  --duration-fast: 150ms;
+  --duration-normal: 220ms;
+
+  /* Layout */
+  --page-gutter: clamp(1.1rem, 4vw, 4rem);
+  --account-max-width: 92rem;
+  --content-max-width: 54rem;
+}
