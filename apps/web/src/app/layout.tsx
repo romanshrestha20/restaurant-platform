@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { AppProviders } from '@/providers/app-providers';
+import { ThemeScript } from '@/lib/theme/theme-script';
 
 export const metadata: Metadata = {
   title: "Tablefolk",
@@ -16,7 +17,11 @@ export default function RootLayout({
     <html
       lang="en"
       className="h-full antialiased"
+      suppressHydrationWarning
     >
+      <head>
+        <ThemeScript />
+      </head>
       <body className="min-h-full flex flex-col">
         <AppProviders>{children}</AppProviders>
       </body>

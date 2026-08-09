@@ -4,7 +4,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { ProtectedRoute, useAuth } from '@/modules/auth';
-import { Brand, Button } from '@/components/ui';
+import { Brand, Button, ThemeSelector } from '@/components/ui';
 
 const sections = [
   { label: 'Profile', href: '/account/profile', available: true },
@@ -35,6 +35,7 @@ function AccountShell({ children }: { children: ReactNode }) {
         <Brand />
         <div className="account-header__actions">
           <span className="account-header__greeting">Hello, {firstName}</span>
+          <ThemeSelector compact />
           <Button variant="ghost" onClick={handleSignOut}>Sign out</Button>
         </div>
       </header>
