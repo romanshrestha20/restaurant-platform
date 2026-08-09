@@ -14,9 +14,15 @@ import { Throttle } from '@nestjs/throttler';
 import type { CookieOptions, Request, Response } from 'express';
 import { AccessTokenGuard } from '../../../common/guards/access-token.guard';
 import { RefreshTokenGuard } from '../../../common/guards/refresh-token.guard';
+import {
+  RequirePlatformRoles,
+  RequireRestaurantRoles,
+} from '../../../common/decorators/roles.decorator';
+import type { RestaurantMembershipAuth } from '../../../common/guards/restaurant-roles.guard';
 import { AppEnvironment } from '../../../config/env';
 import { REFRESH_TOKEN_COOKIE } from '../constants/auth.constants';
 import { CurrentUser } from '../decorators/current-user.decorator';
+import { CurrentRestaurantMembership } from '../decorators/current-restaurant-membership.decorator';
 import { LoginDto } from '../dto/login.dto';
 import { RegisterDto } from '../dto/register.dto';
 import type {
@@ -105,6 +111,24 @@ export class AuthController {
   ): Promise<void> {
     await this.authService.logoutAll(authUser.id);
     response.clearCookie(REFRESH_TOKEN_COOKIE, this.getCookieOptions());
+  }
+
+  @Get('platform/admin')
+  @RequirePlatformRoles('ADMIN')
+  getPlatformAdminAccess(@CurrentUser() authUser: AccessAuthUser) {
+    return {
+      userId: authUser.id,
+      role: 'ADMIN' as const,
+      authorized: true,
+    };
+  }
+
+  @Get('restaurants/:restaurantId/management')
+  @RequireRestaurantRoles('OWNER', 'MANAGER')
+  getRestaurantManagementAccess(
+    @CurrentRestaurantMembership() membership: RestaurantMembershipAuth,
+  ) {
+    return { ...membership, authorized: true };
   }
 
   private setRefreshCookie(response: Response, result: AuthSessionResponse) {
