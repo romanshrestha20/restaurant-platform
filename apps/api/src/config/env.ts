@@ -16,6 +16,7 @@ export const envValidationSchema = Joi.object({
     .required(),
   JWT_ACCESS_TTL_SECONDS: Joi.number().integer().positive().default(900),
   JWT_REFRESH_TTL_SECONDS: Joi.number().integer().positive().default(2_592_000),
+  HEALTH_DATABASE_TIMEOUT_MS: Joi.number().integer().positive().default(3_000),
 });
 
 export interface AppEnvironment {
@@ -27,4 +28,5 @@ export interface AppEnvironment {
   JWT_REFRESH_SECRET: string;
   JWT_ACCESS_TTL_SECONDS: number;
   JWT_REFRESH_TTL_SECONDS: number;
+  HEALTH_DATABASE_TIMEOUT_MS: number;
 }
