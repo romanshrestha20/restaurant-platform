@@ -36,6 +36,7 @@
   --radius-sm: 0.35rem;
   --radius-md: 0.4rem;
   --radius-round: 999px;
+  --shadow-overlay: 0 24px 70px rgba(27, 33, 29, 0.18);
   --focus-ring: 0 0 0 3px rgba(49, 91, 76, 0.16);
   --duration-fast: 150ms;
   --duration-normal: 220ms;
@@ -44,4 +45,5 @@
   --page-gutter: clamp(1.1rem, 4vw, 4rem);
   --account-max-width: 92rem;
   --content-max-width: 54rem;
+  --container-max-width: 76rem;
 }
