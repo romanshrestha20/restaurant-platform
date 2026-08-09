@@ -11,6 +11,9 @@ import { RefreshTokenStrategy } from './strategies/refresh-token.strategy';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { RestaurantRolesGuard } from '../../common/guards/restaurant-roles.guard';
 import { PasswordService } from './services/password.service';
+import { AccountRecoveryService } from './services/account-recovery.service';
+import { AccountTokenService } from './services/account-token.service';
+import { AuthMailService } from './services/auth-mail.service';
 
 @Module({
   imports: [
@@ -26,6 +29,9 @@ import { PasswordService } from './services/password.service';
   controllers: [AuthController],
   providers: [
     AuthService,
+    AccountRecoveryService,
+    AccountTokenService,
+    AuthMailService,
     AuthTokenService,
     PasswordService,
     AuthRepository,
