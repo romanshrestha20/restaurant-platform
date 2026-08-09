@@ -2,9 +2,12 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { AppProviders } from '@/providers/app-providers';
 import { ThemeScript } from '@/lib/theme/theme-script';
+import { DEFAULT_BRAND_ID, brandRegistry } from '@/lib/brand';
+
+const brand = brandRegistry[DEFAULT_BRAND_ID];
 
 export const metadata: Metadata = {
-  title: "Tablefolk",
+  title: brand.name,
   description: "Your reservations, orders, and dining preferences in one place.",
 };
 
@@ -16,6 +19,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      data-brand={brand.id}
       className="h-full antialiased"
       suppressHydrationWarning
     >
@@ -23,7 +27,7 @@ export default function RootLayout({
         <ThemeScript />
       </head>
       <body className="min-h-full flex flex-col">
-        <AppProviders>{children}</AppProviders>
+        <AppProviders brand={brand.id}>{children}</AppProviders>
       </body>
     </html>
   );

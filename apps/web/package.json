@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "check:tokens": "node scripts/check-design-tokens.mjs",
     "start": "next start"
   },
   "dependencies": {
