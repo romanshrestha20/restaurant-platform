@@ -19,6 +19,9 @@ const configValues: AppEnvironment = {
   MAIL_FROM: 'no-reply@example.com',
   SMTP_PORT: 587,
   SMTP_SECURE: false,
+  UPLOAD_STORAGE_PROVIDER: 'local',
+  UPLOAD_LOCAL_DIR: 'uploads',
+  UPLOAD_PUBLIC_URL: 'http://localhost:3001/uploads',
   HEALTH_DATABASE_TIMEOUT_MS: 3_000,
 };
 
