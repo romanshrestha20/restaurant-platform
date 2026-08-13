@@ -14,13 +14,15 @@ export function useLoginForm() {
   const [submitting, setSubmitting] = useState(false);
   const [passwordChanged, setPasswordChanged] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [nextPath, setNextPath] = useState('');
 
   useEffect(() => {
-    setPasswordChanged(
-      new URLSearchParams(window.location.search).get('passwordChanged') ===
-        '1',
-    );
-    if (status === 'authenticated') router.replace('/restaurants');
+    const search = new URLSearchParams(window.location.search);
+    setPasswordChanged(search.get('passwordChanged') === '1');
+    const requested = search.get('next');
+    const safeNext = requested?.startsWith('/') ? requested : '';
+    setNextPath(safeNext);
+    if (status === 'authenticated') router.replace(safeNext || '/restaurants');
   }, [router, status]);
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
@@ -56,6 +58,7 @@ export function useLoginForm() {
     error,
     password,
     passwordChanged,
+    nextPath,
     setEmail,
     setPassword,
     setShowPassword,

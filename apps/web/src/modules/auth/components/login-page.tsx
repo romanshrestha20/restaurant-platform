@@ -27,7 +27,7 @@ export default function LoginPage() {
         eyebrow="Welcome back"
         title="Sign in to your account"
         description="Use the email and password connected to your Tablefolk account."
-        footer={<p className="auth-switch">New to Tablefolk? <Link href="/register">Create an account</Link></p>}
+        footer={<p className="auth-switch">New to Tablefolk? <Link href={form.nextPath ? `/register?next=${encodeURIComponent(form.nextPath)}` : '/register'}>Create an account</Link></p>}
       >
         {form.passwordChanged ? (
           <Alert tone="success">Password changed. Sign in again with your new password.</Alert>

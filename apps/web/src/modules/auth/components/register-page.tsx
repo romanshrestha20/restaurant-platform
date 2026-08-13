@@ -19,7 +19,7 @@ export default function RegisterPage() {
         eyebrow="Create account"
         title="Tell us about yourself"
         description="Start with the details needed for your account."
-        footer={<p className="auth-switch">Already have an account? <Link href="/login">Sign in</Link></p>}
+        footer={<p className="auth-switch">Already have an account? <Link href={registration.nextPath ? `/login?next=${encodeURIComponent(registration.nextPath)}` : '/login'}>Sign in</Link></p>}
       >
           <Form className="auth-form" onSubmit={registration.submit}>
             <div className="field-grid">

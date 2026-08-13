@@ -28,9 +28,13 @@ export function useRegisterForm() {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [nextPath, setNextPath] = useState('');
 
   useEffect(() => {
-    if (status === 'authenticated') router.replace('/account/profile');
+    const requested = new URLSearchParams(window.location.search).get('next');
+    const safeNext = requested?.startsWith('/') ? requested : '';
+    setNextPath(safeNext);
+    if (status === 'authenticated') router.replace(safeNext || '/account/profile');
   }, [router, status]);
 
   const update = (field: keyof RegistrationForm, value: string) => {
@@ -71,7 +75,7 @@ export function useRegisterForm() {
         password: form.password,
         ...(phone ? { phone } : {}),
       });
-      router.replace('/account/profile');
+      router.replace(nextPath || '/account/profile');
     } catch (requestError: unknown) {
       setError(
         requestError instanceof ApiError
@@ -86,6 +90,7 @@ export function useRegisterForm() {
   return {
     error,
     form,
+    nextPath,
     setShowPassword,
     showPassword,
     submit,
