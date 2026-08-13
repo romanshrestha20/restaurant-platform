@@ -9,6 +9,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { ProfileModule } from './modules/profile/profile.module';
 import { RestaurantsModule } from './modules/restaurants/restaurants.module';
+import { RealtimeModule } from './common/realtime';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { RestaurantsModule } from './modules/restaurants/restaurants.module';
     AuthModule,
     ProfileModule,
     RestaurantsModule,
+    RealtimeModule,
   ],
   providers: [
     {
