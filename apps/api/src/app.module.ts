@@ -11,6 +11,8 @@ import { ProfileModule } from './modules/profile/profile.module';
 import { RestaurantsModule } from './modules/restaurants/restaurants.module';
 import { RealtimeModule } from './common/realtime';
 import { MenuModule } from './modules/menu/menu.module';
+import { CatalogModule } from './modules/catalog/catalog.module';
+import { CartModule } from './modules/cart/cart.module';
 
 @Module({
   imports: [
@@ -32,6 +34,8 @@ import { MenuModule } from './modules/menu/menu.module';
     ProfileModule,
     RestaurantsModule,
     MenuModule,
+    CatalogModule,
+    CartModule,
     RealtimeModule,
   ],
   providers: [
