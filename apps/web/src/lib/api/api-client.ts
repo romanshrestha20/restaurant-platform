@@ -42,7 +42,9 @@ class ApiClient {
         credentials: 'include',
       });
     } catch {
-      throw new ApiError(0, ['Unable to reach the server. Check your connection and try again.']);
+      throw new ApiError(0, [
+        'Unable to reach the server. Check your connection and try again.',
+      ]);
     }
 
     if (response.status === 401 && !skipAuthRefresh) {
@@ -51,7 +53,9 @@ class ApiClient {
         return this.request<T>(path, { ...init, skipAuthRefresh: true });
       } catch {
         this.authHandlers.onUnauthorized();
-        throw new ApiError(401, ['Your session has expired. Please sign in again.']);
+        throw new ApiError(401, [
+          'Your session has expired. Please sign in again.',
+        ]);
       }
     }
 
@@ -86,6 +90,20 @@ class ApiClient {
         ? { body: body instanceof FormData ? body : JSON.stringify(body) }
         : {}),
     });
+  }
+
+  put<T>(path: string, body?: unknown, options?: RequestOptions) {
+    return this.request<T>(path, {
+      ...options,
+      method: 'PUT',
+      ...(body !== undefined
+        ? { body: body instanceof FormData ? body : JSON.stringify(body) }
+        : {}),
+    });
+  }
+
+  delete<T>(path: string, options?: RequestOptions) {
+    return this.request<T>(path, { ...options, method: 'DELETE' });
   }
 }
 
