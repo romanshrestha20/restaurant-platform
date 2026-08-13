@@ -1,5 +1,6 @@
 import prisma from "../src/client";
 import { seedAdmin, seedAdminProfile } from "./seed/admin";
+import { seedCustomer } from "./seed/customer";
 import {
   seedAddOns,
   seedCategories,
@@ -17,8 +18,6 @@ import {
 import { seedRolePermissions, seedRoles } from "./seed/roles";
 import { seedRestaurantTables } from "./seed/tables";
 
-
-
 async function main() {
   console.log("Seeding permissions...");
   const permissions = await seedPermissions(prisma);
@@ -34,6 +33,9 @@ async function main() {
 
   console.log("Seeding admin profile...");
   await seedAdminProfile(prisma, admin.id);
+
+  console.log("Seeding customer user and profile...");
+  await seedCustomer(prisma, roles.CUSTOMER);
 
   console.log("Seeding restaurant...");
   const restaurant = await seedRestaurant(prisma);

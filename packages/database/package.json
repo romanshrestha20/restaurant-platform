@@ -26,6 +26,7 @@
     "deploy": "prisma migrate deploy",
     "seed": "prisma db seed",
     "seed:menu": "tsx prisma/seed-menu.ts",
+    "seed:customer": "tsx prisma/seed-customer.ts",
     "studio": "prisma studio",
     "push": "prisma db push"
   },

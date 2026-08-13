@@ -1,4 +1,4 @@
-export declare const PLATFORM_ROLE_NAMES: readonly ['ADMIN', 'CUSTOMER'];
+export declare const PLATFORM_ROLE_NAMES: readonly ['ADMIN'];
 export declare const RESTAURANT_ROLE_NAMES: readonly [
   'OWNER',
   'MANAGER',
@@ -22,7 +22,6 @@ export declare const RESTAURANT_PERMISSION_NAMES: readonly [
 ];
 export declare const ROLE_NAMES: readonly [
   'ADMIN',
-  'CUSTOMER',
   'OWNER',
   'MANAGER',
   'CHEF',

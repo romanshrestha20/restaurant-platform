@@ -1,4 +1,4 @@
-const PLATFORM_ROLE_NAMES = ['ADMIN', 'CUSTOMER'];
+const PLATFORM_ROLE_NAMES = ['ADMIN'];
 const RESTAURANT_ROLE_NAMES = ['OWNER', 'MANAGER', 'CHEF', 'WAITER'];
 const RESTAURANT_PERMISSION_NAMES = [
   'restaurant.read',
@@ -19,7 +19,6 @@ const ROLE_NAMES = [...PLATFORM_ROLE_NAMES, ...RESTAURANT_ROLE_NAMES];
 
 const ROLE_DESCRIPTIONS = {
   ADMIN: 'Platform administrator',
-  CUSTOMER: 'Restaurant customer',
   OWNER: 'Restaurant owner',
   MANAGER: 'Restaurant manager',
   CHEF: 'Kitchen staff',

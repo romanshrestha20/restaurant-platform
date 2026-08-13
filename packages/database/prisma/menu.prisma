@@ -139,8 +139,8 @@ model VariantOption {
 
   variant Variant @relation(fields: [variantId], references: [id], onDelete: Cascade)
 
-  orderItems OrderItem[]
-  cartItems  CartItem[]
+  orderItems OrderItemVariantOption[]
+  cartItems  CartItemVariantOption[]
 
   @@map("variant_options")
 }

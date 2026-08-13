@@ -113,6 +113,8 @@ model RestaurantSettings {
 }
 
 model RestaurantMember {
+  id String @id @default(cuid())
+
   restaurantId String
   userId       String
   roleId       String
@@ -121,11 +123,15 @@ model RestaurantMember {
   user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   role       Role       @relation(fields: [roleId], references: [id], onDelete: Restrict)
 
-  joinedAt DateTime @default(now())
+  isActive Boolean @default(true)
 
-  @@id([restaurantId, userId])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([restaurantId, userId])
   @@index([userId])
   @@index([roleId])
+  @@index([restaurantId, roleId])
   @@map("restaurant_members")
 }
 
