@@ -8,7 +8,11 @@ type AuthHandlers = {
 
 type RequestOptions = RequestInit & {
   skipAuthRefresh?: boolean;
+  timeoutMs?: number;
+  requestId?: string;
 };
+
+const DEFAULT_TIMEOUT_MS = 15_000;
 
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api/v1';
@@ -25,7 +29,12 @@ class ApiClient {
   }
 
   async request<T>(path: string, options: RequestOptions = {}): Promise<T> {
-    const { skipAuthRefresh = false, ...init } = options;
+    const {
+      requestId = globalThis.crypto?.randomUUID?.() ?? `${Date.now()}`,
+      skipAuthRefresh = false,
+      timeoutMs = DEFAULT_TIMEOUT_MS,
+      ...init
+    } = options;
     const headers = new Headers(init.headers);
     const token = this.authHandlers.getAccessToken();
 
@@ -33,6 +42,13 @@ class ApiClient {
       headers.set('Content-Type', 'application/json');
     }
     if (token) headers.set('Authorization', `Bearer ${token}`);
+    headers.set('X-Request-ID', requestId);
+
+    const controller = new AbortController();
+    const abortFromCaller = () => controller.abort(init.signal?.reason);
+    if (init.signal?.aborted) abortFromCaller();
+    else init.signal?.addEventListener('abort', abortFromCaller, { once: true });
+    const timeout = setTimeout(() => controller.abort('timeout'), timeoutMs);
 
     let response: Response;
     try {
@@ -40,22 +56,39 @@ class ApiClient {
         ...init,
         headers,
         credentials: 'include',
+        signal: controller.signal,
       });
-    } catch {
-      throw new ApiError(0, [
-        'Unable to reach the server. Check your connection and try again.',
-      ]);
+    } catch (error) {
+      const timedOut = controller.signal.reason === 'timeout';
+      throw new ApiError(
+        0,
+        [
+          timedOut
+            ? 'The request timed out. Please try again.'
+            : 'Unable to reach the server. Check your connection and try again.',
+        ],
+        requestId,
+      );
+    } finally {
+      clearTimeout(timeout);
+      init.signal?.removeEventListener('abort', abortFromCaller);
     }
 
     if (response.status === 401 && !skipAuthRefresh) {
       try {
         await this.authHandlers.refreshSession();
-        return this.request<T>(path, { ...init, skipAuthRefresh: true });
+        return this.request<T>(path, {
+          ...init,
+          requestId,
+          skipAuthRefresh: true,
+        });
       } catch {
         this.authHandlers.onUnauthorized();
-        throw new ApiError(401, [
-          'Your session has expired. Please sign in again.',
-        ]);
+        throw new ApiError(
+          401,
+          ['Your session has expired. Please sign in again.'],
+          requestId,
+        );
       }
     }
 
