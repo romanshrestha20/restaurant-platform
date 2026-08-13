@@ -1,5 +1,9 @@
 import type { Socket } from 'socket.io';
 import type { RealtimeUser, RealtimeSocketAuth } from './realtime-auth.types';
+import type {
+  MenuItemEventData,
+  RestaurantDomainEvent,
+} from './domain-event.types';
 
 export interface RealtimeReadyPayload {
   userId: string;
@@ -22,6 +26,21 @@ export interface ClientToServerEvents {
 export interface ServerToClientEvents {
   'realtime:ready': (payload: RealtimeReadyPayload) => void;
   'realtime:pong': (payload: RealtimePongPayload) => void;
+  'menu:item_created': (
+    payload: RestaurantDomainEvent<
+      'menu:item_created',
+      { item: MenuItemEventData }
+    >,
+  ) => void;
+  'menu:item_updated': (
+    payload: RestaurantDomainEvent<
+      'menu:item_updated',
+      { item: MenuItemEventData }
+    >,
+  ) => void;
+  'menu:item_deleted': (
+    payload: RestaurantDomainEvent<'menu:item_deleted', { itemId: string }>,
+  ) => void;
 }
 
 export interface RealtimeSocketData {
