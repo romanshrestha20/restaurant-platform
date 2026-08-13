@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from '../src/app.module';
+import { restaurantPermissionsForRole } from '@restaurant/database/authorization';
 import { AuthTokenService } from '../src/modules/auth/services/auth-token.service';
 import { PrismaService } from '../src/prisma/prisma.service';
 
@@ -95,6 +96,7 @@ describe('Role authorization (e2e)', () => {
       restaurantId: 'restaurant-1',
       userId: 'user-1',
       role: 'OWNER',
+      permissions: restaurantPermissionsForRole('OWNER'),
       authorized: true,
     });
   });

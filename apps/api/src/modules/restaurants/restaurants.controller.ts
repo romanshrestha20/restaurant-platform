@@ -15,7 +15,7 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Throttle } from '@nestjs/throttler';
-import { RequireRestaurantRoles } from '../../common/decorators/roles.decorator';
+import { RequireRestaurantPermissions } from '../../common/decorators/roles.decorator';
 import { AccessTokenGuard } from '../../common/guards/access-token.guard';
 import { MAX_IMAGE_SIZE } from '../../common/upload/upload.service';
 import { CurrentRestaurantMembership } from '../auth/decorators/current-restaurant-membership.decorator';
@@ -49,7 +49,7 @@ export class RestaurantsController {
   }
 
   @Get(':restaurantId')
-  @RequireRestaurantRoles('OWNER', 'MANAGER', 'CHEF', 'WAITER')
+  @RequireRestaurantPermissions('restaurant.read')
   getManagement(
     @Param('restaurantId') restaurantId: string,
     @CurrentRestaurantMembership() membership: RestaurantMembershipAuth,
@@ -58,7 +58,7 @@ export class RestaurantsController {
   }
 
   @Patch(':restaurantId')
-  @RequireRestaurantRoles('OWNER', 'MANAGER')
+  @RequireRestaurantPermissions('restaurant.update')
   update(
     @Param('restaurantId') restaurantId: string,
     @CurrentRestaurantMembership() membership: RestaurantMembershipAuth,
@@ -68,7 +68,7 @@ export class RestaurantsController {
   }
 
   @Put(':restaurantId/opening-hours')
-  @RequireRestaurantRoles('OWNER', 'MANAGER')
+  @RequireRestaurantPermissions('restaurant.update')
   replaceOpeningHours(
     @Param('restaurantId') restaurantId: string,
     @Body() data: ReplaceOpeningHoursDto,
@@ -77,13 +77,13 @@ export class RestaurantsController {
   }
 
   @Get(':restaurantId/addresses')
-  @RequireRestaurantRoles('OWNER', 'MANAGER', 'CHEF', 'WAITER')
+  @RequireRestaurantPermissions('restaurant.read')
   listAddresses(@Param('restaurantId') restaurantId: string) {
     return this.restaurantsService.listAddresses(restaurantId);
   }
 
   @Post(':restaurantId/addresses')
-  @RequireRestaurantRoles('OWNER', 'MANAGER')
+  @RequireRestaurantPermissions('restaurant.update')
   addAddress(
     @Param('restaurantId') restaurantId: string,
     @Body() data: AddRestaurantAddressDto,
@@ -92,7 +92,7 @@ export class RestaurantsController {
   }
 
   @Patch(':restaurantId/addresses/:addressId')
-  @RequireRestaurantRoles('OWNER', 'MANAGER')
+  @RequireRestaurantPermissions('restaurant.update')
   updateAddress(
     @Param('restaurantId') restaurantId: string,
     @Param('addressId') addressId: string,
@@ -103,7 +103,7 @@ export class RestaurantsController {
 
   @Delete(':restaurantId/addresses/:addressId')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @RequireRestaurantRoles('OWNER', 'MANAGER')
+  @RequireRestaurantPermissions('restaurant.update')
   deleteAddress(
     @Param('restaurantId') restaurantId: string,
     @Param('addressId') addressId: string,
@@ -118,7 +118,7 @@ export class RestaurantsController {
       limits: { fileSize: MAX_IMAGE_SIZE, files: 1, fields: 0 },
     }),
   )
-  @RequireRestaurantRoles('OWNER', 'MANAGER')
+  @RequireRestaurantPermissions('restaurant.update')
   uploadLogo(
     @Param('restaurantId') restaurantId: string,
     @UploadedFile() file: Express.Multer.File,
@@ -128,7 +128,7 @@ export class RestaurantsController {
 
   @Delete(':restaurantId/logo')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @RequireRestaurantRoles('OWNER', 'MANAGER')
+  @RequireRestaurantPermissions('restaurant.update')
   removeLogo(@Param('restaurantId') restaurantId: string) {
     return this.restaurantsService.removeLogo(restaurantId);
   }
@@ -140,7 +140,7 @@ export class RestaurantsController {
       limits: { fileSize: MAX_IMAGE_SIZE, files: 1, fields: 0 },
     }),
   )
-  @RequireRestaurantRoles('OWNER', 'MANAGER')
+  @RequireRestaurantPermissions('restaurant.update')
   uploadCover(
     @Param('restaurantId') restaurantId: string,
     @UploadedFile() file: Express.Multer.File,
@@ -150,7 +150,7 @@ export class RestaurantsController {
 
   @Delete(':restaurantId/cover')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @RequireRestaurantRoles('OWNER', 'MANAGER')
+  @RequireRestaurantPermissions('restaurant.update')
   removeCover(@Param('restaurantId') restaurantId: string) {
     return this.restaurantsService.removeCover(restaurantId);
   }

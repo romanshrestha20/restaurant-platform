@@ -10,6 +10,10 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { DayOfWeek, RestaurantMediaType } from '@restaurant/database/generated';
+import {
+  isRestaurantRole,
+  restaurantPermissionsForRole,
+} from '@restaurant/database/authorization';
 import { UploadService } from '../../common/upload/upload.service';
 import type { AddRestaurantAddressDto } from './dto/add-restaurant-address.dto';
 import type { CreateOpeningHourDto } from './dto/create-opening-hour.dto';
@@ -87,6 +91,9 @@ export class RestaurantsService {
         memberships.map(({ role, ...membership }) => ({
           ...membership,
           callerRole: role.name,
+          callerPermissions: isRestaurantRole(role.name)
+            ? restaurantPermissionsForRole(role.name)
+            : [],
         })),
       );
   }
@@ -97,7 +104,13 @@ export class RestaurantsService {
     if (!restaurant) {
       throw new NotFoundException('Restaurant not found');
     }
-    return { ...restaurant, callerRole };
+    return {
+      ...restaurant,
+      callerRole,
+      callerPermissions: isRestaurantRole(callerRole)
+        ? restaurantPermissionsForRole(callerRole)
+        : [],
+    };
   }
 
   async update(
@@ -117,7 +130,13 @@ export class RestaurantsService {
     if (!restaurant) {
       throw new NotFoundException('Restaurant not found');
     }
-    return { ...restaurant, callerRole };
+    return {
+      ...restaurant,
+      callerRole,
+      callerPermissions: isRestaurantRole(callerRole)
+        ? restaurantPermissionsForRole(callerRole)
+        : [],
+    };
   }
 
   async replaceOpeningHours(

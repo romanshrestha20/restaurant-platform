@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { RestaurantMediaType } from '@restaurant/database/generated';
+import { restaurantPermissionsForRole } from '@restaurant/database/authorization';
 import type { UploadResult } from '../../common/upload/types/upload-result.type';
 import { PrismaService } from '../../prisma/prisma.service';
 import type { AddRestaurantAddressDto } from './dto/add-restaurant-address.dto';
@@ -191,7 +192,11 @@ export class RestaurantsRepository {
         select: managementSelect,
       });
 
-      return { ...restaurant, callerRole: 'OWNER' as const };
+      return {
+        ...restaurant,
+        callerRole: 'OWNER' as const,
+        callerPermissions: restaurantPermissionsForRole('OWNER'),
+      };
     });
   }
 

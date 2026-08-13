@@ -9,16 +9,21 @@ import {
 import { Reflector } from '@nestjs/core';
 import {
   isRestaurantRole,
+  hasRestaurantPermissions,
+  restaurantPermissionsForRole,
+  type RestaurantPermissionName,
   type RestaurantRoleName,
 } from '@restaurant/database/authorization';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AccessAuthUser } from '../../modules/auth/interfaces/auth-user.interface';
 import { REQUIRED_RESTAURANT_ROLES_KEY } from '../constants/authorization.constants';
+import { REQUIRED_RESTAURANT_PERMISSIONS_KEY } from '../constants/authorization.constants';
 
 export interface RestaurantMembershipAuth {
   restaurantId: string;
   userId: string;
   role: RestaurantRoleName;
+  permissions: readonly RestaurantPermissionName[];
 }
 
 type RestaurantRequest = {
@@ -41,8 +46,14 @@ export class RestaurantRolesGuard implements CanActivate {
       context.getHandler(),
       context.getClass(),
     ]);
+    const requiredPermissions = this.reflector.getAllAndOverride<
+      RestaurantPermissionName[]
+    >(REQUIRED_RESTAURANT_PERMISSIONS_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
 
-    if (!requiredRoles?.length) {
+    if (!requiredRoles?.length && !requiredPermissions?.length) {
       return true;
     }
 
@@ -76,7 +87,9 @@ export class RestaurantRolesGuard implements CanActivate {
       !membership.restaurant.isActive ||
       membership.restaurant.deletedAt !== null ||
       !isRestaurantRole(membership.role.name) ||
-      !requiredRoles.includes(membership.role.name)
+      (requiredRoles?.length && !requiredRoles.includes(membership.role.name)) ||
+      (requiredPermissions?.length &&
+        !hasRestaurantPermissions(membership.role.name, requiredPermissions))
     ) {
       throw new ForbiddenException('Insufficient restaurant permissions');
     }
@@ -85,6 +98,7 @@ export class RestaurantRolesGuard implements CanActivate {
       restaurantId,
       userId: request.user.id,
       role: membership.role.name,
+      permissions: restaurantPermissionsForRole(membership.role.name),
     };
 
     return true;
