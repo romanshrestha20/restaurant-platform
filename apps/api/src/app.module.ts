@@ -10,6 +10,7 @@ import { GlobalExceptionFilter } from './common/filters/global-exception.filter'
 import { ProfileModule } from './modules/profile/profile.module';
 import { RestaurantsModule } from './modules/restaurants/restaurants.module';
 import { RealtimeModule } from './common/realtime';
+import { MenuModule } from './modules/menu/menu.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { RealtimeModule } from './common/realtime';
     AuthModule,
     ProfileModule,
     RestaurantsModule,
+    MenuModule,
     RealtimeModule,
   ],
   providers: [
