@@ -735,6 +735,42 @@ textarea:focus-visible {
   margin-top: 3rem;
 }
 
+.page-skeleton {
+  width: 100%;
+}
+
+.page-skeleton__eyebrow {
+  width: 7rem;
+  height: 0.65rem;
+}
+
+.page-skeleton__title {
+  width: min(28rem, 72%);
+  height: 3.5rem;
+  margin-top: 1rem;
+}
+
+.page-skeleton__description {
+  width: min(22rem, 60%);
+  height: 0.8rem;
+  margin-top: 1rem;
+}
+
+.list-skeleton {
+  display: flex;
+  margin-top: 3rem;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.list-skeleton__row {
+  min-height: 5rem;
+}
+
+.error-state {
+  min-height: 24rem;
+}
+
 .session-loader {
   display: flex;
   min-height: 100vh;
@@ -1518,11 +1554,6 @@ textarea:focus-visible {
   margin-top: 1rem;
 }
 
-.restaurant-management__cover-skeleton {
-  height: 22rem;
-  margin-bottom: 2rem;
-}
-
 .restaurant-venue-header {
   position: relative;
   display: flex;
@@ -2221,16 +2252,6 @@ textarea:focus-visible {
   padding-top: 6rem;
 }
 
-.workspace-selector__title-skeleton {
-  width: min(40rem, 80%);
-  height: 5rem;
-  margin-bottom: 3rem;
-}
-
-.workspace-selector__tile-skeleton {
-  height: 15rem;
-}
-
 .workspace-selector--error .button {
   margin-top: 1rem;
 }
@@ -2405,40 +2426,6 @@ textarea:focus-visible {
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-}
-
-.workspace-sidebar__footer {
-  margin-top: auto;
-  border-top: 1px solid var(--workspace-sidebar-border);
-  padding: 1.25rem;
-}
-
-.workspace-sidebar__footer > a {
-  color: var(--workspace-sidebar-text);
-  font-size: 0.75rem;
-  font-weight: 700;
-}
-
-.workspace-sidebar__footer > div {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 0.9rem;
-}
-
-.workspace-sidebar__footer button {
-  border: 0;
-  padding: 0;
-  background: transparent;
-  color: var(--workspace-sidebar-muted);
-  font-size: 0.65rem;
-  cursor: pointer;
-}
-
-.workspace-sidebar .theme-selector select {
-  border-color: var(--workspace-sidebar-border);
-  background: var(--workspace-sidebar-surface);
-  color: var(--workspace-sidebar-text);
 }
 
 .workspace-main {
@@ -3148,26 +3135,6 @@ textarea:focus-visible {
   height: 1rem;
   flex: none;
   opacity: 0.82;
-}
-
-.workspace-sidebar__footer {
-  display: flex;
-  padding: 1rem 1.25rem;
-  flex-direction: column;
-  gap: 0.7rem;
-}
-
-.workspace-sidebar__footer > a {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  color: var(--workspace-sidebar-muted);
-  font-size: 0.68rem;
-  font-weight: 600;
-}
-
-.workspace-sidebar__footer > a:hover {
-  color: var(--workspace-sidebar-text);
 }
 
 .workspace-canvas {
