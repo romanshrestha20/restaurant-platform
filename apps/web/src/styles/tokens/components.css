@@ -1,4 +1,15 @@
 :root {
+  /* Restaurant workspace */
+  --restaurant-cover-shade: linear-gradient(0deg, rgb(10 16 13 / 86%) 0%, rgb(10 16 13 / 20%) 65%, transparent 100%);
+  --restaurant-cover-border: rgb(255 255 255 / 36%);
+  --restaurant-cover-glass: rgb(255 255 255 / 12%);
+  --restaurant-cover-muted: rgb(255 255 255 / 64%);
+  --workspace-sidebar-background: #101713;
+  --workspace-sidebar-surface: #18221d;
+  --workspace-sidebar-border: rgb(255 255 255 / 10%);
+  --workspace-sidebar-text: #f4f0e7;
+  --workspace-sidebar-muted: rgb(244 240 231 / 56%);
+
   /* Focus */
   --focus-outline: 3px solid var(--color-focus);
   --focus-ring: 0 0 0 3px color-mix(in srgb, var(--color-focus) 24%, transparent);
