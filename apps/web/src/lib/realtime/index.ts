@@ -5,6 +5,7 @@ export { useRealtimeEvent } from './use-realtime-event';
 export { DOMAIN_EVENT_NAMES } from './domain-event.types';
 export type {
   DomainEventName,
+  MenuItemEventData,
   NotificationRecord,
   RestaurantDomainEvent,
 } from './domain-event.types';

@@ -48,7 +48,7 @@ const operations: WorkspaceLink[] = [
     available: false,
     icon: "reservations",
   },
-  { label: "Menu", segment: "menu", available: false, icon: "menu" },
+  { label: "Menu", segment: "menu", available: true, icon: "menu" },
   {
     label: "Customers",
     segment: "customers",
@@ -77,12 +77,8 @@ const management: WorkspaceLink[] = [
 ];
 
 function RestaurantWorkspaceShell({ children }: { children: ReactNode }) {
-  const {
-    activeMembership,
-    memberships,
-    status,
-    switchRestaurant,
-  } = useActiveRestaurant();
+  const { activeMembership, memberships, status, switchRestaurant } =
+    useActiveRestaurant();
   const { signOut, user } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
@@ -283,9 +279,7 @@ function UserMenu({
       <DropdownItem disabled>
         Security <small className="user-menu__soon">Soon</small>
       </DropdownItem>
-      <DropdownItem onClick={() => router.push("/restaurants")}>
-        Restaurant selector
-      </DropdownItem>
+
       <div className="user-menu__theme">
         <span>Appearance</span>
         <ThemeSelector compact />
