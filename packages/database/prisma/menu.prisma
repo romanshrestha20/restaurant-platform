@@ -9,20 +9,34 @@ enum MenuItemStatus {
   HIDDEN
 }
 
-enum DietaryType {
-  VEGAN
-  VEGETARIAN
-  HALAL
-  GLUTEN_FREE
-  DAIRY_FREE
-  NUT_FREE
-  SPICY
+model Menu {
+  id String @id @default(cuid())
+
+  restaurantId String
+
+  name        String
+  description String?
+  sortOrder   Int     @default(0)
+  isActive    Boolean @default(true)
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  categories Category[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([restaurantId, name])
+  @@index([restaurantId, sortOrder])
+  @@index([deletedAt])
+  @@map("menus")
 }
 
 model Category {
   id String @id @default(cuid())
 
   restaurantId String
+  menuId       String
 
   name        String
   description String?
@@ -32,6 +46,7 @@ model Category {
   status CategoryStatus @default(ACTIVE)
 
   restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  menu       Menu       @relation(fields: [menuId], references: [id], onDelete: Cascade)
 
   menuItems MenuItem[]
 
@@ -39,7 +54,9 @@ model Category {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  @@unique([restaurantId, name])
+  @@unique([menuId, name])
+  @@index([restaurantId])
+  @@index([menuId, sortOrder])
   @@index([deletedAt])
   @@map("categories")
 }
@@ -63,6 +80,8 @@ model MenuItem {
 
   isFeatured Boolean @default(false)
 
+  sortOrder Int @default(0)
+
   status MenuItemStatus @default(AVAILABLE)
 
   restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
@@ -83,8 +102,12 @@ model MenuItem {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
+  @@unique([restaurantId, sku])
   @@index([restaurantId])
+  @@index([restaurantId, status])
   @@index([categoryId])
+  @@index([categoryId, status])
+  @@index([categoryId, sortOrder])
   @@index([deletedAt])
   @@map("menu_items")
 }
@@ -112,7 +135,7 @@ model VariantOption {
 
   name String
 
-  price Decimal @db.Decimal(10, 2)
+  priceAdjustment Decimal @db.Decimal(10, 2)
 
   variant Variant @relation(fields: [variantId], references: [id], onDelete: Cascade)
 
@@ -141,6 +164,7 @@ model AddOnGroup {
 
   menuItems MenuItemAddOnGroup[]
 
+  @@index([restaurantId])
   @@map("addon_groups")
 }
 
@@ -153,6 +177,8 @@ model AddOn {
 
   price Decimal @db.Decimal(10, 2)
 
+  sortOrder Int @default(0)
+
   isAvailable Boolean @default(true)
 
   group AddOnGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
@@ -160,6 +186,7 @@ model AddOn {
   orderItems OrderItemAddOn[]
   cartItems  CartItemAddOn[]
 
+  @@index([groupId, sortOrder])
   @@map("addons")
 }
 

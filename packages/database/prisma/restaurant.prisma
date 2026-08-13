@@ -45,6 +45,7 @@ model Restaurant {
   openingHours OpeningHour[]
   tables       RestaurantTable[]
 
+  menus        Menu[]
   categories   Category[]
   menuItems    MenuItem[]
   addOnGroups  AddOnGroup[]

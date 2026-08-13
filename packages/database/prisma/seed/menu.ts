@@ -62,10 +62,21 @@ export async function seedCategories(
   restaurantId: string,
 ): Promise<SeededCategories> {
   const seeded: SeededCategories = {};
+  const menu = await prisma.menu.upsert({
+    where: {
+      restaurantId_name: { restaurantId, name: "Main menu" },
+    },
+    update: { isActive: true, deletedAt: null },
+    create: {
+      restaurantId,
+      name: "Main menu",
+      description: "Primary restaurant menu",
+    },
+  });
 
   for (const [index, [name, description]] of CATEGORY_DATA.entries()) {
     const category = await prisma.category.upsert({
-      where: { restaurantId_name: { restaurantId, name } },
+      where: { menuId_name: { menuId: menu.id, name } },
       update: {
         description,
         sortOrder: index,
@@ -74,6 +85,7 @@ export async function seedCategories(
       },
       create: {
         restaurantId,
+        menuId: menu.id,
         name,
         description,
         sortOrder: index,
@@ -152,11 +164,11 @@ export async function seedVariants(
     if (option) {
       await prisma.variantOption.update({
         where: { id: option.id },
-        data: { price },
+        data: { priceAdjustment: price },
       });
     } else {
       await prisma.variantOption.create({
-        data: { variantId: variant.id, name, price },
+        data: { variantId: variant.id, name, priceAdjustment: price },
       });
     }
   }
@@ -185,22 +197,22 @@ export async function seedAddOns(
         },
       });
 
-  for (const [name, price] of [
+  for (const [sortOrder, [name, price]] of [
     ["Extra cheese", 1.5],
     ["Mushrooms", 1],
     ["Jalapeños", 0.75],
-  ] as const) {
+  ].entries()) {
     const addOn = await prisma.addOn.findFirst({
       where: { groupId: group.id, name },
     });
     if (addOn) {
       await prisma.addOn.update({
         where: { id: addOn.id },
-        data: { price, isAvailable: true },
+        data: { price, sortOrder, isAvailable: true },
       });
     } else {
       await prisma.addOn.create({
-        data: { groupId: group.id, name, price },
+        data: { groupId: group.id, name, price, sortOrder },
       });
     }
   }

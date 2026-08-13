@@ -11,6 +11,10 @@
       "types": "./src/authorization.d.cts",
       "default": "./src/authorization.cjs"
     },
+    "./connection-url": {
+      "types": "./src/connection-url.d.cts",
+      "default": "./src/connection-url.cjs"
+    },
     "./generated": {
       "types": "./src/generated/index.d.ts",
       "default": "./src/generated/index.js"
@@ -21,6 +25,7 @@
     "migrate": "prisma migrate dev",
     "deploy": "prisma migrate deploy",
     "seed": "prisma db seed",
+    "seed:menu": "tsx prisma/seed-menu.ts",
     "studio": "prisma studio",
     "push": "prisma db push"
   },
