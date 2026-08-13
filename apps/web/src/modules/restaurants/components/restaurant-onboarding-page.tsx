@@ -6,6 +6,7 @@ import { useMemo, useState, type FormEvent } from 'react';
 import {
   Alert,
   Checkbox,
+  Form,
   FormField,
   Input,
   LoadingButton,
@@ -217,7 +218,7 @@ export function RestaurantOnboardingPage() {
           </ol>
         </aside>
 
-        <form className="restaurant-wizard__form" onSubmit={submit}>
+        <Form className="restaurant-wizard__form" onSubmit={submit}>
           <PageHeader
             className="restaurant-wizard__heading"
             description={stepDescription(step)}
@@ -485,7 +486,7 @@ export function RestaurantOnboardingPage() {
               </button>
             )}
           </footer>
-        </form>
+        </Form>
       </div>
     </div>
   );

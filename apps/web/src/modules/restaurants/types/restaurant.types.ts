@@ -1,4 +1,18 @@
 export type RestaurantRole = 'OWNER' | 'MANAGER' | 'CHEF' | 'WAITER';
+export type RestaurantPermission =
+  | 'restaurant.read'
+  | 'restaurant.update'
+  | 'menu.read'
+  | 'menu.create'
+  | 'menu.update'
+  | 'menu.delete'
+  | 'orders.read'
+  | 'orders.update'
+  | 'reservations.read'
+  | 'reservations.update'
+  | 'customers.read'
+  | 'staff.read'
+  | 'staff.manage';
 export type RestaurantStatus = 'ACTIVE' | 'INACTIVE' | 'CLOSED';
 export type RestaurantMediaType = 'LOGO' | 'COVER';
 export type DayOfWeek =
@@ -58,6 +72,7 @@ export type RestaurantSummary = {
 export type RestaurantMembership = {
   joinedAt: string;
   callerRole: RestaurantRole;
+  callerPermissions: RestaurantPermission[];
   restaurant: RestaurantSummary;
 };
 
@@ -73,6 +88,7 @@ export type RestaurantManagement = Omit<RestaurantSummary, 'media'> & {
   email: string | null;
   phone: string | null;
   callerRole: RestaurantRole;
+  callerPermissions: RestaurantPermission[];
   openingHours: OpeningHour[];
   media: RestaurantMedia[];
   settings: {

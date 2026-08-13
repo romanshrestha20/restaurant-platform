@@ -3,7 +3,13 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { Alert, Badge, Button, PageHeader, Skeleton } from '@/components/ui';
+import {
+  Badge,
+  Button,
+  ErrorState,
+  PageHeader,
+  PageSkeleton,
+} from '@/components/ui';
 import { useAuth } from '@/modules/auth';
 import { useActiveRestaurant } from '../context/active-restaurant-context';
 import { RestaurantAvatar } from './restaurant-avatar';
@@ -31,28 +37,21 @@ export function RestaurantListPage() {
     (status === 'ready' && memberships.length === 1)
   ) {
     return (
-      <div className="workspace-selector workspace-selector--loading">
-        <Skeleton className="workspace-selector__title-skeleton" />
-        <div className="workspace-selector__grid">
-          {[0, 1].map((item) => (
-            <Skeleton
-              className="workspace-selector__tile-skeleton"
-              key={item}
-            />
-          ))}
-        </div>
-      </div>
+      <PageSkeleton className="workspace-selector workspace-selector--loading" />
     );
   }
 
   if (status === 'error') {
     return (
-      <div className="workspace-selector workspace-selector--error">
-        <Alert>We could not load your restaurant workspaces.</Alert>
-        <Button onClick={() => void refresh().catch(() => undefined)}>
-          Try again
-        </Button>
-      </div>
+      <ErrorState
+        action={
+          <Button onClick={() => void refresh().catch(() => undefined)}>
+            Try again
+          </Button>
+        }
+        description="We could not load your restaurant workspaces."
+        title="Restaurants unavailable"
+      />
     );
   }
 

@@ -1,14 +1,36 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
-import { createContext, useContext, useMemo, type ReactNode } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  type ReactNode,
+} from 'react';
 import { useRestaurants } from '../hooks/use-restaurants';
-import type { RestaurantMembership } from '../types/restaurant.types';
+import { canRestaurant } from '../permissions/restaurant-permissions';
+import type {
+  RestaurantMembership,
+  RestaurantPermission,
+} from '../types/restaurant.types';
 
 type ActiveRestaurantContextValue = {
+  currentRestaurant: RestaurantMembership['restaurant'] | null;
+  currentRestaurantId: string | null;
+  membership: RestaurantMembership | null;
+  permissions: readonly RestaurantPermission[];
+  restaurants: RestaurantMembership[];
+  switchRestaurant: (restaurantId: string) => void;
+  refreshRestaurant: () => Promise<RestaurantMembership[]>;
+  can: (permission: RestaurantPermission) => boolean;
+  /** @deprecated Use membership. */
   activeMembership: RestaurantMembership | null;
+  /** @deprecated Use currentRestaurantId. */
   activeRestaurantId: string | null;
+  /** @deprecated Use restaurants. */
   memberships: RestaurantMembership[];
+  /** @deprecated Use refreshRestaurant. */
   refresh: () => Promise<RestaurantMembership[]>;
   status: 'loading' | 'ready' | 'error';
 };
@@ -16,12 +38,13 @@ type ActiveRestaurantContextValue = {
 const ActiveRestaurantContext =
   createContext<ActiveRestaurantContextValue | null>(null);
 
-export function ActiveRestaurantProvider({
+export function RestaurantWorkspaceProvider({
   children,
 }: {
   children: ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const { refresh, restaurants: memberships, status } = useRestaurants();
   const activeRestaurantId = useMemo(() => {
     const match = pathname.match(/^\/restaurants\/([^/]+)/);
@@ -31,10 +54,27 @@ export function ActiveRestaurantProvider({
     memberships.find(
       ({ restaurant }) => restaurant.id === activeRestaurantId,
     ) ?? null;
+  const switchRestaurant = useCallback(
+    (restaurantId: string) => router.push(`/restaurants/${restaurantId}`),
+    [router],
+  );
+  const can = useCallback(
+    (permission: RestaurantPermission) =>
+      canRestaurant(activeMembership, permission),
+    [activeMembership],
+  );
 
   return (
     <ActiveRestaurantContext.Provider
       value={{
+        currentRestaurant: activeMembership?.restaurant ?? null,
+        currentRestaurantId: activeRestaurantId,
+        membership: activeMembership,
+        permissions: activeMembership?.callerPermissions ?? [],
+        restaurants: memberships,
+        switchRestaurant,
+        refreshRestaurant: refresh,
+        can,
         activeMembership,
         activeRestaurantId,
         memberships,
@@ -46,6 +86,9 @@ export function ActiveRestaurantProvider({
     </ActiveRestaurantContext.Provider>
   );
 }
+
+/** @deprecated Use RestaurantWorkspaceProvider. */
+export const ActiveRestaurantProvider = RestaurantWorkspaceProvider;
 
 export function useActiveRestaurant() {
   const context = useContext(ActiveRestaurantContext);

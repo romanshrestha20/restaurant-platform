@@ -12,13 +12,16 @@ import {
   Badge,
   Button,
   Checkbox,
+  ConfirmDialog,
+  ErrorState,
+  Form,
   FormField,
   Input,
   LoadingButton,
   Modal,
   Select,
   SectionHeader,
-  Skeleton,
+  PageSkeleton,
   Textarea,
 } from '@/components/ui';
 import { ApiError } from '@/lib/api';
@@ -89,27 +92,25 @@ export function RestaurantManagementPage({
 
   if (status === 'loading') {
     return (
-      <div className="restaurant-management restaurant-management--loading">
-        <Skeleton className="restaurant-management__cover-skeleton" />
-        <Skeleton className="skeleton--title" />
-        <Skeleton className="skeleton--line" />
-      </div>
+      <PageSkeleton className="restaurant-management restaurant-management--loading" />
     );
   }
 
   if (status === 'error' || !restaurant) {
     return (
-      <div className="restaurant-management restaurant-management--error">
-        <Alert>We could not load this restaurant workspace.</Alert>
-        <Button onClick={() => void load().catch(() => undefined)}>
-          Try again
-        </Button>
-      </div>
+      <ErrorState
+        action={
+          <Button onClick={() => void load().catch(() => undefined)}>
+            Try again
+          </Button>
+        }
+        description="We could not load this restaurant workspace."
+        title="Restaurant unavailable"
+      />
     );
   }
 
-  const canEdit =
-    restaurant.callerRole === 'OWNER' || restaurant.callerRole === 'MANAGER';
+  const canEdit = restaurant.callerPermissions.includes('restaurant.update');
   const cover = restaurant.media.find((item) => item.type === 'COVER');
   const logo = restaurant.media.find((item) => item.type === 'LOGO');
 
@@ -306,7 +307,7 @@ function OverviewPanel({
         description="Public identity, contact information, and operating locale."
         title="Restaurant details"
       />
-      <form className="restaurant-detail-form" onSubmit={save}>
+      <Form className="restaurant-detail-form" onSubmit={save}>
         {error ? <Alert>{error}</Alert> : null}
         <div className="field-grid">
           <FormField htmlFor="manage-name" label="Name">
@@ -383,7 +384,7 @@ function OverviewPanel({
             </LoadingButton>
           </div>
         ) : null}
-      </form>
+      </Form>
     </section>
   );
 }
@@ -581,6 +582,8 @@ function LocationsPanel({
     null,
   );
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [confirmingRemoval, setConfirmingRemoval] =
+    useState<RestaurantAddress | null>(null);
   const toast = useToast();
 
   const reload = async () => {
@@ -588,7 +591,6 @@ function LocationsPanel({
   };
 
   const remove = async (address: RestaurantAddress) => {
-    if (!window.confirm(`Remove ${address.label}?`)) return;
     setDeleting(address.id);
     try {
       await restaurantService.removeAddress(restaurant.id, address.id);
@@ -600,6 +602,7 @@ function LocationsPanel({
       });
     } finally {
       setDeleting(null);
+      setConfirmingRemoval(null);
     }
   };
 
@@ -643,7 +646,7 @@ function LocationsPanel({
                 <Button
                   disabled={deleting === address.id}
                   variant="ghost"
-                  onClick={() => void remove(address)}
+                  onClick={() => setConfirmingRemoval(address)}
                 >
                   Remove
                 </Button>
@@ -669,6 +672,23 @@ function LocationsPanel({
         }}
         open={editing !== null}
         restaurantId={restaurant.id}
+      />
+      <ConfirmDialog
+        confirmLabel="Remove location"
+        description={
+          confirmingRemoval
+            ? `Remove ${confirmingRemoval.label} from this restaurant? This cannot be undone.`
+            : ''
+        }
+        loading={deleting !== null}
+        onConfirm={() => {
+          if (confirmingRemoval) void remove(confirmingRemoval);
+        }}
+        onOpenChange={(open) => {
+          if (!open && deleting === null) setConfirmingRemoval(null);
+        }}
+        open={confirmingRemoval !== null}
+        title="Remove location?"
       />
     </section>
   );
@@ -760,11 +780,7 @@ function AddressModal({
       open={open}
       title={address ? 'Edit location' : 'Add location'}
     >
-      <form
-        className="ui-form ui-form--md"
-        id="restaurant-address-form"
-        onSubmit={submit}
-      >
+      <Form id="restaurant-address-form" onSubmit={submit}>
         {error ? <Alert>{error}</Alert> : null}
         <FormField htmlFor="location-label" label="Label">
           <Input
@@ -821,7 +837,7 @@ function AddressModal({
           label="Use as the primary address"
           onChange={(event) => update('isPrimary', event.target.checked)}
         />
-      </form>
+      </Form>
     </Modal>
   );
 }

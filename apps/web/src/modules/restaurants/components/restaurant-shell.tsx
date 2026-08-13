@@ -14,7 +14,7 @@ import {
 } from "@/components/ui";
 import { ProtectedRoute, useAuth } from "@/modules/auth";
 import {
-  ActiveRestaurantProvider,
+  RestaurantWorkspaceProvider,
   useActiveRestaurant,
 } from "../context/active-restaurant-context";
 import { RestaurantAvatar } from "./restaurant-avatar";
@@ -77,7 +77,12 @@ const management: WorkspaceLink[] = [
 ];
 
 function RestaurantWorkspaceShell({ children }: { children: ReactNode }) {
-  const { activeMembership, memberships, status } = useActiveRestaurant();
+  const {
+    activeMembership,
+    memberships,
+    status,
+    switchRestaurant,
+  } = useActiveRestaurant();
   const { signOut, user } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
@@ -165,9 +170,7 @@ function RestaurantWorkspaceShell({ children }: { children: ReactNode }) {
               <DropdownItem
                 className="workspace-switcher__item"
                 key={membership.restaurant.id}
-                onClick={() =>
-                  router.push(`/restaurants/${membership.restaurant.id}`)
-                }
+                onClick={() => switchRestaurant(membership.restaurant.id)}
               >
                 <span>{membership.restaurant.name}</span>
                 <small>{membership.callerRole.toLowerCase()}</small>
@@ -427,9 +430,9 @@ function NavIcon({ name }: { name: NavIconName }) {
 export function RestaurantShell({ children }: { children: ReactNode }) {
   return (
     <ProtectedRoute>
-      <ActiveRestaurantProvider>
+      <RestaurantWorkspaceProvider>
         <RestaurantWorkspaceShell>{children}</RestaurantWorkspaceShell>
-      </ActiveRestaurantProvider>
+      </RestaurantWorkspaceProvider>
     </ProtectedRoute>
   );
 }
