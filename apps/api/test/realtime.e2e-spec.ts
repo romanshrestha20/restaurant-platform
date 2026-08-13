@@ -213,6 +213,40 @@ describe('Authenticated realtime connection (e2e)', () => {
     expect(restaurantMemberships).toHaveBeenCalledWith('user-2');
   });
 
+  it('delivers menu domain events only to the authorized restaurant room', async () => {
+    const [ownerClient, customerClient] = await Promise.all([
+      connect(await createAccessToken('user-1', 'owner@example.com')),
+      connect(await createAccessToken('user-2', 'customer@example.com')),
+    ]);
+    const outsiderListener = jest.fn();
+    customerClient.on('menu:item_created', outsiderListener);
+    const received = new Promise((resolve) =>
+      ownerClient.once('menu:item_created', resolve),
+    );
+    const payload = {
+      event: 'menu:item_created' as const,
+      restaurantId: 'restaurant-1',
+      occurredAt: new Date().toISOString(),
+      data: {
+        item: {
+          id: 'item-1',
+          categoryId: 'category-1',
+          name: 'Soup',
+          description: null,
+          price: '8.00',
+          sortOrder: 0,
+          status: 'AVAILABLE' as const,
+        },
+      },
+    };
+
+    gateway.emitToRestaurant('restaurant-1', 'menu:item_created', payload);
+
+    await expect(received).resolves.toEqual(payload);
+    await new Promise((resolve) => setImmediate(resolve));
+    expect(outsiderListener).not.toHaveBeenCalled();
+  });
+
   it('rotates the refresh token and reconnects with the new access token', async () => {
     const login = await loginViaHttp();
     const firstClient = await connect(login.accessToken);
