@@ -11,6 +11,7 @@ import { AppEnvironment } from './config/env';
 import { getLogLevels, logStartup } from './config/logger';
 import { createSameOriginMiddleware } from './common/security/same-origin.middleware';
 import { RealtimeIoAdapter } from './common/realtime';
+import { requestIdMiddleware } from './common/http/request-id.middleware';
 
 async function bootstrap(): Promise<void> {
   const environment = process.env.NODE_ENV ?? 'development';
@@ -37,6 +38,7 @@ async function bootstrap(): Promise<void> {
     origin: clientUrl,
     credentials: true,
   });
+  app.use(requestIdMiddleware);
   app.useWebSocketAdapter(new RealtimeIoAdapter(app, clientUrl));
   app.use(createSameOriginMiddleware(clientUrl));
   app.use(helmet());
