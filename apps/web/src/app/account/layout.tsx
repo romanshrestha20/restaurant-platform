@@ -8,6 +8,7 @@ import { Brand, Button, ThemeSelector } from '@/components/ui';
 
 const sections = [
   { label: 'Profile', href: '/account/profile', available: true },
+  { label: 'Restaurants', href: '/restaurants', available: true },
   { label: 'Addresses', href: '/account/addresses', available: false },
   { label: 'Orders', href: '/account/orders', available: false },
   { label: 'Reservations', href: '/account/reservations', available: false },
@@ -36,7 +37,9 @@ function AccountShell({ children }: { children: ReactNode }) {
         <div className="account-header__actions">
           <span className="account-header__greeting">Hello, {firstName}</span>
           <ThemeSelector compact />
-          <Button variant="ghost" onClick={handleSignOut}>Sign out</Button>
+          <Button variant="ghost" onClick={handleSignOut}>
+            Sign out
+          </Button>
         </div>
       </header>
 
@@ -52,15 +55,25 @@ function AccountShell({ children }: { children: ReactNode }) {
                 <li key={section.href}>
                   {section.available ? (
                     <Link
-                      className={pathname === section.href ? 'account-nav__link is-active' : 'account-nav__link'}
+                      className={
+                        pathname === section.href
+                          ? 'account-nav__link is-active'
+                          : 'account-nav__link'
+                      }
                       href={section.href}
-                      aria-current={pathname === section.href ? 'page' : undefined}
+                      aria-current={
+                        pathname === section.href ? 'page' : undefined
+                      }
                     >
                       {section.label}
                     </Link>
                   ) : (
-                    <span className="account-nav__link is-disabled" aria-disabled="true">
-                      {section.label}<small>Soon</small>
+                    <span
+                      className="account-nav__link is-disabled"
+                      aria-disabled="true"
+                    >
+                      {section.label}
+                      <small>Soon</small>
                     </span>
                   )}
                 </li>
@@ -71,10 +84,19 @@ function AccountShell({ children }: { children: ReactNode }) {
 
         <div className="mobile-section-picker">
           <label htmlFor="account-section">Account section</label>
-          <select id="account-section" value={pathname} onChange={(event) => router.push(event.target.value)}>
+          <select
+            id="account-section"
+            value={pathname}
+            onChange={(event) => router.push(event.target.value)}
+          >
             {sections.map((section) => (
-              <option key={section.href} value={section.href} disabled={!section.available}>
-                {section.label}{section.available ? '' : ' — Soon'}
+              <option
+                key={section.href}
+                value={section.href}
+                disabled={!section.available}
+              >
+                {section.label}
+                {section.available ? '' : ' — Soon'}
               </option>
             ))}
           </select>
@@ -87,5 +109,9 @@ function AccountShell({ children }: { children: ReactNode }) {
 }
 
 export default function AccountLayout({ children }: { children: ReactNode }) {
-  return <ProtectedRoute><AccountShell>{children}</AccountShell></ProtectedRoute>;
+  return (
+    <ProtectedRoute>
+      <AccountShell>{children}</AccountShell>
+    </ProtectedRoute>
+  );
 }

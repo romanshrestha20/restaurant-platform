@@ -17,9 +17,10 @@ export function useLoginForm() {
 
   useEffect(() => {
     setPasswordChanged(
-      new URLSearchParams(window.location.search).get('passwordChanged') === '1',
+      new URLSearchParams(window.location.search).get('passwordChanged') ===
+        '1',
     );
-    if (status === 'authenticated') router.replace('/account/profile');
+    if (status === 'authenticated') router.replace('/restaurants');
   }, [router, status]);
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
@@ -33,8 +34,12 @@ export function useLoginForm() {
     setSubmitting(true);
     try {
       await login(email.trim(), password);
-      const requestedPath = new URLSearchParams(window.location.search).get('next');
-      router.replace(requestedPath?.startsWith('/') ? requestedPath : '/account/profile');
+      const requestedPath = new URLSearchParams(window.location.search).get(
+        'next',
+      );
+      router.replace(
+        requestedPath?.startsWith('/') ? requestedPath : '/restaurants',
+      );
     } catch (requestError: unknown) {
       setError(
         requestError instanceof ApiError
