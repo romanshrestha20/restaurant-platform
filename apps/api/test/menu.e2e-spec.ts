@@ -30,6 +30,22 @@ describe('Restaurant menu API (e2e)', () => {
     createItem: jest.fn(),
     updateItem: jest.fn(),
     deleteItem: jest.fn(),
+    getItemConfiguration: jest.fn(),
+    createVariant: jest.fn(),
+    updateVariant: jest.fn(),
+    deleteVariant: jest.fn(),
+    createVariantOption: jest.fn(),
+    updateVariantOption: jest.fn(),
+    deleteVariantOption: jest.fn(),
+    listAddOnGroups: jest.fn(),
+    createAddOnGroup: jest.fn(),
+    updateAddOnGroup: jest.fn(),
+    deleteAddOnGroup: jest.fn(),
+    createAddOn: jest.fn(),
+    updateAddOn: jest.fn(),
+    deleteAddOn: jest.fn(),
+    attachAddOnGroup: jest.fn(),
+    detachAddOnGroup: jest.fn(),
   };
   const emitToRestaurant = jest.fn();
   const menu = {
@@ -77,6 +93,41 @@ describe('Restaurant menu API (e2e)', () => {
     });
     repository.updateItem.mockResolvedValue({ id: 'item-1' });
     repository.deleteItem.mockResolvedValue(true);
+    repository.getItemConfiguration.mockResolvedValue({
+      id: 'item-1',
+      restaurantId: 'restaurant-1',
+      categoryId: 'category-1',
+      name: 'Salmon',
+      basePrice: '24.50',
+      variants: [],
+      addOnGroups: [],
+      media: [],
+    });
+    repository.createVariant.mockResolvedValue({
+      id: 'variant-1',
+      name: 'Size',
+      sortOrder: 0,
+    });
+    repository.createVariantOption.mockResolvedValue({
+      id: 'option-1',
+      name: 'Large',
+      priceAdjustment: '3.00',
+    });
+    repository.listAddOnGroups.mockResolvedValue([]);
+    repository.createAddOnGroup.mockResolvedValue({
+      id: 'group-1',
+      name: 'Sauces',
+      addOns: [],
+    });
+    repository.createAddOn.mockResolvedValue({
+      id: 'addon-1',
+      name: 'Aioli',
+      price: '1.50',
+    });
+    repository.attachAddOnGroup.mockResolvedValue({
+      menuItemId: 'item-1',
+      groupId: 'group-1',
+    });
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
@@ -251,6 +302,42 @@ describe('Restaurant menu API (e2e)', () => {
       ]),
     );
     expect(repository.createItem).not.toHaveBeenCalled();
+  });
+
+  it('manages item variants and reusable add-ons inside the restaurant boundary', async () => {
+    const authorization = { Authorization: `Bearer ${await token()}` };
+    await request(app.getHttpServer())
+      .post('/api/v1/restaurants/restaurant-1/menu-items/item-1/variants')
+      .set(authorization)
+      .send({ name: ' Size ' })
+      .expect(201);
+    await request(app.getHttpServer())
+      .post('/api/v1/restaurants/restaurant-1/variants/variant-1/options')
+      .set(authorization)
+      .send({ name: 'Large', priceAdjustment: 3 })
+      .expect(201);
+    await request(app.getHttpServer())
+      .post('/api/v1/restaurants/restaurant-1/add-on-groups')
+      .set(authorization)
+      .send({ name: 'Sauces', minSelection: 0, maxSelection: 2 })
+      .expect(201);
+    await request(app.getHttpServer())
+      .put(
+        '/api/v1/restaurants/restaurant-1/menu-items/item-1/add-on-groups/group-1',
+      )
+      .set(authorization)
+      .expect(200);
+
+    expect(repository.createVariant).toHaveBeenCalledWith(
+      'restaurant-1',
+      'item-1',
+      expect.objectContaining({ name: 'Size' }),
+    );
+    expect(repository.attachAddOnGroup).toHaveBeenCalledWith(
+      'restaurant-1',
+      'item-1',
+      'group-1',
+    );
   });
 
   afterEach(async () => app?.close());

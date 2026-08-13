@@ -3,6 +3,7 @@ import { Prisma } from '@restaurant/database/generated';
 import type { MenuRepository } from './menu.repository';
 import { MenuService } from './menu.service';
 import type { RealtimeGateway } from '../../common/realtime';
+import type { UploadService } from '../../common/upload/upload.service';
 
 describe('MenuService', () => {
   const repository = {
@@ -21,9 +22,16 @@ describe('MenuService', () => {
     deleteItem: jest.fn(),
   } as unknown as jest.Mocked<MenuRepository>;
   const emitToRestaurant = jest.fn();
-  const service = new MenuService(repository, {
-    emitToRestaurant,
-  } as unknown as RealtimeGateway);
+  const service = new MenuService(
+    repository,
+    {
+      emitToRestaurant,
+    } as unknown as RealtimeGateway,
+    {
+      uploadImage: jest.fn(),
+      deleteQuietly: jest.fn(),
+    } as unknown as UploadService,
+  );
 
   beforeEach(() => jest.clearAllMocks());
 

@@ -265,3 +265,147 @@ export class MenuItemListQueryDto extends PaginationQueryDto {
   @IsEnum(MenuItemStatus)
   status?: MenuItemStatus;
 }
+
+export class CreateVariantDto {
+  @Transform(trim)
+  @IsString()
+  @Length(1, 100)
+  name!: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  sortOrder?: number;
+}
+
+export class UpdateVariantDto {
+  @IsOptional()
+  @Transform(trim)
+  @IsString()
+  @Length(1, 100)
+  name?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  sortOrder?: number;
+}
+
+export class CreateVariantOptionDto {
+  @Transform(trim)
+  @IsString()
+  @Length(1, 100)
+  name!: string;
+
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 2 })
+  priceAdjustment!: number;
+}
+
+export class UpdateVariantOptionDto {
+  @IsOptional()
+  @Transform(trim)
+  @IsString()
+  @Length(1, 100)
+  name?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 2 })
+  priceAdjustment?: number;
+}
+
+export class CreateAddOnGroupDto {
+  @Transform(trim)
+  @IsString()
+  @Length(1, 100)
+  name!: string;
+
+  @IsOptional()
+  @IsBoolean()
+  required?: boolean;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  minSelection?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  maxSelection?: number;
+}
+
+export class UpdateAddOnGroupDto {
+  @IsOptional()
+  @Transform(trim)
+  @IsString()
+  @Length(1, 100)
+  name?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  required?: boolean;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  minSelection?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  maxSelection?: number;
+}
+
+export class CreateAddOnDto {
+  @Transform(trim)
+  @IsString()
+  @Length(1, 100)
+  name!: string;
+
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  price!: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  sortOrder?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  isAvailable?: boolean;
+}
+
+export class UpdateAddOnDto {
+  @IsOptional()
+  @Transform(trim)
+  @IsString()
+  @Length(1, 100)
+  name?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  price?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  sortOrder?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  isAvailable?: boolean;
+}

@@ -2,16 +2,25 @@ import { Injectable } from '@nestjs/common';
 import type { Prisma } from '@restaurant/database/generated';
 import { PrismaService } from '../../prisma/prisma.service';
 import type {
+  CreateAddOnDto,
+  CreateAddOnGroupDto,
   CreateMenuCategoryDto,
   CreateMenuDto,
   CreateMenuItemDto,
+  CreateVariantDto,
+  CreateVariantOptionDto,
   MenuCategoryListQueryDto,
   MenuItemListQueryDto,
   MenuListQueryDto,
   UpdateMenuCategoryDto,
   UpdateMenuDto,
   UpdateMenuItemDto,
+  UpdateAddOnDto,
+  UpdateAddOnGroupDto,
+  UpdateVariantDto,
+  UpdateVariantOptionDto,
 } from './dto/menu.dto';
+import type { UploadResult } from '../../common/upload/types/upload-result.type';
 
 const itemSelect = {
   id: true,
@@ -34,6 +43,62 @@ const itemSelect = {
     select: {
       alt: true,
       media: { select: { url: true, width: true, height: true } },
+    },
+  },
+} as const;
+
+const configurationSelect = {
+  ...itemSelect,
+  media: {
+    orderBy: { sortOrder: 'asc' as const },
+    select: {
+      mediaId: true,
+      alt: true,
+      sortOrder: true,
+      media: {
+        select: {
+          id: true,
+          url: true,
+          width: true,
+          height: true,
+          fileName: true,
+        },
+      },
+    },
+  },
+  variants: {
+    orderBy: { sortOrder: 'asc' as const },
+    select: {
+      id: true,
+      name: true,
+      sortOrder: true,
+      options: {
+        orderBy: { name: 'asc' as const },
+        select: { id: true, name: true, priceAdjustment: true },
+      },
+    },
+  },
+  addOnGroups: {
+    select: {
+      group: {
+        select: {
+          id: true,
+          name: true,
+          required: true,
+          minSelection: true,
+          maxSelection: true,
+          addOns: {
+            orderBy: { sortOrder: 'asc' as const },
+            select: {
+              id: true,
+              name: true,
+              price: true,
+              sortOrder: true,
+              isAvailable: true,
+            },
+          },
+        },
+      },
     },
   },
 } as const;
@@ -307,5 +372,250 @@ export class MenuRepository {
       data: { deletedAt: new Date(), status: 'HIDDEN' },
     });
     return deleted.count === 1;
+  }
+
+  getItemConfiguration(restaurantId: string, itemId: string) {
+    return this.prisma.menuItem.findFirst({
+      where: {
+        id: itemId,
+        restaurantId,
+        deletedAt: null,
+        category: { deletedAt: null, menu: { deletedAt: null } },
+      },
+      select: configurationSelect,
+    });
+  }
+
+  addItemMedia(
+    restaurantId: string,
+    itemId: string,
+    uploaded: UploadResult,
+    alt?: string,
+  ) {
+    return this.prisma.$transaction(async (transaction) => {
+      const item = await transaction.menuItem.findFirst({
+        where: { id: itemId, restaurantId, deletedAt: null },
+        select: { id: true, _count: { select: { media: true } } },
+      });
+      if (!item) return null;
+      return transaction.media.create({
+        data: {
+          ...uploaded,
+          menuItems: {
+            create: {
+              menuItemId: itemId,
+              alt: alt?.trim() || null,
+              sortOrder: item._count.media,
+            },
+          },
+        },
+        select: {
+          id: true,
+          url: true,
+          width: true,
+          height: true,
+          fileName: true,
+        },
+      });
+    });
+  }
+
+  removeItemMedia(restaurantId: string, itemId: string, mediaId: string) {
+    return this.prisma.$transaction(async (transaction) => {
+      const link = await transaction.menuItemMedia.findFirst({
+        where: { menuItemId: itemId, mediaId, menuItem: { restaurantId } },
+        select: { media: { select: { publicId: true } } },
+      });
+      if (!link) return null;
+      await transaction.media.delete({ where: { id: mediaId } });
+      return link.media.publicId;
+    });
+  }
+
+  async createVariant(
+    restaurantId: string,
+    itemId: string,
+    data: CreateVariantDto,
+  ) {
+    const item = await this.prisma.menuItem.findFirst({
+      where: { id: itemId, restaurantId, deletedAt: null },
+      select: { id: true },
+    });
+    return item
+      ? this.prisma.variant.create({ data: { menuItemId: itemId, ...data } })
+      : null;
+  }
+
+  async updateVariant(
+    restaurantId: string,
+    variantId: string,
+    data: UpdateVariantDto,
+  ) {
+    const result = await this.prisma.variant.updateMany({
+      where: { id: variantId, menuItem: { restaurantId, deletedAt: null } },
+      data,
+    });
+    return result.count
+      ? this.prisma.variant.findUnique({ where: { id: variantId } })
+      : null;
+  }
+
+  async deleteVariant(restaurantId: string, variantId: string) {
+    const variant = await this.prisma.variant.findFirst({
+      where: { id: variantId, menuItem: { restaurantId, deletedAt: null } },
+      select: { id: true },
+    });
+    if (!variant) return false;
+    await this.prisma.variant.delete({ where: { id: variantId } });
+    return true;
+  }
+
+  async createVariantOption(
+    restaurantId: string,
+    variantId: string,
+    data: CreateVariantOptionDto,
+  ) {
+    const variant = await this.prisma.variant.findFirst({
+      where: { id: variantId, menuItem: { restaurantId, deletedAt: null } },
+      select: { id: true },
+    });
+    return variant
+      ? this.prisma.variantOption.create({ data: { variantId, ...data } })
+      : null;
+  }
+
+  async updateVariantOption(
+    restaurantId: string,
+    optionId: string,
+    data: UpdateVariantOptionDto,
+  ) {
+    const result = await this.prisma.variantOption.updateMany({
+      where: {
+        id: optionId,
+        variant: { menuItem: { restaurantId, deletedAt: null } },
+      },
+      data,
+    });
+    return result.count
+      ? this.prisma.variantOption.findUnique({ where: { id: optionId } })
+      : null;
+  }
+
+  async deleteVariantOption(restaurantId: string, optionId: string) {
+    const option = await this.prisma.variantOption.findFirst({
+      where: {
+        id: optionId,
+        variant: { menuItem: { restaurantId, deletedAt: null } },
+      },
+      select: { id: true },
+    });
+    if (!option) return false;
+    await this.prisma.variantOption.delete({ where: { id: optionId } });
+    return true;
+  }
+
+  listAddOnGroups(restaurantId: string) {
+    return this.prisma.addOnGroup.findMany({
+      where: { restaurantId, restaurant: { isActive: true, deletedAt: null } },
+      orderBy: { name: 'asc' },
+      include: { addOns: { orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }] } },
+    });
+  }
+
+  createAddOnGroup(restaurantId: string, data: CreateAddOnGroupDto) {
+    return this.prisma.addOnGroup.create({ data: { restaurantId, ...data } });
+  }
+
+  async updateAddOnGroup(
+    restaurantId: string,
+    groupId: string,
+    data: UpdateAddOnGroupDto,
+  ) {
+    const result = await this.prisma.addOnGroup.updateMany({
+      where: { id: groupId, restaurantId },
+      data,
+    });
+    return result.count
+      ? this.prisma.addOnGroup.findUnique({
+          where: { id: groupId },
+          include: { addOns: true },
+        })
+      : null;
+  }
+
+  async deleteAddOnGroup(restaurantId: string, groupId: string) {
+    const result = await this.prisma.addOnGroup.deleteMany({
+      where: { id: groupId, restaurantId },
+    });
+    return result.count === 1;
+  }
+
+  async createAddOn(
+    restaurantId: string,
+    groupId: string,
+    data: CreateAddOnDto,
+  ) {
+    const group = await this.prisma.addOnGroup.findFirst({
+      where: { id: groupId, restaurantId },
+      select: { id: true },
+    });
+    return group
+      ? this.prisma.addOn.create({ data: { groupId, ...data } })
+      : null;
+  }
+
+  async updateAddOn(
+    restaurantId: string,
+    addOnId: string,
+    data: UpdateAddOnDto,
+  ) {
+    const result = await this.prisma.addOn.updateMany({
+      where: { id: addOnId, group: { restaurantId } },
+      data,
+    });
+    return result.count
+      ? this.prisma.addOn.findUnique({ where: { id: addOnId } })
+      : null;
+  }
+
+  async deleteAddOn(restaurantId: string, addOnId: string) {
+    const result = await this.prisma.addOn.deleteMany({
+      where: { id: addOnId, group: { restaurantId } },
+    });
+    return result.count === 1;
+  }
+
+  async attachAddOnGroup(
+    restaurantId: string,
+    itemId: string,
+    groupId: string,
+  ) {
+    const [item, group] = await Promise.all([
+      this.prisma.menuItem.findFirst({
+        where: { id: itemId, restaurantId, deletedAt: null },
+        select: { id: true },
+      }),
+      this.prisma.addOnGroup.findFirst({
+        where: { id: groupId, restaurantId },
+        select: { id: true },
+      }),
+    ]);
+    if (!item || !group) return null;
+    return this.prisma.menuItemAddOnGroup.upsert({
+      where: { menuItemId_groupId: { menuItemId: itemId, groupId } },
+      create: { menuItemId: itemId, groupId },
+      update: {},
+    });
+  }
+
+  async detachAddOnGroup(
+    restaurantId: string,
+    itemId: string,
+    groupId: string,
+  ) {
+    const result = await this.prisma.menuItemAddOnGroup.deleteMany({
+      where: { menuItemId: itemId, groupId, menuItem: { restaurantId } },
+    });
+    return result.count === 1;
   }
 }
