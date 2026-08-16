@@ -130,7 +130,7 @@ describe('Profile API (e2e)', () => {
     tokenService.signAccessToken({
       id,
       email: 'customer@example.com',
-      roles: [{ role: { name: 'CUSTOMER' } }],
+      roles: [],
     });
 
   it('requires authentication for profile reads and writes', async () => {

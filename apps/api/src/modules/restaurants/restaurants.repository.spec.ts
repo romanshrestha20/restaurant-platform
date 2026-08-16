@@ -146,6 +146,13 @@ describe('RestaurantsRepository', () => {
           members: {
             create: { userId: 'user-1', roleId: 'owner-role' },
           },
+          menus: {
+            create: {
+              name: 'Main menu',
+              description: 'Draft menu created during restaurant setup',
+              isActive: false,
+            },
+          },
           openingHours: {
             create: expect.arrayContaining([
               {

@@ -171,7 +171,7 @@ describe('Restaurant onboarding API (e2e)', () => {
     tokenService.signAccessToken({
       id: 'user-1',
       email: 'owner@example.com',
-      roles: [{ role: { name: 'CUSTOMER' } }],
+      roles: [],
     });
 
   const validPayload = {

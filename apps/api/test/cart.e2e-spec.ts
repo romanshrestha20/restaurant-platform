@@ -41,7 +41,7 @@ describe('Customer catalog and cart API (e2e)', () => {
   });
 
   const token = () => tokenService.signAccessToken({
-    id: 'customer-1', email: 'customer@example.com', roles: [{ role: { name: 'CUSTOMER' } }],
+    id: 'customer-1', email: 'customer@example.com', roles: [],
   });
 
   it('serves the customer catalog without restaurant membership or login', async () => {

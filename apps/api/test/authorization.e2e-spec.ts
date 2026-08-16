@@ -33,11 +33,11 @@ describe('Role authorization (e2e)', () => {
     await app.init();
   });
 
-  const createToken = (role: 'ADMIN' | 'CUSTOMER') =>
+  const createToken = (role?: 'ADMIN') =>
     tokenService.signAccessToken({
       id: 'user-1',
       email: 'user@example.com',
-      roles: [{ role: { name: role } }],
+      roles: role ? [{ role: { name: role } }] : [],
     });
 
   it('returns 401 when the platform endpoint has no access token', async () => {
@@ -47,7 +47,7 @@ describe('Role authorization (e2e)', () => {
   });
 
   it('returns 403 when a customer accesses the platform-admin endpoint', async () => {
-    const token = await createToken('CUSTOMER');
+    const token = await createToken();
 
     await request(app.getHttpServer())
       .get('/api/v1/auth/platform/admin')
@@ -71,7 +71,7 @@ describe('Role authorization (e2e)', () => {
   });
 
   it('allows an owner only for their restaurant membership', async () => {
-    const token = await createToken('CUSTOMER');
+    const token = await createToken();
     findMembership.mockResolvedValue({
       role: { name: 'OWNER' },
       restaurant: { isActive: true, deletedAt: null },
@@ -102,7 +102,7 @@ describe('Role authorization (e2e)', () => {
   });
 
   it('denies a restaurant role without management permission', async () => {
-    const token = await createToken('CUSTOMER');
+    const token = await createToken();
     findMembership.mockResolvedValue({
       role: { name: 'WAITER' },
       restaurant: { isActive: true, deletedAt: null },

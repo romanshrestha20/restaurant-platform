@@ -40,7 +40,7 @@ const user = {
   deletedAt: null,
   createdAt: new Date('2026-01-01T00:00:00.000Z'),
   profile: { firstName: 'Aino', lastName: 'Owner' },
-  roles: [{ role: { name: 'CUSTOMER' as const } }],
+  roles: [],
 };
 
 describe('Authenticated realtime connection (e2e)', () => {
@@ -319,7 +319,7 @@ describe('Authenticated realtime connection (e2e)', () => {
     return tokenService.signAccessToken({
       id,
       email,
-      roles: [{ role: { name: 'CUSTOMER' } }],
+      roles: [],
     });
   }
 

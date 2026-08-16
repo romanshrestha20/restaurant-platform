@@ -19,6 +19,8 @@ describe('Restaurant menu API (e2e)', () => {
   const repository = {
     listMenus: jest.fn(),
     createMenu: jest.fn(),
+    ensureDefaultMenu: jest.fn(),
+    importCsv: jest.fn(),
     getMenu: jest.fn(),
     updateMenu: jest.fn(),
     deleteMenu: jest.fn(),
@@ -66,6 +68,16 @@ describe('Restaurant menu API (e2e)', () => {
     });
     repository.listMenus.mockResolvedValue({ data: [menu], total: 1 });
     repository.createMenu.mockResolvedValue(menu);
+    repository.ensureDefaultMenu.mockResolvedValue({
+      ...menu,
+      name: 'Main menu',
+      isActive: false,
+    });
+    repository.importCsv.mockResolvedValue({
+      menuId: 'menu-1',
+      categoriesCreated: 1,
+      itemsCreated: 1,
+    });
     repository.getMenu.mockResolvedValue(menu);
     repository.updateMenu.mockResolvedValue({ ...menu, name: 'Evening' });
     repository.deleteMenu.mockResolvedValue(true);
@@ -161,7 +173,7 @@ describe('Restaurant menu API (e2e)', () => {
     tokenService.signAccessToken({
       id: 'user-1',
       email: 'staff@example.com',
-      roles: [{ role: { name: 'CUSTOMER' } }],
+      roles: [],
     });
 
   it('requires authentication and restaurant membership', async () => {
@@ -239,6 +251,62 @@ describe('Restaurant menu API (e2e)', () => {
         event: 'menu:item_created',
         data: { item: expect.objectContaining({ id: 'item-1' }) },
       }),
+    );
+  });
+
+  it('validates and imports normalized CSV menu rows', async () => {
+    const authorization = { Authorization: `Bearer ${await token()}` };
+    const response = await request(app.getHttpServer())
+      .post('/api/v1/restaurants/restaurant-1/menus/menu-1/imports/csv')
+      .set(authorization)
+      .send({
+        rows: [
+          {
+            category: ' Mains ',
+            name: ' Salmon soup ',
+            price: 12.5,
+            sku: ' soup-1 ',
+            preparationTime: 15,
+            featured: true,
+          },
+        ],
+      })
+      .expect(400);
+
+    expect(response.body.message).toEqual(
+      expect.arrayContaining([expect.stringContaining('featured')]),
+    );
+
+    await request(app.getHttpServer())
+      .post('/api/v1/restaurants/restaurant-1/menus/menu-1/imports/csv')
+      .set(authorization)
+      .send({
+        rows: [
+          {
+            category: ' Mains ',
+            name: ' Salmon soup ',
+            price: 12.5,
+            sku: ' soup-1 ',
+            preparationTime: 15,
+            isFeatured: true,
+          },
+        ],
+      })
+      .expect(201)
+      .expect({ menuId: 'menu-1', categoriesCreated: 1, itemsCreated: 1 });
+
+    expect(repository.importCsv).toHaveBeenCalledWith(
+      'restaurant-1',
+      'menu-1',
+      [
+        expect.objectContaining({
+          category: 'Mains',
+          name: 'Salmon soup',
+          price: 12.5,
+          sku: 'SOUP-1',
+          isFeatured: true,
+        }),
+      ],
     );
   });
 
