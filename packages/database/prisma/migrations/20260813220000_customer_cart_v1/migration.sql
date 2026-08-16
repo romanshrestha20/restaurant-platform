@@ -130,3 +130,46 @@ CREATE INDEX "orders_restaurantId_status_idx" ON "orders"("restaurantId", "statu
 CREATE INDEX "orders_restaurantId_createdAt_idx" ON "orders"("restaurantId", "createdAt");
 CREATE INDEX "order_status_history_orderId_createdAt_idx"
 ON "order_status_history"("orderId", "createdAt");
+
+-- Authentication remains shared by every user. Global roles are explicitly
+-- separated from restaurant-scoped membership roles; customer access is
+-- intrinsic to an active authenticated user and needs no CUSTOMER role.
+CREATE TYPE "RoleScope" AS ENUM ('PLATFORM', 'RESTAURANT');
+
+ALTER TABLE "roles" ADD COLUMN "scope" "RoleScope";
+
+UPDATE "roles"
+SET "scope" = CASE
+  WHEN "name" = 'ADMIN' THEN 'PLATFORM'::"RoleScope"
+  ELSE 'RESTAURANT'::"RoleScope"
+END;
+
+DELETE FROM "role_permissions"
+WHERE "roleId" IN (SELECT "id" FROM "roles" WHERE "name" = 'CUSTOMER');
+
+DELETE FROM "user_roles"
+WHERE "roleId" IN (SELECT "id" FROM "roles" WHERE "name" = 'CUSTOMER');
+
+DELETE FROM "roles" WHERE "name" = 'CUSTOMER';
+
+ALTER TABLE "roles" ALTER COLUMN "scope" SET NOT NULL;
+
+ALTER TABLE "restaurant_members" ADD COLUMN "id" TEXT;
+UPDATE "restaurant_members"
+SET "id" = 'membership_' || md5("restaurantId" || ':' || "userId");
+ALTER TABLE "restaurant_members" ALTER COLUMN "id" SET NOT NULL;
+
+ALTER TABLE "restaurant_members" RENAME COLUMN "joinedAt" TO "createdAt";
+ALTER TABLE "restaurant_members"
+ADD COLUMN "isActive" BOOLEAN NOT NULL DEFAULT true,
+ADD COLUMN "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+ALTER TABLE "restaurant_members" ALTER COLUMN "updatedAt" DROP DEFAULT;
+
+ALTER TABLE "restaurant_members" DROP CONSTRAINT "restaurant_members_pkey";
+ALTER TABLE "restaurant_members"
+ADD CONSTRAINT "restaurant_members_pkey" PRIMARY KEY ("id");
+CREATE UNIQUE INDEX "restaurant_members_restaurantId_userId_key"
+ON "restaurant_members"("restaurantId", "userId");
+CREATE INDEX "restaurant_members_restaurantId_roleId_idx"
+ON "restaurant_members"("restaurantId", "roleId");

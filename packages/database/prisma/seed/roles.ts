@@ -40,7 +40,6 @@ const ROLE_PERMISSIONS: Record<RoleName, PermissionName[]> = {
   ],
   CHEF: ["menu.manage", "orders.manage"],
   WAITER: ["orders.manage", "reservations.manage"],
-  CUSTOMER: [],
 };
 
 export async function seedRoles(prisma: PrismaClient): Promise<SeededRoles> {
@@ -48,10 +47,11 @@ export async function seedRoles(prisma: PrismaClient): Promise<SeededRoles> {
 
   for (const name of ROLE_NAMES) {
     const description = ROLE_DESCRIPTIONS[name];
+    const scope = name === "ADMIN" ? "PLATFORM" : "RESTAURANT";
     const role = await prisma.role.upsert({
       where: { name },
-      update: { description },
-      create: { name, description },
+      update: { description, scope },
+      create: { name, description, scope },
     });
     seeded[name] = role.id;
   }

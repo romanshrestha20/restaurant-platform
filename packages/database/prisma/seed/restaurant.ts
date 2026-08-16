@@ -86,7 +86,7 @@ export async function seedRestaurantMember(
 ) {
   return prisma.restaurantMember.upsert({
     where: { restaurantId_userId: { restaurantId, userId } },
-    update: { roleId },
-    create: { restaurantId, userId, roleId },
+    update: { roleId, isActive: true },
+    create: { restaurantId, userId, roleId, isActive: true },
   });
 }

@@ -35,7 +35,7 @@ async function main() {
   await seedAdminProfile(prisma, admin.id);
 
   console.log("Seeding customer user and profile...");
-  await seedCustomer(prisma, roles.CUSTOMER);
+  await seedCustomer(prisma);
 
   console.log("Seeding restaurant...");
   const restaurant = await seedRestaurant(prisma);

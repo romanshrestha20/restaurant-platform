@@ -3,15 +3,13 @@ import type { PrismaClient } from "../../src/generated";
 
 const DEFAULT_CUSTOMER_EMAIL = "customer@restaurant.local";
 
-export async function seedCustomer(
-  prisma: PrismaClient,
-  customerRoleId: string,
-) {
+export async function seedCustomer(prisma: PrismaClient) {
   const email = (process.env.SEED_CUSTOMER_EMAIL ?? DEFAULT_CUSTOMER_EMAIL)
     .trim()
     .toLowerCase();
   const password =
-    process.env.SEED_CUSTOMER_PASSWORD ?? process.env.SEED_ADMIN_PASSWORD;
+    (process.env.SEED_CUSTOMER_PASSWORD ?? process.env.SEED_ADMIN_PASSWORD) ||
+    "Password123@";
 
   if (!password || password.length < 12) {
     throw new Error(
@@ -34,14 +32,6 @@ export async function seedCustomer(
       emailVerified: true,
       isActive: true,
     },
-  });
-
-  await prisma.userRole.upsert({
-    where: {
-      userId_roleId: { userId: customer.id, roleId: customerRoleId },
-    },
-    update: {},
-    create: { userId: customer.id, roleId: customerRoleId },
   });
 
   await prisma.profile.upsert({
