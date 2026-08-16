@@ -134,6 +134,8 @@ model Order {
 
   total Decimal @db.Decimal(10, 2)
 
+  restaurantSnapshot Json?
+
   user User @relation(fields: [userId], references: [id])
 
   restaurant Restaurant @relation(fields: [restaurantId], references: [id])
@@ -166,7 +168,7 @@ model OrderItem {
 
   orderId String
 
-  menuItemId String
+  menuItemId String?
 
   name String
 
@@ -176,38 +178,52 @@ model OrderItem {
 
   totalPrice Decimal @db.Decimal(10, 2)
 
+  itemSnapshot Json?
+
   order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
-  menuItem MenuItem @relation(fields: [menuItemId], references: [id])
+  menuItem MenuItem? @relation(fields: [menuItemId], references: [id], onDelete: SetNull)
 
   variantOptions OrderItemVariantOption[]
 
   addOns OrderItemAddOn[]
 
+  @@index([orderId])
+  @@index([menuItemId])
   @@map("order_items")
 }
 
 model OrderItemVariantOption {
+  id String @id @default(cuid())
+
   orderItemId String
-  optionId    String
+
+  optionId String?
 
   name String
 
+  variantName String?
+
   priceAdjustment Decimal @db.Decimal(10, 2)
 
-  orderItem OrderItem     @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
-  option    VariantOption @relation(fields: [optionId], references: [id])
+  orderItem OrderItem      @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  option    VariantOption? @relation(fields: [optionId], references: [id], onDelete: SetNull)
 
-  @@id([orderItemId, optionId])
+  @@index([orderItemId])
+  @@index([optionId])
   @@map("order_item_variant_options")
 }
 
 model OrderItemAddOn {
+  id String @id @default(cuid())
+
   orderItemId String
 
-  addOnId String
+  addOnId String?
 
   name String
+
+  groupName String?
 
   quantity Int @default(1)
 
@@ -215,9 +231,10 @@ model OrderItemAddOn {
 
   orderItem OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
 
-  addOn AddOn @relation(fields: [addOnId], references: [id])
+  addOn AddOn? @relation(fields: [addOnId], references: [id], onDelete: SetNull)
 
-  @@id([orderItemId, addOnId])
+  @@index([orderItemId])
+  @@index([addOnId])
   @@map("order_item_addons")
 }
 
