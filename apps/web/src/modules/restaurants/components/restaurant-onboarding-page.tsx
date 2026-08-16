@@ -16,6 +16,7 @@ import {
 } from '@/components/ui';
 import { ApiError } from '@/lib/api';
 import { restaurantService } from '../services/restaurant.service';
+import { useActiveRestaurant } from '../context/active-restaurant-context';
 import type { DayOfWeek, OpeningHour } from '../types/restaurant.types';
 
 const wizardSteps = [
@@ -83,6 +84,7 @@ export function RestaurantOnboardingPage() {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const router = useRouter();
+  const { refreshRestaurant } = useActiveRestaurant();
   const suggestedSlug = useMemo(
     () =>
       form.name
@@ -179,6 +181,7 @@ export function RestaurantOnboardingPage() {
           restaurantService.uploadMedia(restaurant.id, 'cover', cover),
         );
       await Promise.all(uploads);
+      await refreshRestaurant();
       router.replace(`/restaurants/${restaurant.id}`);
     } catch (caught) {
       setError(

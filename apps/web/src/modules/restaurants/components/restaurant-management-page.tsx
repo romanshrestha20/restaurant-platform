@@ -76,12 +76,17 @@ export function RestaurantManagementPage({
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>(
     'loading',
   );
+  const [loadError, setLoadError] = useState('');
   const load = useCallback(async () => {
     setStatus('loading');
+    setLoadError('');
     try {
       setRestaurant(await restaurantService.get(restaurantId));
       setStatus('ready');
-    } catch {
+    } catch (error) {
+      setLoadError(
+        getError(error, 'We could not load this restaurant workspace.'),
+      );
       setStatus('error');
     }
   }, [restaurantId]);
@@ -104,7 +109,9 @@ export function RestaurantManagementPage({
             Try again
           </Button>
         }
-        description="We could not load this restaurant workspace."
+        description={
+          loadError || 'We could not load this restaurant workspace.'
+        }
         title="Restaurant unavailable"
       />
     );

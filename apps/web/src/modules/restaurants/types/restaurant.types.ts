@@ -70,7 +70,7 @@ export type RestaurantSummary = {
 };
 
 export type RestaurantMembership = {
-  joinedAt: string;
+  createdAt: string;
   callerRole: RestaurantRole;
   callerPermissions: RestaurantPermission[];
   restaurant: RestaurantSummary;
