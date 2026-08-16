@@ -66,3 +66,92 @@ export type CustomerCart = {
     addOns: Array<{ quantity: number; price: string; addOn: { id: string; name: string } }>;
   }>;
 };
+
+// ─── Order types ───────────────────────────────────────────────────────────────
+
+export type OrderStatus =
+  | 'PENDING'
+  | 'CONFIRMED'
+  | 'PREPARING'
+  | 'READY'
+  | 'SERVED'
+  | 'COMPLETED'
+  | 'CANCELLED'
+  | 'REFUNDED';
+
+export type OrderType = 'DINE_IN' | 'TAKEAWAY' | 'DELIVERY';
+
+export type PaymentMethod = 'CASH' | 'CARD' | 'ONLINE';
+export type PaymentStatus = 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED';
+
+export type OrderDeliveryAddress = {
+  street: string;
+  city: string;
+  state: string | null;
+  postalCode: string | null;
+  country: string;
+};
+
+export type OrderItemSummary = {
+  id: string;
+  name: string;
+  quantity: number;
+  unitPrice: string;
+  totalPrice: string;
+  variantOptions: Array<{ name: string; priceAdjustment: string }>;
+  addOns: Array<{ name: string; quantity: number; price: string }>;
+};
+
+export type OrderHistoryEntry = {
+  id: string;
+  status: OrderStatus;
+  notes: string | null;
+  createdAt: string;
+  changedBy: { id: string; profile: { firstName: string; lastName: string } | null } | null;
+};
+
+export type CustomerOrder = {
+  id: string;
+  orderNumber: string;
+  type: OrderType;
+  status: OrderStatus;
+  notes: string | null;
+  subtotal: string;
+  tax: string;
+  discount: string;
+  total: string;
+  currency: string;
+  createdAt: string;
+  updatedAt: string;
+  restaurant: {
+    id: string;
+    name: string;
+    slug: string;
+    currency: string;
+    phone: string | null;
+    addresses: Array<{ street: string; city: string; country: string; isPrimary: boolean }>;
+  };
+  table: { id: string; tableNumber: string; capacity: number } | null;
+  deliveryAddress: OrderDeliveryAddress | null;
+  items: OrderItemSummary[];
+  payment: {
+    id: string;
+    method: PaymentMethod;
+    status: PaymentStatus;
+    amount: string;
+    paidAt: string | null;
+  } | null;
+  history: OrderHistoryEntry[];
+};
+
+export type CheckoutInput = {
+  restaurantId: string;
+  type: OrderType;
+  tableNumber?: string;
+  tableId?: string;
+  deliveryAddressId?: string;
+  deliveryAddress?: OrderDeliveryAddress;
+  notes?: string | null;
+  paymentMethod: PaymentMethod;
+  couponCode?: string;
+};

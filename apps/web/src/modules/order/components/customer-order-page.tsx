@@ -216,7 +216,7 @@ export function CustomerOrderPage({ slug }: { slug: string }) {
       </main>
 
       <ItemConfigurator item={selectedItem} currency={catalog.currency} pending={cartPending} onAdd={addToCart} onOpenChange={(open) => { if (!open) setSelectedItem(null); }} />
-      <CartDrawer cart={cart} currency={catalog.currency} open={cartOpen} pending={cartPending} onOpenChange={setCartOpen} onQuantity={updateQuantity} onRemove={removeItem} onStart={() => setCartOpen(false)} />
+      <CartDrawer cart={cart} currency={catalog.currency} open={cartOpen} pending={cartPending} onOpenChange={setCartOpen} onQuantity={updateQuantity} onRemove={removeItem} onStart={() => setCartOpen(false)} onCheckout={() => { setCartOpen(false); router.push(`/checkout?restaurantId=${catalog.id}`); }} />
     </div>
   );
 }
@@ -273,8 +273,8 @@ function ItemConfigurator({ currency, item, onAdd, onOpenChange, pending }: {
   );
 }
 
-function CartDrawer({ cart, currency, onOpenChange, onQuantity, onRemove, onStart, open, pending }: {
-  cart: CustomerCart | null; currency: string; onOpenChange: (open: boolean) => void; onQuantity: (id: string, quantity: number) => Promise<void>; onRemove: (id: string) => Promise<void>; onStart: () => void; open: boolean; pending: boolean;
+function CartDrawer({ cart, currency, onCheckout, onOpenChange, onQuantity, onRemove, onStart, open, pending }: {
+  cart: CustomerCart | null; currency: string; onCheckout: () => void; onOpenChange: (open: boolean) => void; onQuantity: (id: string, quantity: number) => Promise<void>; onRemove: (id: string) => Promise<void>; onStart: () => void; open: boolean; pending: boolean;
 }) {
   const money = new Intl.NumberFormat(undefined, { style: 'currency', currency });
   return <Drawer open={open} title="Your cart" onOpenChange={onOpenChange}>
@@ -285,7 +285,8 @@ function CartDrawer({ cart, currency, onOpenChange, onQuantity, onRemove, onStar
         <div><b>{money.format(Number(item.totalPrice))}</b><button disabled={pending} onClick={() => void onRemove(item.id)}>Remove</button></div>
       </article>)}</div>
       <dl className="customer-cart-totals"><div><dt>Subtotal</dt><dd>{money.format(Number(cart.subtotal))}</dd></div><div><dt>Tax</dt><dd>{money.format(Number(cart.tax))}</dd></div><div><dt>Total</dt><dd>{money.format(Number(cart.total))}</dd></div></dl>
-      <p className="customer-cart-note">Your cart is saved. Delivery, table service, and payment are selected during checkout.</p>
+      <p className="customer-cart-note">Delivery, table service, and payment are selected at checkout.</p>
+      <Button id="cart-checkout-btn" onClick={onCheckout}>Checkout · {money.format(Number(cart.total))}</Button>
     </div>}
   </Drawer>;
 }

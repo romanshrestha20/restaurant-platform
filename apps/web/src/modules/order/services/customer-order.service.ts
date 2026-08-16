@@ -1,5 +1,10 @@
 import { apiClient } from '@/lib/api';
-import type { CustomerCart, CustomerCatalog } from '../types/customer-order.types';
+import type {
+  CheckoutInput,
+  CustomerCart,
+  CustomerCatalog,
+  CustomerOrder,
+} from '../types/customer-order.types';
 
 export const customerOrderService = {
   catalog(slug: string) {
@@ -33,4 +38,20 @@ export const customerOrderService = {
   revalidate(cartId: string, version: number) {
     return apiClient.post<{ cart: CustomerCart; changes: unknown[] }>(`/customer/carts/${cartId}/revalidate`, { version });
   },
+
+  // ─── Checkout & Orders ────────────────────────────────────────────────────────
+
+  checkout(input: CheckoutInput) {
+    return apiClient.post<CustomerOrder>('/customer/orders/checkout', input);
+  },
+  listOrders() {
+    return apiClient.get<CustomerOrder[]>('/customer/orders');
+  },
+  getOrder(orderId: string) {
+    return apiClient.get<CustomerOrder>(`/customer/orders/${orderId}`);
+  },
+  getOrderByNumber(orderNumber: string) {
+    return apiClient.get<CustomerOrder>(`/customer/orders/by-number/${orderNumber}`);
+  },
 };
+
