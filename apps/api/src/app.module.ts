@@ -13,6 +13,7 @@ import { RealtimeModule } from './common/realtime';
 import { MenuModule } from './modules/menu/menu.module';
 import { CatalogModule } from './modules/catalog/catalog.module';
 import { CartModule } from './modules/cart/cart.module';
+import { OrdersModule } from './modules/orders/orders.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { CartModule } from './modules/cart/cart.module';
     MenuModule,
     CatalogModule,
     CartModule,
+    OrdersModule,
     RealtimeModule,
   ],
   providers: [
