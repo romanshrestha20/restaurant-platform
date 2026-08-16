@@ -9,8 +9,8 @@ import { Brand, Button, ThemeSelector } from '@/components/ui';
 const sections = [
   { label: 'Profile', href: '/account/profile', available: true },
   { label: 'Restaurants', href: '/restaurants', available: true },
+  { label: 'Orders', href: '/orders', available: true },
   { label: 'Addresses', href: '/account/addresses', available: false },
-  { label: 'Orders', href: '/account/orders', available: false },
   { label: 'Reservations', href: '/account/reservations', available: false },
   { label: 'Favourites', href: '/account/favourites', available: false },
   { label: 'Security', href: '/account/security', available: false },
