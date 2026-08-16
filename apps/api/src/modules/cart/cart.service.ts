@@ -7,9 +7,9 @@ import {
 import { createHash } from 'node:crypto';
 import { Prisma } from '@restaurant/database/generated';
 import { PrismaService } from '../../prisma/prisma.service';
+import { MenuAvailabilityService } from '../menu/menu-availability.service';
 import type {
   AddCartItemDto,
-  CartAddOnSelectionDto,
   UpdateCartItemDto,
 } from './dto/cart.dto';
 
@@ -44,23 +44,19 @@ const fixed = (value: Prisma.Decimal | number) => value.toFixed(2);
 
 @Injectable()
 export class CartService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly menuAvailabilityService: MenuAvailabilityService,
+  ) {}
 
   async getOrCreate(userId: string, restaurantId: string) {
     const current = await this.findActive(userId, restaurantId);
     if (current) return this.serialize(current);
 
-    const restaurant = await this.prisma.restaurant.findFirst({
-      where: {
-        id: restaurantId,
-        isActive: true,
-        status: 'ACTIVE',
-        deletedAt: null,
-        settings: { acceptsOrders: true },
-      },
-      select: { id: true, currency: true },
-    });
-    if (!restaurant) throw new NotFoundException('Restaurant is not accepting orders');
+    const restaurant = await this.menuAvailabilityService.validateRestaurantAcceptingOrders(
+      this.prisma,
+      restaurantId,
+    );
 
     try {
       const cart = await this.prisma.cart.create({
@@ -87,12 +83,14 @@ export class CartService {
     const cart = await this.prisma.$transaction(async (tx) => {
       const owned = await this.getOwned(tx, userId, cartId);
       this.requireVersion(owned.version, data.version);
-      const selection = await this.resolveSelection(
+      const selection = await this.menuAvailabilityService.validateItemSelection(
         tx,
         owned.restaurantId,
-        data.menuItemId,
-        data.variantOptionIds ?? [],
-        data.addOns ?? [],
+        {
+          menuItemId: data.menuItemId,
+          variantOptionIds: data.variantOptionIds ?? [],
+          addOns: data.addOns ?? [],
+        },
       );
       const signature = this.signature(data);
       const existing = await tx.cartItem.findUnique({
@@ -213,12 +211,14 @@ export class CartService {
       });
       const changes: Array<{ cartItemId: string; previousUnitPrice: string; unitPrice: string }> = [];
       for (const item of items) {
-        const selection = await this.resolveSelection(
+        const selection = await this.menuAvailabilityService.validateItemSelection(
           tx,
           owned.restaurantId,
-          item.menuItemId,
-          item.variantOptions.map((entry) => entry.optionId),
-          item.addOns.map((entry) => ({ addOnId: entry.addOnId, quantity: entry.quantity })),
+          {
+            menuItemId: item.menuItemId,
+            variantOptionIds: item.variantOptions.map((entry) => entry.optionId),
+            addOns: item.addOns.map((entry) => ({ addOnId: entry.addOnId, quantity: entry.quantity })),
+          },
         );
         if (!item.unitPrice.equals(selection.unitPrice)) {
           changes.push({
@@ -273,85 +273,6 @@ export class CartService {
     return cart;
   }
 
-  private async resolveSelection(
-    tx: Prisma.TransactionClient,
-    restaurantId: string,
-    menuItemId: string,
-    optionIds: string[],
-    addOnInput: CartAddOnSelectionDto[],
-  ) {
-    if (new Set(addOnInput.map((entry) => entry.addOnId)).size !== addOnInput.length) {
-      throw new BadRequestException('Each add-on may only be selected once');
-    }
-    const item = await tx.menuItem.findFirst({
-      where: {
-        id: menuItemId,
-        restaurantId,
-        status: 'AVAILABLE',
-        deletedAt: null,
-        category: { status: 'ACTIVE', deletedAt: null, menu: { isActive: true, deletedAt: null } },
-      },
-      select: {
-        basePrice: true,
-        variants: {
-          select: {
-            id: true,
-            options: {
-              where: { id: { in: optionIds } },
-              select: { id: true, priceAdjustment: true },
-            },
-          },
-        },
-        addOnGroups: {
-          select: {
-            group: {
-              select: {
-                id: true,
-                required: true,
-                minSelection: true,
-                maxSelection: true,
-                addOns: {
-                  where: { id: { in: addOnInput.map((entry) => entry.addOnId) }, isAvailable: true },
-                  select: { id: true, price: true },
-                },
-              },
-            },
-          },
-        },
-      },
-    });
-    if (!item) throw new ConflictException('Menu item is no longer available');
-    const options = item.variants.flatMap((variant) => variant.options);
-    if (options.length !== optionIds.length) {
-      throw new BadRequestException('A selected variant option does not belong to this item');
-    }
-    if (item.variants.some((variant) => variant.options.length > 1)) {
-      throw new BadRequestException('Select at most one option from each variant');
-    }
-    const selectedAddOns = item.addOnGroups.flatMap(({ group }) => group.addOns);
-    if (selectedAddOns.length !== addOnInput.length) {
-      throw new BadRequestException('A selected add-on is unavailable for this item');
-    }
-    for (const { group } of item.addOnGroups) {
-      const selected = group.addOns.reduce(
-        (total, addOn) => total + (addOnInput.find((entry) => entry.addOnId === addOn.id)?.quantity ?? 0),
-        0,
-      );
-      if (selected < group.minSelection || selected > group.maxSelection) {
-        throw new BadRequestException(
-          `${group.required ? 'Required add-on group' : 'Add-on group'} selections must be between ${group.minSelection} and ${group.maxSelection}`,
-        );
-      }
-    }
-    const addOns = selectedAddOns.map((addOn) => ({
-      ...addOn,
-      quantity: addOnInput.find((entry) => entry.addOnId === addOn.id)!.quantity,
-    }));
-    const unitPrice = options
-      .reduce((total, option) => total.plus(option.priceAdjustment), item.basePrice)
-      .plus(addOns.reduce((total, addOn) => total.plus(addOn.price.mul(addOn.quantity)), new Prisma.Decimal(0)));
-    return { unitPrice, options, addOns };
-  }
 
   private async recalculate(
     tx: Prisma.TransactionClient,
