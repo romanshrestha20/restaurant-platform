@@ -176,6 +176,13 @@ export class RestaurantsRepository {
           members: {
             create: { userId, roleId: ownerRole.id },
           },
+          menus: {
+            create: {
+              name: 'Main menu',
+              description: 'Draft menu created during restaurant setup',
+              isActive: false,
+            },
+          },
           ...(data.openingHours?.length
             ? {
                 openingHours: {
@@ -204,11 +211,12 @@ export class RestaurantsRepository {
     return this.prisma.restaurantMember.findMany({
       where: {
         userId,
+        isActive: true,
         restaurant: { isActive: true, deletedAt: null },
       },
-      orderBy: { joinedAt: 'desc' },
+      orderBy: { createdAt: 'desc' },
       select: {
-        joinedAt: true,
+        createdAt: true,
         role: { select: { name: true } },
         restaurant: { select: restaurantSummarySelect },
       },

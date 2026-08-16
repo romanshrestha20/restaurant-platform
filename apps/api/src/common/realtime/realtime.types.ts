@@ -2,6 +2,7 @@ import type { Socket } from 'socket.io';
 import type { RealtimeUser, RealtimeSocketAuth } from './realtime-auth.types';
 import type {
   MenuItemEventData,
+  OrderEventData,
   RestaurantDomainEvent,
 } from './domain-event.types';
 
@@ -40,6 +41,24 @@ export interface ServerToClientEvents {
   ) => void;
   'menu:item_deleted': (
     payload: RestaurantDomainEvent<'menu:item_deleted', { itemId: string }>,
+  ) => void;
+  'order:created': (
+    payload: RestaurantDomainEvent<
+      'order:created',
+      { order: OrderEventData }
+    >,
+  ) => void;
+  'order:status_changed': (
+    payload: RestaurantDomainEvent<
+      'order:status_changed',
+      { order: OrderEventData }
+    >,
+  ) => void;
+  'order:updated': (
+    payload: RestaurantDomainEvent<
+      'order:updated',
+      { order: OrderEventData }
+    >,
   ) => void;
 }
 

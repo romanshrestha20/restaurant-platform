@@ -75,6 +75,7 @@ export class RestaurantRolesGuard implements CanActivate {
         },
       },
       select: {
+        isActive: true,
         role: { select: { name: true } },
         restaurant: {
           select: { isActive: true, deletedAt: true },
@@ -84,6 +85,7 @@ export class RestaurantRolesGuard implements CanActivate {
 
     if (
       !membership ||
+      membership.isActive === false ||
       !membership.restaurant.isActive ||
       membership.restaurant.deletedAt !== null ||
       !isRestaurantRole(membership.role.name) ||

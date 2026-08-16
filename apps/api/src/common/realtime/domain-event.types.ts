@@ -30,6 +30,21 @@ export type MenuItemEventData = {
   status: 'AVAILABLE' | 'UNAVAILABLE' | 'HIDDEN';
 };
 
+export type OrderEventData = {
+  id: string;
+  orderNumber: string;
+  restaurantId: string;
+  userId: string;
+  type: string;
+  status: string;
+  total: string;
+  tableNumber?: string | null;
+  customerName?: string;
+  itemCount: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type NotificationRecord = {
   id: string;
   recipientId: string;

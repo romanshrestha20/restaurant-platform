@@ -34,6 +34,7 @@ describe('RealtimeRoomService', () => {
     expect(findMany).toHaveBeenCalledWith({
       where: {
         userId: 'user-1',
+        isActive: true,
         restaurant: { isActive: true, deletedAt: null },
       },
       select: { restaurantId: true },

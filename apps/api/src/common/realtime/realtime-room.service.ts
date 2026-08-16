@@ -9,6 +9,7 @@ export class RealtimeRoomService {
     const memberships = await this.prisma.restaurantMember.findMany({
       where: {
         userId,
+        isActive: true,
         restaurant: { isActive: true, deletedAt: null },
       },
       select: { restaurantId: true },
