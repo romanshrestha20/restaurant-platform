@@ -54,6 +54,7 @@ export class AuthRepository {
           },
         },
         roles: {
+          where: { role: { scope: 'PLATFORM' } },
           select: {
             role: {
               select: { name: true },
@@ -76,19 +77,6 @@ export class AuthRepository {
             lastName: data.lastName,
           },
         },
-        roles: {
-          create: {
-            role: {
-              connectOrCreate: {
-                where: { name: 'CUSTOMER' },
-                create: {
-                  name: 'CUSTOMER',
-                  description: 'Restaurant customer',
-                },
-              },
-            },
-          },
-        },
       },
       select: {
         id: true,
@@ -105,6 +93,7 @@ export class AuthRepository {
           },
         },
         roles: {
+          where: { role: { scope: 'PLATFORM' } },
           select: {
             role: {
               select: { name: true },
@@ -174,6 +163,7 @@ export class AuthRepository {
               },
             },
             roles: {
+              where: { role: { scope: 'PLATFORM' } },
               select: {
                 role: {
                   select: { name: true },

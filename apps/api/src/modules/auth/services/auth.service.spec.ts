@@ -38,7 +38,7 @@ const safeUser = {
   isActive: true,
   createdAt: new Date('2026-08-07T00:00:00.000Z'),
   profile: { firstName: 'Test', lastName: 'Customer' },
-  roles: [{ role: { name: 'CUSTOMER' } }],
+  roles: [],
 };
 
 describe('AuthService registration', () => {

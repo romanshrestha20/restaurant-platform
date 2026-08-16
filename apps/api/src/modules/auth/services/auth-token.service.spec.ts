@@ -34,7 +34,7 @@ describe('AuthTokenService', () => {
   const user = {
     id: 'user-1',
     email: 'customer@example.com',
-    roles: [{ role: { name: 'CUSTOMER' } }],
+    roles: [],
   };
 
   it('signs and verifies access tokens with the expected payload', async () => {
@@ -44,7 +44,7 @@ describe('AuthTokenService', () => {
     expect(payload).toMatchObject({
       sub: user.id,
       email: user.email,
-      roles: ['CUSTOMER'],
+      roles: [],
       tokenType: 'access',
     });
   });
