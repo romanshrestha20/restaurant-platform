@@ -7,6 +7,7 @@ import type {
   CreateMenuCategoryDto,
   CreateMenuDto,
   CreateMenuItemDto,
+  ImportMenuCsvRowDto,
   CreateVariantDto,
   CreateVariantOptionDto,
   MenuCategoryListQueryDto,
@@ -161,6 +162,87 @@ export class MenuRepository {
     return this.prisma.menu.create({
       data: { restaurantId, ...data },
       select: menuSelect,
+    });
+  }
+
+  ensureDefaultMenu(restaurantId: string) {
+    return this.prisma.menu.upsert({
+      where: {
+        restaurantId_name: { restaurantId, name: 'Main menu' },
+      },
+      update: { deletedAt: null },
+      create: {
+        restaurantId,
+        name: 'Main menu',
+        description: 'Draft menu created during restaurant setup',
+        isActive: false,
+      },
+      select: menuSelect,
+    });
+  }
+
+  importCsv(restaurantId: string, menuId: string, rows: ImportMenuCsvRowDto[]) {
+    return this.prisma.$transaction(async (transaction) => {
+      const menu = await transaction.menu.findFirst({
+        where: {
+          id: menuId,
+          restaurantId,
+          deletedAt: null,
+          restaurant: { isActive: true, deletedAt: null },
+        },
+        select: { id: true },
+      });
+      if (!menu) return null;
+
+      const existingCategories = await transaction.category.findMany({
+        where: { menuId, restaurantId, deletedAt: null },
+        select: { id: true, name: true },
+      });
+      const categoryIds = new Map(
+        existingCategories.map((category) => [
+          category.name.trim().toLocaleLowerCase(),
+          category.id,
+        ]),
+      );
+      let categoriesCreated = 0;
+
+      for (const row of rows) {
+        const key = row.category.trim().toLocaleLowerCase();
+        if (categoryIds.has(key)) continue;
+        const category = await transaction.category.create({
+          data: {
+            restaurantId,
+            menuId,
+            name: row.category.trim(),
+            sortOrder: categoryIds.size,
+          },
+          select: { id: true },
+        });
+        categoryIds.set(key, category.id);
+        categoriesCreated += 1;
+      }
+
+      await transaction.menuItem.createMany({
+        data: rows.map((row, index) => ({
+          restaurantId,
+          categoryId: categoryIds.get(row.category.trim().toLocaleLowerCase())!,
+          name: row.name,
+          description: row.description || null,
+          sku: row.sku || null,
+          basePrice: row.price,
+          preparationTime: row.preparationTime ?? null,
+          calories: row.calories ?? null,
+          isFeatured: row.isFeatured ?? false,
+          status: row.status,
+          sortOrder: index,
+        })),
+      });
+
+      return {
+        menuId,
+        categoriesCreated,
+        itemsCreated: rows.length,
+      };
     });
   }
 

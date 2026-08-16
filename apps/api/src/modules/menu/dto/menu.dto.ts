@@ -1,5 +1,8 @@
 import { Transform, Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
+  ArrayMinSize,
+  IsArray,
   IsBoolean,
   IsEnum,
   IsInt,
@@ -10,6 +13,7 @@ import {
   Length,
   MaxLength,
   Min,
+  ValidateNested,
 } from 'class-validator';
 import { CategoryStatus, MenuItemStatus } from '@restaurant/database/generated';
 import { PaginationQueryDto } from '../../../common/pagination';
@@ -65,6 +69,64 @@ export class UpdateMenuDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+}
+
+export class ImportMenuCsvRowDto {
+  @Transform(trim)
+  @IsString()
+  @Length(2, 100)
+  category!: string;
+
+  @Transform(trim)
+  @IsString()
+  @Length(2, 120)
+  name!: string;
+
+  @IsOptional()
+  @Transform(trim)
+  @IsString()
+  @MaxLength(2_000)
+  description?: string | null;
+
+  @IsOptional()
+  @Transform(normalizeSku)
+  @IsString()
+  @Length(1, 64)
+  sku?: string | null;
+
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  price!: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  preparationTime?: number | null;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  calories?: number | null;
+
+  @IsOptional()
+  @IsBoolean()
+  isFeatured?: boolean;
+
+  @IsOptional()
+  @IsEnum(MenuItemStatus)
+  status?: MenuItemStatus;
+}
+
+export class ImportMenuCsvDto {
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(500)
+  @ValidateNested({ each: true })
+  @Type(() => ImportMenuCsvRowDto)
+  rows!: ImportMenuCsvRowDto[];
 }
 
 export class CreateMenuCategoryDto {

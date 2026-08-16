@@ -23,6 +23,7 @@ import {
   CreateMenuCategoryDto,
   CreateMenuDto,
   CreateMenuItemDto,
+  ImportMenuCsvDto,
   CreateVariantDto,
   CreateVariantOptionDto,
   MenuCategoryListQueryDto,
@@ -58,6 +59,23 @@ export class MenuController {
     @Body() data: CreateMenuDto,
   ) {
     return this.menuService.createMenu(restaurantId, data);
+  }
+
+  @Post('menus/default')
+  @RequireRestaurantPermissions('menu.create')
+  ensureDefaultMenu(@Param('restaurantId') restaurantId: string) {
+    return this.menuService.ensureDefaultMenu(restaurantId);
+  }
+
+  @Post('menus/:menuId/imports/csv')
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  @RequireRestaurantPermissions('menu.create')
+  importCsv(
+    @Param('restaurantId') restaurantId: string,
+    @Param('menuId') menuId: string,
+    @Body() data: ImportMenuCsvDto,
+  ) {
+    return this.menuService.importCsv(restaurantId, menuId, data);
   }
 
   @Get('menus/:menuId')

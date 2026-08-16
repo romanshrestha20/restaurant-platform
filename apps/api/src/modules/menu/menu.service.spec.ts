@@ -1,4 +1,8 @@
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { Prisma } from '@restaurant/database/generated';
 import type { MenuRepository } from './menu.repository';
 import { MenuService } from './menu.service';
@@ -9,6 +13,8 @@ describe('MenuService', () => {
   const repository = {
     listMenus: jest.fn(),
     createMenu: jest.fn(),
+    ensureDefaultMenu: jest.fn(),
+    importCsv: jest.fn(),
     getMenu: jest.fn(),
     updateMenu: jest.fn(),
     deleteMenu: jest.fn(),
@@ -56,6 +62,54 @@ describe('MenuService', () => {
     await expect(
       service.createMenu('restaurant-1', { name: 'Dinner' }),
     ).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('initializes the default menu for an existing empty restaurant', async () => {
+    repository.ensureDefaultMenu.mockResolvedValue({
+      id: 'menu-1',
+      restaurantId: 'restaurant-1',
+      name: 'Main menu',
+      description: 'Draft menu created during restaurant setup',
+      sortOrder: 0,
+      isActive: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      _count: { categories: 0 },
+    });
+
+    await expect(service.ensureDefaultMenu('restaurant-1')).resolves.toEqual(
+      expect.objectContaining({ name: 'Main menu', isActive: false }),
+    );
+  });
+
+  it('imports validated CSV rows into the selected menu', async () => {
+    repository.importCsv.mockResolvedValue({
+      menuId: 'menu-1',
+      categoriesCreated: 1,
+      itemsCreated: 1,
+    });
+
+    await expect(
+      service.importCsv('restaurant-1', 'menu-1', {
+        rows: [{ category: 'Mains', name: 'Soup', price: 8.5, sku: 'SOUP' }],
+      }),
+    ).resolves.toEqual({
+      menuId: 'menu-1',
+      categoriesCreated: 1,
+      itemsCreated: 1,
+    });
+  });
+
+  it('rejects duplicate SKUs before starting a CSV import', async () => {
+    await expect(
+      service.importCsv('restaurant-1', 'menu-1', {
+        rows: [
+          { category: 'Mains', name: 'Soup', price: 8.5, sku: 'SOUP' },
+          { category: 'Mains', name: 'Stew', price: 9.5, sku: 'soup' },
+        ],
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(repository.importCsv).not.toHaveBeenCalled();
   });
 
   it('rejects categories that do not resolve through the restaurant menu', async () => {

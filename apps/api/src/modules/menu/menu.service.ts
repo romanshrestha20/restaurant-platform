@@ -19,6 +19,7 @@ import type {
   CreateMenuCategoryDto,
   CreateMenuDto,
   CreateMenuItemDto,
+  ImportMenuCsvDto,
   CreateVariantDto,
   CreateVariantOptionDto,
   MenuCategoryListQueryDto,
@@ -82,6 +83,40 @@ export class MenuService {
       if (isUniqueConflict(error)) {
         throw new ConflictException(
           'A menu with this name already exists in the restaurant',
+        );
+      }
+      throw error;
+    }
+  }
+
+  ensureDefaultMenu(restaurantId: string) {
+    return this.repository.ensureDefaultMenu(restaurantId);
+  }
+
+  async importCsv(
+    restaurantId: string,
+    menuId: string,
+    data: ImportMenuCsvDto,
+  ) {
+    const skus = data.rows
+      .map((row) => row.sku?.trim().toUpperCase())
+      .filter((sku): sku is string => Boolean(sku));
+    if (new Set(skus).size !== skus.length) {
+      throw new BadRequestException('CSV contains duplicate SKU values');
+    }
+
+    try {
+      const imported = await this.repository.importCsv(
+        restaurantId,
+        menuId,
+        data.rows,
+      );
+      if (!imported) throw new NotFoundException('Menu not found');
+      return imported;
+    } catch (error) {
+      if (isUniqueConflict(error)) {
+        throw new ConflictException(
+          'An imported SKU already exists in this restaurant',
         );
       }
       throw error;
