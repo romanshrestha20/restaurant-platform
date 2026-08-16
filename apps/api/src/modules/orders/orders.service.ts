@@ -12,6 +12,7 @@ import {
 } from '@restaurant/database/generated';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RealtimeGateway } from '../../common/realtime/realtime.gateway';
+import { MenuAvailabilityService } from '../menu/menu-availability.service';
 import type {
   CheckoutDto,
   OrderFilterDto,
@@ -86,28 +87,14 @@ export class OrdersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly realtimeGateway: RealtimeGateway,
+    private readonly menuAvailabilityService: MenuAvailabilityService,
   ) {}
 
   async checkout(userId: string, data: CheckoutDto) {
-    const restaurant = await this.prisma.restaurant.findFirst({
-      where: {
-        id: data.restaurantId,
-        isActive: true,
-        status: 'ACTIVE',
-        deletedAt: null,
-      },
-      include: {
-        settings: true,
-      },
-    });
-
-    if (!restaurant) {
-      throw new NotFoundException('Restaurant not found or inactive');
-    }
-
-    if (restaurant.settings && !restaurant.settings.acceptsOrders) {
-      throw new BadRequestException('Restaurant is not currently accepting orders');
-    }
+    const restaurant = await this.menuAvailabilityService.validateRestaurantAcceptingOrders(
+      this.prisma,
+      data.restaurantId,
+    );
 
     // Retrieve active cart with detailed items
     const cart = await this.prisma.cart.findFirst({
@@ -119,9 +106,38 @@ export class OrdersService {
       include: {
         items: {
           include: {
-            menuItem: true,
-            variantOptions: { include: { option: true } },
-            addOns: { include: { addOn: true } },
+            menuItem: {
+              include: {
+                media: {
+                  take: 1,
+                  orderBy: { sortOrder: 'asc' as const },
+                  select: { alt: true, media: { select: { url: true } } },
+                },
+                category: { select: { id: true, name: true } },
+              },
+            },
+            variantOptions: {
+              include: {
+                option: {
+                  select: {
+                    id: true,
+                    name: true,
+                    variant: { select: { id: true, name: true } },
+                  },
+                },
+              },
+            },
+            addOns: {
+              include: {
+                addOn: {
+                  select: {
+                    id: true,
+                    name: true,
+                    group: { select: { id: true, name: true } },
+                  },
+                },
+              },
+            },
           },
         },
       },
@@ -130,6 +146,13 @@ export class OrdersService {
     if (!cart || cart.items.length === 0) {
       throw new BadRequestException('Your cart is empty');
     }
+
+    // Revalidate live availability and price parity for all items in the cart
+    await this.menuAvailabilityService.validateCartItems(
+      this.prisma,
+      data.restaurantId,
+      cart.items,
+    );
 
     // Minimum order check for takeaway/delivery
     const subtotalNum = Number(cart.subtotal);
@@ -183,7 +206,6 @@ export class OrdersService {
             label: 'Delivery',
             street: data.deliveryAddress.street,
             city: data.deliveryAddress.city,
-            state: data.deliveryAddress.state ?? null,
             postalCode: data.deliveryAddress.postalCode ?? '00000',
             country: data.deliveryAddress.country,
           },
@@ -245,6 +267,21 @@ export class OrdersService {
 
     const orderNumber = this.generateOrderNumber(restaurant.slug);
 
+    const restaurantSnapshot = {
+      id: restaurant.id,
+      name: restaurant.name,
+      slug: restaurant.slug,
+      currency: restaurant.currency,
+      settings: restaurant.settings
+        ? {
+            taxRate: fixed(restaurant.settings.taxRate ?? 0),
+            deliveryFee: fixed(restaurant.settings.deliveryFee ?? 0),
+            serviceFee: fixed(restaurant.settings.serviceFee ?? 0),
+            minimumOrder: fixed(restaurant.settings.minimumOrder ?? 0),
+          }
+        : null,
+    };
+
     // Run order creation in a single transaction
     const order = await this.prisma.$transaction(async (tx) => {
       const createdOrder = await tx.order.create({
@@ -261,29 +298,60 @@ export class OrdersService {
           tax: finalTax,
           discount: discountAmount,
           total: finalTotal,
+          restaurantSnapshot,
           items: {
-            create: cart.items.map((item) => ({
-              menuItemId: item.menuItemId,
-              name: item.menuItem.name,
-              quantity: item.quantity,
-              unitPrice: item.unitPrice,
-              totalPrice: item.totalPrice,
-              variantOptions: {
-                create: item.variantOptions.map((vo) => ({
+            create: cart.items.map((item) => {
+              const itemSnapshot = {
+                menuItemId: item.menuItemId,
+                name: item.menuItem.name,
+                unitPrice: fixed(item.unitPrice),
+                totalPrice: fixed(item.totalPrice),
+                quantity: item.quantity,
+                notes: item.notes,
+                categoryName: item.menuItem.category?.name ?? null,
+                mediaUrl: item.menuItem.media?.[0]?.media?.url ?? null,
+                mediaAlt: item.menuItem.media?.[0]?.alt ?? null,
+                variantOptions: item.variantOptions.map((vo) => ({
                   optionId: vo.optionId,
-                  name: vo.option.name,
-                  priceAdjustment: vo.priceAdjustment,
+                  name: vo.option?.name ?? '',
+                  variantName: vo.option?.variant?.name ?? null,
+                  priceAdjustment: fixed(vo.priceAdjustment),
                 })),
-              },
-              addOns: {
-                create: item.addOns.map((ao) => ({
+                addOns: item.addOns.map((ao) => ({
                   addOnId: ao.addOnId,
-                  name: ao.addOn.name,
+                  name: ao.addOn?.name ?? '',
+                  groupName: ao.addOn?.group?.name ?? null,
                   quantity: ao.quantity,
-                  price: ao.price,
+                  price: fixed(ao.price),
                 })),
-              },
-            })),
+              };
+
+              return {
+                menuItemId: item.menuItemId,
+                name: item.menuItem.name,
+                quantity: item.quantity,
+                unitPrice: item.unitPrice,
+                totalPrice: item.totalPrice,
+                itemSnapshot,
+                variantOptions: {
+                  create: item.variantOptions.map((vo) => ({
+                    optionId: vo.optionId,
+                    name: vo.option?.name ?? '',
+                    variantName: vo.option?.variant?.name ?? null,
+                    priceAdjustment: vo.priceAdjustment,
+                  })),
+                },
+                addOns: {
+                  create: item.addOns.map((ao) => ({
+                    addOnId: ao.addOnId,
+                    name: ao.addOn?.name ?? '',
+                    groupName: ao.addOn?.group?.name ?? null,
+                    quantity: ao.quantity,
+                    price: ao.price,
+                  })),
+                },
+              };
+            }),
           },
           history: {
             create: {
