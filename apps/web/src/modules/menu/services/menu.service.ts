@@ -11,6 +11,8 @@ import type {
   MenuItemInput,
   MenuItemListResponse,
   MenuItemStatus,
+  MenuCsvImportResult,
+  MenuCsvImportRow,
   MenuListResponse,
   RestaurantMenu,
   VariantOption,
@@ -30,6 +32,17 @@ export const menuService = {
       Partial<Pick<RestaurantMenu, "description" | "sortOrder" | "isActive">>,
   ) {
     return apiClient.post<RestaurantMenu>(`${root(restaurantId)}/menus`, input);
+  },
+  ensureDefaultMenu(restaurantId: string) {
+    return apiClient.post<RestaurantMenu>(
+      `${root(restaurantId)}/menus/default`,
+    );
+  },
+  importCsv(restaurantId: string, menuId: string, rows: MenuCsvImportRow[]) {
+    return apiClient.post<MenuCsvImportResult>(
+      `${root(restaurantId)}/menus/${menuId}/imports/csv`,
+      { rows },
+    );
   },
   updateMenu(
     restaurantId: string,

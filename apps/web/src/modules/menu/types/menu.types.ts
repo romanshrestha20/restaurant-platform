@@ -101,3 +101,21 @@ export type MenuItemInput = {
   sortOrder?: number;
   status?: MenuItemStatus;
 };
+
+export type MenuCsvImportRow = {
+  category: string;
+  name: string;
+  description?: string;
+  sku?: string;
+  price: number;
+  preparationTime?: number;
+  calories?: number;
+  isFeatured?: boolean;
+  status?: MenuItemStatus;
+};
+
+export type MenuCsvImportResult = {
+  menuId: string;
+  categoriesCreated: number;
+  itemsCreated: number;
+};

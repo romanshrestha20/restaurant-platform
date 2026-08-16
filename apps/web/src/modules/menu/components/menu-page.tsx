@@ -41,6 +41,8 @@ import type {
   RestaurantMenu,
 } from "../types/menu.types";
 import { ItemConfigurationDialog } from "./item-configuration-dialog";
+import { CsvMenuImportDialog } from "./csv-menu-import-dialog";
+import { MenuOnboarding } from "./menu-onboarding";
 
 const PAGE_SIZE = 10;
 
@@ -79,6 +81,7 @@ export function MenuPage() {
   const [editingItem, setEditingItem] = useState<MenuItem | "new" | null>(null);
   const [deletingItem, setDeletingItem] = useState<MenuItem | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [csvImportOpen, setCsvImportOpen] = useState(false);
   const toast = useToast();
   const itemRequest = useRef(0);
   const realtimeRefresh = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -93,19 +96,25 @@ export function MenuPage() {
           menuService.listMenus(currentRestaurantId, { limit: 100 }),
           menuService.listCategories(currentRestaurantId, { limit: 100 }),
         ]);
-        setMenus(menuResult.data);
+        let availableMenus = menuResult.data;
+        if (!availableMenus.length && can("menu.create")) {
+          availableMenus = [
+            await menuService.ensureDefaultMenu(currentRestaurantId),
+          ];
+        }
+        setMenus(availableMenus);
         setCategories(categoryResult.data);
         setSelectedMenuId((current) =>
-          menuResult.data.some((menu) => menu.id === current)
+          availableMenus.some((menu) => menu.id === current)
             ? current
-            : (menuResult.data[0]?.id ?? ""),
+            : (availableMenus[0]?.id ?? ""),
         );
         setReferenceStatus("ready");
       } catch {
         if (!silent) setReferenceStatus("error");
       }
     },
-    [currentRestaurantId],
+    [can, currentRestaurantId],
   );
 
   const loadItems = useCallback(async () => {
@@ -300,8 +309,18 @@ export function MenuPage() {
     <div className="menu-page">
       <PageHeader
         actions={
-          canCreate && visibleCategories.length ? (
-            <Button onClick={() => setEditingItem("new")}>Add item</Button>
+          canCreate && selectedMenu ? (
+            <>
+              <Button
+                variant="secondary"
+                onClick={() => setCsvImportOpen(true)}
+              >
+                Import CSV
+              </Button>
+              {visibleCategories.length ? (
+                <Button onClick={() => setEditingItem("new")}>Add item</Button>
+              ) : null}
+            </>
           ) : undefined
         }
         description="Organize categories, pricing, and service availability."
@@ -472,16 +491,11 @@ export function MenuPage() {
                 />
               ) : null}
               {itemStatus === "ready" && !visibleCategories.length ? (
-                <EmptyState
-                  action={
-                    canCreate ? (
-                      <Button onClick={() => setCategoryDialogOpen(true)}>
-                        Add category
-                      </Button>
-                    ) : undefined
-                  }
-                  description="Every menu item belongs to a category."
-                  title="Add the first category"
+                <MenuOnboarding
+                  canCreate={canCreate}
+                  menu={selectedMenu!}
+                  onAddCategory={() => setCategoryDialogOpen(true)}
+                  onImport={() => setCsvImportOpen(true)}
                 />
               ) : null}
               {itemStatus === "ready" &&
@@ -639,6 +653,17 @@ export function MenuPage() {
           if (!open) setConfiguringItem(null);
         }}
       />
+      <CsvMenuImportDialog
+        menu={selectedMenu}
+        open={csvImportOpen}
+        restaurantId={currentRestaurantId}
+        onImported={async () => {
+          localMutationUntil.current = Date.now() + 1_000;
+          await loadReferences(true);
+          await loadItems();
+        }}
+        onOpenChange={setCsvImportOpen}
+      />
     </div>
   );
 }
@@ -779,12 +804,14 @@ function MenuDialog({
 }) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [isActive, setIsActive] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   useEffect(() => {
     if (!open) return;
     setName(menu?.name ?? "");
     setDescription(menu?.description ?? "");
+    setIsActive(menu?.isActive ?? true);
     setError("");
   }, [menu, open]);
   const submit = async (event: FormEvent<HTMLFormElement>) => {
@@ -797,6 +824,7 @@ function MenuDialog({
         ? await menuService.updateMenu(restaurantId, menu.id, {
             name: name.trim(),
             description: description.trim() || null,
+            isActive,
           })
         : await menuService.createMenu(restaurantId, {
             name: name.trim(),
@@ -850,6 +878,13 @@ function MenuDialog({
             onChange={(event) => setDescription(event.target.value)}
           />
         </FormField>
+        {menu ? (
+          <Checkbox
+            checked={isActive}
+            label="Publish this menu to customers"
+            onChange={(event) => setIsActive(event.target.checked)}
+          />
+        ) : null}
       </Form>
     </Modal>
   );
