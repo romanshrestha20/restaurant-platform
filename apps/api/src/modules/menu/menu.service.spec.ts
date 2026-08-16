@@ -64,6 +64,14 @@ describe('MenuService', () => {
     ).rejects.toBeInstanceOf(ConflictException);
   });
 
+  it('rejects creating menu when restaurant does not exist or is inactive', async () => {
+    repository.createMenu.mockResolvedValue(null);
+
+    await expect(
+      service.createMenu('invalid-rest', { name: 'Dinner' }),
+    ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
   it('initializes the default menu for an existing empty restaurant', async () => {
     repository.ensureDefaultMenu.mockResolvedValue({
       id: 'menu-1',

@@ -78,7 +78,11 @@ export class MenuService {
 
   async createMenu(restaurantId: string, data: CreateMenuDto) {
     try {
-      return await this.repository.createMenu(restaurantId, data);
+      const menu = await this.repository.createMenu(restaurantId, data);
+      if (!menu) {
+        throw new NotFoundException('Restaurant not found or inactive');
+      }
+      return menu;
     } catch (error) {
       if (isUniqueConflict(error)) {
         throw new ConflictException(
@@ -447,7 +451,11 @@ export class MenuService {
 
   async createAddOnGroup(restaurantId: string, data: CreateAddOnGroupDto) {
     this.validateSelectionLimits(data);
-    return this.repository.createAddOnGroup(restaurantId, data);
+    const group = await this.repository.createAddOnGroup(restaurantId, data);
+    if (!group) {
+      throw new NotFoundException('Restaurant not found or inactive');
+    }
+    return group;
   }
 
   async updateAddOnGroup(

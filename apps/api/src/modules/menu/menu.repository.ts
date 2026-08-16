@@ -158,7 +158,12 @@ export class MenuRepository {
     return { data, total };
   }
 
-  createMenu(restaurantId: string, data: CreateMenuDto) {
+  async createMenu(restaurantId: string, data: CreateMenuDto) {
+    const restaurant = await this.prisma.restaurant.findFirst({
+      where: { id: restaurantId, isActive: true, deletedAt: null },
+      select: { id: true },
+    });
+    if (!restaurant) return null;
     return this.prisma.menu.create({
       data: { restaurantId, ...data },
       select: menuSelect,
@@ -520,7 +525,12 @@ export class MenuRepository {
     data: CreateVariantDto,
   ) {
     const item = await this.prisma.menuItem.findFirst({
-      where: { id: itemId, restaurantId, deletedAt: null },
+      where: {
+        id: itemId,
+        restaurantId,
+        deletedAt: null,
+        category: { deletedAt: null, menu: { deletedAt: null, restaurant: { isActive: true, deletedAt: null } } },
+      },
       select: { id: true },
     });
     return item
@@ -533,18 +543,34 @@ export class MenuRepository {
     variantId: string,
     data: UpdateVariantDto,
   ) {
-    const result = await this.prisma.variant.updateMany({
-      where: { id: variantId, menuItem: { restaurantId, deletedAt: null } },
+    const variant = await this.prisma.variant.findFirst({
+      where: {
+        id: variantId,
+        menuItem: {
+          restaurantId,
+          deletedAt: null,
+          category: { deletedAt: null, menu: { deletedAt: null } },
+        },
+      },
+      select: { id: true },
+    });
+    if (!variant) return null;
+    return this.prisma.variant.update({
+      where: { id: variantId },
       data,
     });
-    return result.count
-      ? this.prisma.variant.findUnique({ where: { id: variantId } })
-      : null;
   }
 
   async deleteVariant(restaurantId: string, variantId: string) {
     const variant = await this.prisma.variant.findFirst({
-      where: { id: variantId, menuItem: { restaurantId, deletedAt: null } },
+      where: {
+        id: variantId,
+        menuItem: {
+          restaurantId,
+          deletedAt: null,
+          category: { deletedAt: null, menu: { deletedAt: null } },
+        },
+      },
       select: { id: true },
     });
     if (!variant) return false;
@@ -558,7 +584,14 @@ export class MenuRepository {
     data: CreateVariantOptionDto,
   ) {
     const variant = await this.prisma.variant.findFirst({
-      where: { id: variantId, menuItem: { restaurantId, deletedAt: null } },
+      where: {
+        id: variantId,
+        menuItem: {
+          restaurantId,
+          deletedAt: null,
+          category: { deletedAt: null, menu: { deletedAt: null } },
+        },
+      },
       select: { id: true },
     });
     return variant
@@ -571,23 +604,37 @@ export class MenuRepository {
     optionId: string,
     data: UpdateVariantOptionDto,
   ) {
-    const result = await this.prisma.variantOption.updateMany({
+    const option = await this.prisma.variantOption.findFirst({
       where: {
         id: optionId,
-        variant: { menuItem: { restaurantId, deletedAt: null } },
+        variant: {
+          menuItem: {
+            restaurantId,
+            deletedAt: null,
+            category: { deletedAt: null, menu: { deletedAt: null } },
+          },
+        },
       },
+      select: { id: true },
+    });
+    if (!option) return null;
+    return this.prisma.variantOption.update({
+      where: { id: optionId },
       data,
     });
-    return result.count
-      ? this.prisma.variantOption.findUnique({ where: { id: optionId } })
-      : null;
   }
 
   async deleteVariantOption(restaurantId: string, optionId: string) {
     const option = await this.prisma.variantOption.findFirst({
       where: {
         id: optionId,
-        variant: { menuItem: { restaurantId, deletedAt: null } },
+        variant: {
+          menuItem: {
+            restaurantId,
+            deletedAt: null,
+            category: { deletedAt: null, menu: { deletedAt: null } },
+          },
+        },
       },
       select: { id: true },
     });
@@ -604,7 +651,12 @@ export class MenuRepository {
     });
   }
 
-  createAddOnGroup(restaurantId: string, data: CreateAddOnGroupDto) {
+  async createAddOnGroup(restaurantId: string, data: CreateAddOnGroupDto) {
+    const restaurant = await this.prisma.restaurant.findFirst({
+      where: { id: restaurantId, isActive: true, deletedAt: null },
+      select: { id: true },
+    });
+    if (!restaurant) return null;
     return this.prisma.addOnGroup.create({ data: { restaurantId, ...data } });
   }
 
@@ -626,10 +678,13 @@ export class MenuRepository {
   }
 
   async deleteAddOnGroup(restaurantId: string, groupId: string) {
-    const result = await this.prisma.addOnGroup.deleteMany({
+    const group = await this.prisma.addOnGroup.findFirst({
       where: { id: groupId, restaurantId },
+      select: { id: true },
     });
-    return result.count === 1;
+    if (!group) return false;
+    await this.prisma.addOnGroup.delete({ where: { id: groupId } });
+    return true;
   }
 
   async createAddOn(
@@ -651,20 +706,25 @@ export class MenuRepository {
     addOnId: string,
     data: UpdateAddOnDto,
   ) {
-    const result = await this.prisma.addOn.updateMany({
+    const addOn = await this.prisma.addOn.findFirst({
       where: { id: addOnId, group: { restaurantId } },
+      select: { id: true },
+    });
+    if (!addOn) return null;
+    return this.prisma.addOn.update({
+      where: { id: addOnId },
       data,
     });
-    return result.count
-      ? this.prisma.addOn.findUnique({ where: { id: addOnId } })
-      : null;
   }
 
   async deleteAddOn(restaurantId: string, addOnId: string) {
-    const result = await this.prisma.addOn.deleteMany({
+    const addOn = await this.prisma.addOn.findFirst({
       where: { id: addOnId, group: { restaurantId } },
+      select: { id: true },
     });
-    return result.count === 1;
+    if (!addOn) return false;
+    await this.prisma.addOn.delete({ where: { id: addOnId } });
+    return true;
   }
 
   async attachAddOnGroup(
@@ -674,7 +734,12 @@ export class MenuRepository {
   ) {
     const [item, group] = await Promise.all([
       this.prisma.menuItem.findFirst({
-        where: { id: itemId, restaurantId, deletedAt: null },
+        where: {
+          id: itemId,
+          restaurantId,
+          deletedAt: null,
+          category: { deletedAt: null, menu: { deletedAt: null } },
+        },
         select: { id: true },
       }),
       this.prisma.addOnGroup.findFirst({
@@ -695,9 +760,23 @@ export class MenuRepository {
     itemId: string,
     groupId: string,
   ) {
-    const result = await this.prisma.menuItemAddOnGroup.deleteMany({
-      where: { menuItemId: itemId, groupId, menuItem: { restaurantId } },
+    const link = await this.prisma.menuItemAddOnGroup.findFirst({
+      where: {
+        menuItemId: itemId,
+        groupId,
+        menuItem: {
+          restaurantId,
+          deletedAt: null,
+          category: { deletedAt: null, menu: { deletedAt: null } },
+        },
+        group: { restaurantId },
+      },
+      select: { menuItemId: true, groupId: true },
     });
-    return result.count === 1;
+    if (!link) return false;
+    await this.prisma.menuItemAddOnGroup.delete({
+      where: { menuItemId_groupId: { menuItemId: itemId, groupId } },
+    });
+    return true;
   }
 }
