@@ -8,6 +8,9 @@ import {
   UploadedFile,
   UseGuards,
   UseInterceptors,
+  Delete,
+  Param,
+  Query,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Throttle } from '@nestjs/throttler';
@@ -22,6 +25,8 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 import { REFRESH_TOKEN_COOKIE } from '../auth/constants/auth.constants';
 import type { AppEnvironment } from '../../config/env';
 import { MAX_IMAGE_SIZE } from '../../common/upload/upload.service';
+import { CreateAddressDto } from './dto/create-address.dto';
+import { UpdateAddressDto } from './dto/update-address.dto';
 
 @Controller('profile')
 @UseGuards(AccessTokenGuard)
@@ -35,6 +40,21 @@ export class ProfileController {
   getProfile(@CurrentUser() user: AccessAuthUser) {
     return this.profileService.getProfile(user.id);
   }
+
+  @Get('addresses')
+  getAddresses(@CurrentUser() user: AccessAuthUser) { return this.profileService.getAddresses(user.id); }
+
+  @Get('addresses/search')
+  searchAddresses(@Query('q') query = '') { return this.profileService.searchAddresses(query); }
+
+  @Post('addresses')
+  createAddress(@CurrentUser() user: AccessAuthUser, @Body() data: CreateAddressDto) { return this.profileService.createAddress(user.id, data); }
+
+  @Patch('addresses/:addressId')
+  updateAddress(@CurrentUser() user: AccessAuthUser, @Param('addressId') addressId: string, @Body() data: UpdateAddressDto) { return this.profileService.updateAddress(user.id, addressId, data); }
+
+  @Delete('addresses/:addressId')
+  deleteAddress(@CurrentUser() user: AccessAuthUser, @Param('addressId') addressId: string) { return this.profileService.deleteAddress(user.id, addressId); }
 
   @Patch()
   updateProfile(

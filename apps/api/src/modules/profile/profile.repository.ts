@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import type { UpdateProfileDto } from './dto/update-profile.dto';
 import type { UploadResult } from '../../common/upload/types/upload-result.type';
+import type { CreateAddressDto } from './dto/create-address.dto';
+import type { UpdateAddressDto } from './dto/update-address.dto';
 
 const profileSelect = {
   id: true,
@@ -47,6 +49,32 @@ const profileSelect = {
 @Injectable()
 export class ProfileRepository {
   constructor(private readonly prisma: PrismaService) {}
+
+  listAddresses(userId: string) { return this.prisma.address.findMany({ where: { userId }, orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }] }); }
+  async createAddress(userId: string, data: CreateAddressDto) {
+    return this.prisma.$transaction(async (tx) => {
+      if (data.isDefault || !(await tx.address.count({ where: { userId } }))) await tx.address.updateMany({ where: { userId }, data: { isDefault: false } });
+      return tx.address.create({ data: { ...data, userId, isDefault: data.isDefault ?? false } });
+    });
+  }
+  async updateAddress(userId: string, addressId: string, data: UpdateAddressDto) {
+    return this.prisma.$transaction(async (tx) => {
+      const existing = await tx.address.findFirst({ where: { id: addressId, userId } });
+      if (!existing) return null;
+      if (data.isDefault) await tx.address.updateMany({ where: { userId }, data: { isDefault: false } });
+      return tx.address.update({ where: { id: addressId }, data });
+    });
+  }
+  async deleteAddress(userId: string, addressId: string) { const deleted = await this.prisma.address.deleteMany({ where: { id: addressId, userId } }); return { deleted: deleted.count > 0 }; }
+  async searchAddresses(query: string) {
+    const normalized = query.trim();
+    if (normalized.length < 3) return [];
+    const params = new URLSearchParams({ q: normalized, format: 'jsonv2', addressdetails: '1', limit: '5' });
+    const response = await fetch(`https://nominatim.openstreetmap.org/search?${params}`, { headers: { 'User-Agent': 'Tablefolk/1.0 customer address search' } });
+    if (!response.ok) return [];
+    const results = await response.json() as Array<{ display_name: string; lat: string; lon: string; address?: { house_number?: string; road?: string; city?: string; town?: string; village?: string; postcode?: string; country_code?: string } }>;
+    return results.map((result) => ({ formattedAddress: result.display_name, latitude: Number(result.lat), longitude: Number(result.lon), street: [result.address?.road, result.address?.house_number].filter(Boolean).join(' '), city: result.address?.city ?? result.address?.town ?? result.address?.village ?? '', postalCode: result.address?.postcode ?? '', country: (result.address?.country_code ?? '').toUpperCase() }));
+  }
 
   findByUserId(userId: string) {
     return this.prisma.user.findFirst({

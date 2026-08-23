@@ -12,6 +12,8 @@ import { ProfileRepository } from './profile.repository';
 import { PasswordService } from '../auth/services/password.service';
 import type { ChangePasswordDto } from './dto/change-password.dto';
 import { UploadService } from '../../common/upload/upload.service';
+import type { CreateAddressDto } from './dto/create-address.dto';
+import type { UpdateAddressDto } from './dto/update-address.dto';
 
 const isPrismaUniqueConstraintError = (error: unknown) =>
   typeof error === 'object' &&
@@ -56,6 +58,12 @@ export class ProfileService {
       throw error;
     }
   }
+
+  getAddresses(userId: string) { return this.profileRepository.listAddresses(userId); }
+  createAddress(userId: string, data: CreateAddressDto) { return this.profileRepository.createAddress(userId, data); }
+  updateAddress(userId: string, addressId: string, data: UpdateAddressDto) { return this.profileRepository.updateAddress(userId, addressId, data); }
+  deleteAddress(userId: string, addressId: string) { return this.profileRepository.deleteAddress(userId, addressId); }
+  searchAddresses(query: string) { return this.profileRepository.searchAddresses(query); }
 
   async uploadPhoto(userId: string, file: Express.Multer.File) {
     const user = await this.profileRepository.findByUserId(userId);
