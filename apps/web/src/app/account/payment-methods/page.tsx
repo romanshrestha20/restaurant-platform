@@ -1,0 +1,2 @@
+import { AccountPlaceholder, AccountSectionPage } from '../_components/account-section-page';
+export default function PaymentMethodsPage() { return <AccountSectionPage eyebrow="Payment" title="Payment methods" description="Manage the ways you pay for orders."><AccountPlaceholder title="No payment methods" description="Saved cards, Apple Pay, and Google Pay will appear here." /></AccountSectionPage>; }

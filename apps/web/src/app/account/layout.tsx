@@ -3,46 +3,27 @@
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
-import { ProtectedRoute, useAuth } from '@/modules/auth';
-import { Brand, Button, ThemeSelector } from '@/components/ui';
+import { ProtectedRoute } from '@/modules/auth';
+import { CustomerNavigation } from '@/components/customer';
 
 const sections = [
   { label: 'Profile', href: '/account/profile', available: true },
-  { label: 'Restaurants', href: '/restaurants', available: true },
-  { label: 'Orders', href: '/orders', available: true },
-  { label: 'Addresses', href: '/account/addresses', available: false },
-  { label: 'Reservations', href: '/account/reservations', available: false },
-  { label: 'Favourites', href: '/account/favourites', available: false },
-  { label: 'Security', href: '/account/security', available: false },
+  { label: 'Addresses', href: '/account/addresses', available: true },
+  { label: 'Payment methods', href: '/account/payment-methods', available: true },
+  { label: 'Favorites', href: '/account/favorites', available: true },
+  { label: 'Order history', href: '/account/orders', available: true },
+  { label: 'Notifications', href: '/account/notifications', available: true },
+  { label: 'Preferences', href: '/account/preferences', available: true },
+  { label: 'Security', href: '/account/security', available: true },
 ];
 
 function AccountShell({ children }: { children: ReactNode }) {
-  const { signOut, user } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
-  const firstName = user?.profile?.firstName ?? 'Guest';
-
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-    } finally {
-      router.replace('/login');
-    }
-  };
 
   return (
     <div className="account-app">
-      <header className="account-header">
-        <Brand />
-        <div className="account-header__actions">
-          <span className="account-header__greeting">Hello, {firstName}</span>
-          <ThemeSelector compact />
-          <Button variant="ghost" onClick={handleSignOut}>
-            Sign out
-          </Button>
-        </div>
-      </header>
-
+      <CustomerNavigation />
       <div className="account-layout">
         <aside className="account-sidebar">
           <div className="account-sidebar__heading">

@@ -1,0 +1,2 @@
+import { AccountPlaceholder, AccountSectionPage } from '../_components/account-section-page';
+export default function AddressesPage() { return <AccountSectionPage eyebrow="Addresses" title="Your addresses" description="Save delivery details for faster checkout."><AccountPlaceholder title="No saved addresses" description="Home, work, and other addresses will be available here." /></AccountSectionPage>; }

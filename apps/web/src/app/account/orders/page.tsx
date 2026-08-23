@@ -1,5 +1,5 @@
-import { redirect } from 'next/navigation';
+import { OrdersPage } from '@/modules/order';
 
-export default function AccountOrdersRedirect() {
-  redirect('/orders');
+export default function AccountOrdersPage() {
+  return <OrdersPage />;
 }

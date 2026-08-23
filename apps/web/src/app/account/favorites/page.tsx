@@ -1,0 +1,2 @@
+import { AccountPlaceholder, AccountSectionPage } from '../_components/account-section-page';
+export default function FavoritesPage() { return <AccountSectionPage eyebrow="Favorites" title="Your favorites" description="Keep the restaurants and dishes you return to most."><AccountPlaceholder title="Nothing saved yet" description="Favorite restaurants and dishes will appear here." /></AccountSectionPage>; }

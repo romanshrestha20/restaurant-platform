@@ -1,0 +1,2 @@
+import { AccountPlaceholder, AccountSectionPage } from '../_components/account-section-page';
+export default function SecurityPage() { return <AccountSectionPage eyebrow="Security" title="Account security" description="Keep your account protected and up to date."><AccountPlaceholder title="Security settings" description="Password, active sessions, and account protection will appear here." /></AccountSectionPage>; }
