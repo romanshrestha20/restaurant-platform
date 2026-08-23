@@ -11,4 +11,6 @@ export type CustomerRestaurant = {
   distanceKm: number | null;
   deliveryRadiusKm: number;
   deliveryAvailable: boolean;
+  deliveryFee: number;
+  minimumOrder: number;
 };

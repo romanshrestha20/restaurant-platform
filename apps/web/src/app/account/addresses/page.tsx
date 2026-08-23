@@ -1,2 +1,19 @@
-import { AccountPlaceholder, AccountSectionPage } from '../_components/account-section-page';
-export default function AddressesPage() { return <AccountSectionPage eyebrow="Addresses" title="Your addresses" description="Save delivery details for faster checkout."><AccountPlaceholder title="No saved addresses" description="Home, work, and other addresses will be available here." /></AccountSectionPage>; }
+'use client';
+import { useEffect, useState } from 'react';
+import { Button, Input, LoadingButton } from '@/components/ui';
+import { apiClient } from '@/lib/api';
+import { AccountSectionPage } from '../_components/account-section-page';
+type Address = { id: string; label: string; street: string; city: string; postalCode: string; country: string; isDefault: boolean };
+type Form = Omit<Address, 'id' | 'isDefault'>;
+type Suggestion = { formattedAddress: string; latitude: number; longitude: number; street: string; city: string; postalCode: string; country: string };
+const empty: Form = { label: 'Home', street: '', city: '', postalCode: '', country: 'FI' };
+export default function AddressesPage() {
+  const [addresses, setAddresses] = useState<Address[]>([]); const [form, setForm] = useState<Form>(empty); const [suggestions, setSuggestions] = useState<Suggestion[]>([]); const [saving, setSaving] = useState(false); const [error, setError] = useState('');
+  const load = () => { void apiClient.get<Address[]>('/profile/addresses').then(setAddresses).catch(() => setError('Could not load your addresses.')); };
+  useEffect(load, []);
+  const update = (key: keyof Form, value: string) => setForm((current) => ({ ...current, [key]: value }));
+  const search = (value: string) => { update('street', value); if (value.trim().length < 3) { setSuggestions([]); return; } void apiClient.get<Suggestion[]>(`/profile/addresses/search?q=${encodeURIComponent(value)}`).then(setSuggestions).catch(() => setSuggestions([])); };
+  const choose = (suggestion: Suggestion) => { setForm((current) => ({ ...current, street: suggestion.street || suggestion.formattedAddress, city: suggestion.city, postalCode: suggestion.postalCode, country: suggestion.country || current.country })); setSuggestions([]); };
+  const save = async (event: React.FormEvent) => { event.preventDefault(); setSaving(true); setError(''); try { const next = await apiClient.post<Address>('/profile/addresses', form); setAddresses((current) => [...current, next]); setForm(empty); } catch { setError('Could not save this address.'); } finally { setSaving(false); } };
+  return <AccountSectionPage eyebrow="Addresses" title="Your addresses" description="Save delivery details for faster checkout."><div className="address-list">{addresses.map((address) => <article className="address-entry" key={address.id}><div><small>{address.label}{address.isDefault ? ' · Default' : ''}</small><strong>{address.street}</strong><span>{address.postalCode} {address.city}, {address.country}</span></div><Button variant="ghost" onClick={() => void apiClient.delete(`/profile/addresses/${address.id}`).then(() => setAddresses((current) => current.filter((item) => item.id !== address.id)))}>Remove</Button></article>)}</div><form className="address-form" onSubmit={save}><h3>Add an address</h3><div className="address-form__grid"><label>Label<Input value={form.label} onChange={(event) => update('label', event.target.value)} /></label><label className="address-search-field">Search address<Input required value={form.street} onChange={(event) => search(event.target.value)} />{suggestions.length ? <div className="address-suggestions">{suggestions.map((suggestion) => <button type="button" key={`${suggestion.latitude}-${suggestion.longitude}`} onClick={() => choose(suggestion)}>{suggestion.formattedAddress}</button>)}</div> : null}</label><label>City<Input required value={form.city} onChange={(event) => update('city', event.target.value)} /></label><label>Postal code<Input required value={form.postalCode} onChange={(event) => update('postalCode', event.target.value)} /></label><label>Country code<Input required maxLength={2} value={form.country} onChange={(event) => update('country', event.target.value.toUpperCase())} /></label></div>{error ? <p className="form-error">{error}</p> : null}<LoadingButton loading={saving} type="submit">Save address</LoadingButton></form></AccountSectionPage>;
+}
