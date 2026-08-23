@@ -14,6 +14,7 @@ import { ApiError } from '@/lib/api';
 import { useToast } from '@/lib/toast';
 import { useAuth } from '@/modules/auth';
 import { customerOrderService } from '../services/customer-order.service';
+import { apiClient } from '@/lib/api';
 import type {
   CheckoutInput,
   CustomerCart,
@@ -56,6 +57,9 @@ export function CheckoutPage() {
   const [deliveryCity, setDeliveryCity] = useState('');
   const [deliveryCountry, setDeliveryCountry] = useState('');
   const [deliveryPostal, setDeliveryPostal] = useState('');
+  const [savedAddresses, setSavedAddresses] = useState<Array<{ id: string; label: string; street: string; city: string; postalCode: string; country: string }>>([]);
+  const [deliveryAddressId, setDeliveryAddressId] = useState('');
+  const [deliveryQuote, setDeliveryQuote] = useState<{ deliveryAvailable: boolean; deliveryFee: string; minimumOrder: string; estimatedDeliveryMinutes: number | null; distanceKm: number | null } | null>(null);
 
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
@@ -80,6 +84,8 @@ export function CheckoutPage() {
     }
     if (authStatus === 'authenticated') void loadCart();
   }, [authStatus, loadCart, restaurantId, router]);
+  useEffect(() => { if (authStatus === 'authenticated') void apiClient.get<typeof savedAddresses>('/profile/addresses').then(setSavedAddresses).catch(() => undefined); }, [authStatus]);
+  const selectSavedAddress = (id: string) => { setDeliveryAddressId(id); setDeliveryQuote(null); const address = savedAddresses.find((entry) => entry.id === id); if (!address) return; setDeliveryStreet(address.street); setDeliveryCity(address.city); setDeliveryPostal(address.postalCode); setDeliveryCountry(address.country); void customerOrderService.deliveryQuote(restaurantId, id).then(setDeliveryQuote).catch(() => undefined); };
 
   const money = useMemo(() => {
     if (!cart) return new Intl.NumberFormat(undefined, { style: 'currency', currency: 'EUR' });
@@ -105,7 +111,7 @@ export function CheckoutPage() {
       paymentMethod,
       notes: notes.trim() || null,
       ...(orderType === 'DINE_IN' ? { tableNumber: tableNumber.trim() } : {}),
-      ...(orderType === 'DELIVERY' ? {
+      ...(orderType === 'DELIVERY' && deliveryAddressId ? { deliveryAddressId } : orderType === 'DELIVERY' ? {
         deliveryAddress: {
           street: deliveryStreet.trim(),
           city: deliveryCity.trim(),
@@ -208,6 +214,8 @@ export function CheckoutPage() {
           {orderType === 'DELIVERY' && (
             <section className="checkout-section">
               <h2>Delivery address</h2>
+              {savedAddresses.length ? <select className="checkout-input checkout-input--full" value={deliveryAddressId} onChange={(event) => selectSavedAddress(event.target.value)}><option value="">Enter a new address</option>{savedAddresses.map((address) => <option value={address.id} key={address.id}>{address.label} · {address.street}, {address.city}</option>)}</select> : null}
+              {deliveryQuote ? <p className="checkout-delivery-quote">{deliveryQuote.deliveryAvailable ? <>Delivery fee: {money.format(Number(deliveryQuote.deliveryFee))} · Estimated delivery: {deliveryQuote.estimatedDeliveryMinutes} min</> : 'This restaurant does not deliver to the selected address.'}</p> : null}
               <div className="checkout-address-grid">
                 <input
                   id="checkout-delivery-street"

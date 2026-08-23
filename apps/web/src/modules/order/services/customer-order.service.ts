@@ -47,6 +47,9 @@ export const customerOrderService = {
   listOrders() {
     return apiClient.get<CustomerOrder[]>('/customer/orders');
   },
+  deliveryQuote(restaurantId: string, addressId: string) {
+    return apiClient.get<{ deliveryAvailable: boolean; deliveryFee: string; minimumOrder: string; estimatedDeliveryMinutes: number | null; distanceKm: number | null }>(`/customer/orders/delivery-quote?restaurantId=${encodeURIComponent(restaurantId)}&addressId=${encodeURIComponent(addressId)}`);
+  },
   getOrder(orderId: string) {
     return apiClient.get<CustomerOrder>(`/customer/orders/${orderId}`);
   },
@@ -54,4 +57,3 @@ export const customerOrderService = {
     return apiClient.get<CustomerOrder>(`/customer/orders/by-number/${orderNumber}`);
   },
 };
-

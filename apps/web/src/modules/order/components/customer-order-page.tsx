@@ -74,7 +74,15 @@ export function CustomerOrderPage({ slug }: { slug: string }) {
             setCart(next);
             if (changes.length) toast.info('Your cart was updated with current menu prices');
           })
-          .catch(() => undefined);
+          .catch(async (error) => {
+            toast.error('Your cart needs attention', { description: errorMessage(error) });
+            try {
+              const current = await customerOrderService.currentCart(cart.restaurantId);
+              setCart(current);
+            } catch {
+              setCart(null);
+            }
+          });
       }, 250);
     };
     window.addEventListener('focus', refresh);
