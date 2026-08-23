@@ -154,25 +154,38 @@ export class CartService {
       });
       if (!item) throw new NotFoundException('Cart item not found');
       const quantity = data.quantity ?? item.quantity;
+      const nextSignature = data.notes !== undefined
+        ? this.signatureOf({
+            menuItemId: item.menuItemId,
+            variantOptionIds: item.variantOptions.map((entry) => entry.optionId),
+            addOns: item.addOns.map((entry) => ({ addOnId: entry.addOnId, quantity: entry.quantity })),
+            notes: data.notes,
+          })
+        : item.configurationSignature;
+      const collision = nextSignature !== item.configurationSignature
+        ? await tx.cartItem.findUnique({
+            where: { cartId_configurationSignature: { cartId, configurationSignature: nextSignature } },
+            select: { id: true, quantity: true, unitPrice: true },
+          })
+        : null;
+      if (collision) {
+        const mergedQuantity = collision.quantity + quantity;
+        if (mergedQuantity > 99) throw new BadRequestException('Cart item quantity cannot exceed 99');
+        await tx.cartItem.update({
+          where: { id: collision.id },
+          data: { quantity: mergedQuantity, totalPrice: collision.unitPrice.mul(mergedQuantity) },
+        });
+        await tx.cartItem.delete({ where: { id: item.id } });
+        await this.recalculate(tx, owned, data.version);
+        return tx.cart.findUniqueOrThrow({ where: { id: cartId }, include: cartInclude });
+      }
       await tx.cartItem.update({
         where: { id: cartItemId },
         data: {
           quantity,
           totalPrice: item.unitPrice.mul(quantity),
           ...(data.notes !== undefined ? { notes: data.notes?.trim() || null } : {}),
-          ...(data.notes !== undefined
-            ? {
-                configurationSignature: this.signatureOf({
-                  menuItemId: item.menuItemId,
-                  variantOptionIds: item.variantOptions.map((entry) => entry.optionId),
-                  addOns: item.addOns.map((entry) => ({
-                    addOnId: entry.addOnId,
-                    quantity: entry.quantity,
-                  })),
-                  notes: data.notes,
-                }),
-              }
-            : {}),
+          configurationSignature: nextSignature,
         },
       });
       await this.recalculate(tx, owned, data.version);

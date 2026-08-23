@@ -1,4 +1,4 @@
-import { ConflictException } from '@nestjs/common';
+import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@restaurant/database/generated';
 import type { PrismaService } from '../../prisma/prisma.service';
 import { MenuAvailabilityService } from '../menu/menu-availability.service';
@@ -17,6 +17,7 @@ describe('CartService', () => {
         findFirst: jest.fn(),
         create: jest.fn(),
         updateMany: jest.fn(),
+        delete: jest.fn(),
         findUniqueOrThrow: jest.fn(),
       },
       cartItem: {
@@ -25,6 +26,7 @@ describe('CartService', () => {
         findMany: jest.fn(),
         create: jest.fn(),
         update: jest.fn(),
+        delete: jest.fn(),
         deleteMany: jest.fn(),
         aggregate: jest.fn(),
       },
@@ -167,6 +169,62 @@ describe('CartService', () => {
           totalPrice: new Prisma.Decimal('24.00'),
         },
       });
+    });
+  });
+
+  describe('guards and concurrency', () => {
+    it('rejects a stale cart version before changing items', async () => {
+      prismaMock.cart.findFirst.mockResolvedValue({
+        id: 'cart-1', userId: 'user-1', restaurantId: 'rest-1', version: 2,
+        restaurant: { settings: { taxRate: new Prisma.Decimal('14') } },
+      });
+      await expect(service.addItem('user-1', 'cart-1', { menuItemId: 'item-1', quantity: 1, version: 1 }))
+        .rejects.toBeInstanceOf(ConflictException);
+      expect(prismaMock.cartItem.create).not.toHaveBeenCalled();
+    });
+
+    it('rejects an update for a cart item that is not owned by the cart', async () => {
+      prismaMock.cart.findFirst.mockResolvedValue({
+        id: 'cart-1', userId: 'user-1', restaurantId: 'rest-1', version: 1,
+        restaurant: { settings: { taxRate: new Prisma.Decimal('14') } },
+      });
+      prismaMock.cartItem.findFirst.mockResolvedValue(null);
+      await expect(service.updateItem('user-1', 'cart-1', 'foreign-item', { quantity: 2, version: 1 }))
+        .rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('merges note changes into an existing matching cart line', async () => {
+      prismaMock.cart.findFirst.mockResolvedValue({
+        id: 'cart-1', userId: 'user-1', restaurantId: 'rest-1', version: 1,
+        restaurant: { settings: { taxRate: new Prisma.Decimal('14') } },
+      });
+      prismaMock.cartItem.findFirst.mockResolvedValue({
+        id: 'item-1', menuItemId: 'menu-1', quantity: 2,
+        unitPrice: new Prisma.Decimal('10'), configurationSignature: 'old-signature',
+        variantOptions: [], addOns: [],
+      });
+      prismaMock.cartItem.findUnique.mockResolvedValue({ id: 'item-2', quantity: 1, unitPrice: new Prisma.Decimal('10') });
+      prismaMock.cartItem.aggregate.mockResolvedValue({ _sum: { totalPrice: new Prisma.Decimal('30') } });
+      prismaMock.cart.updateMany.mockResolvedValue({ count: 1 });
+      prismaMock.cart.findUniqueOrThrow.mockResolvedValue({ subtotal: new Prisma.Decimal('30'), tax: new Prisma.Decimal('4.2'), discount: new Prisma.Decimal('0'), total: new Prisma.Decimal('34.2'), items: [] });
+      await service.updateItem('user-1', 'cart-1', 'item-1', { notes: 'No onions', version: 1 });
+      expect(prismaMock.cartItem.update).toHaveBeenCalledWith(expect.objectContaining({ where: { id: 'item-2' }, data: expect.objectContaining({ quantity: 3 }) }));
+      expect(prismaMock.cartItem.delete).toHaveBeenCalledWith({ where: { id: 'item-1' } });
+    });
+
+    it('rejects merging note changes when the combined quantity exceeds 99', async () => {
+      prismaMock.cart.findFirst.mockResolvedValue({ id: 'cart-1', userId: 'user-1', restaurantId: 'rest-1', version: 1, restaurant: { settings: { taxRate: new Prisma.Decimal('14') } } });
+      prismaMock.cartItem.findFirst.mockResolvedValue({ id: 'item-1', menuItemId: 'menu-1', quantity: 2, unitPrice: new Prisma.Decimal('10'), configurationSignature: 'old', variantOptions: [], addOns: [] });
+      prismaMock.cartItem.findUnique.mockResolvedValue({ id: 'item-2', quantity: 98, unitPrice: new Prisma.Decimal('10') });
+      await expect(service.updateItem('user-1', 'cart-1', 'item-1', { notes: 'No onions', version: 1 })).rejects.toBeInstanceOf(BadRequestException);
+    });
+
+    it('returns the cart created by a concurrent request after a unique conflict', async () => {
+      const existing = { id: 'cart-2', subtotal: new Prisma.Decimal('0'), tax: new Prisma.Decimal('0'), discount: new Prisma.Decimal('0'), total: new Prisma.Decimal('0'), items: [] };
+      prismaMock.cart.findFirst.mockResolvedValueOnce(null).mockResolvedValueOnce(existing);
+      prismaMock.restaurant.findFirst.mockResolvedValue({ id: 'rest-1', currency: 'EUR', settings: { acceptsOrders: true } });
+      prismaMock.cart.create.mockRejectedValue({ code: 'P2002' });
+      await expect(service.getOrCreate('user-1', 'rest-1')).resolves.toMatchObject({ id: 'cart-2' });
     });
   });
 });
