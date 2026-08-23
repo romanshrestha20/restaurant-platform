@@ -82,6 +82,7 @@ export class MenuAvailabilityService {
             taxRate: true,
             minimumOrder: true,
             deliveryFee: true,
+            deliveryRadiusKm: true,
             serviceFee: true,
           },
         },

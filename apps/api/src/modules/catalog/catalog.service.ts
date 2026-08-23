@@ -4,9 +4,63 @@ import { PrismaService } from '../../prisma/prisma.service';
 const money = (value: { toFixed(digits: number): string } | number) =>
   value.toFixed(2);
 
+const distanceKm = (fromLat: number, fromLng: number, toLat: number, toLng: number) => {
+  const radians = (value: number) => (value * Math.PI) / 180;
+  const dLat = radians(toLat - fromLat);
+  const dLng = radians(toLng - fromLng);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(radians(fromLat)) * Math.cos(radians(toLat)) * Math.sin(dLng / 2) ** 2;
+  return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+};
+
 @Injectable()
 export class CatalogService {
   constructor(private readonly prisma: PrismaService) {}
+
+  async listRestaurants(customerLatitude?: number, customerLongitude?: number) {
+    const hasCustomerLocation = Number.isFinite(customerLatitude) && Number.isFinite(customerLongitude);
+    const restaurants = await this.prisma.restaurant.findMany({
+      where: {
+        isActive: true,
+        status: 'ACTIVE',
+        deletedAt: null,
+        settings: { acceptsOrders: true },
+        menus: { some: { isActive: true, deletedAt: null, categories: { some: { status: 'ACTIVE', deletedAt: null, menuItems: { some: { status: 'AVAILABLE', deletedAt: null } } } } } },
+      },
+      orderBy: { name: 'asc' },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        description: true,
+        currency: true,
+        settings: { select: { estimatedPrepMinutes: true, deliveryRadiusKm: true, deliveryFee: true, minimumOrder: true } },
+        media: { where: { type: { in: ['COVER', 'LOGO'] } }, select: { type: true, alt: true, media: { select: { url: true } } } },
+        addresses: { where: { isPrimary: true }, take: 1, select: { city: true, country: true, latitude: true, longitude: true } },
+        _count: { select: { menuItems: true } },
+      },
+    });
+
+    return restaurants.flatMap((restaurant) => {
+      const address = restaurant.addresses[0];
+      const hasCoordinates = address?.latitude != null && address.longitude != null;
+      const distance = hasCustomerLocation && hasCoordinates
+        ? distanceKm(customerLatitude!, customerLongitude!, Number(address.latitude), Number(address.longitude))
+        : null;
+      const deliveryRadiusKm = restaurant.settings ? Number(restaurant.settings.deliveryRadiusKm) : 5;
+      if (hasCustomerLocation && (distance === null || distance > deliveryRadiusKm)) return [];
+      return [{
+        ...restaurant,
+        addresses: restaurant.addresses.map(({ latitude, longitude, ...place }) => place),
+        distanceKm: distance === null ? null : Number(distance.toFixed(1)),
+        deliveryRadiusKm,
+        deliveryFee: restaurant.settings ? Number(restaurant.settings.deliveryFee) : 0,
+        minimumOrder: restaurant.settings ? Number(restaurant.settings.minimumOrder) : 0,
+        deliveryAvailable: distance !== null && distance <= deliveryRadiusKm,
+        itemCount: restaurant._count.menuItems,
+        _count: undefined,
+      }];
+    });
+  }
 
   async getRestaurantCatalog(slug: string) {
     const restaurant = await this.prisma.restaurant.findFirst({
