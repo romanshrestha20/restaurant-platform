@@ -1,5 +1,5 @@
-import { RestaurantListPage } from '@/modules/restaurants';
+import { CustomerDiscoveryPage } from '@/modules/restaurants/components/customer-discovery-page';
 
 export default function RestaurantsPage() {
-  return <RestaurantListPage />;
+  return <CustomerDiscoveryPage />;
 }

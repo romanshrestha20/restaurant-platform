@@ -1,5 +1,6 @@
 import { ProtectedRoute } from '@/modules/auth';
 import { OrdersPage } from '@/modules/order';
+import { CustomerNavigation } from '@/components/customer';
 
 export const metadata = {
   title: 'My Orders',
@@ -9,7 +10,7 @@ export const metadata = {
 export default function OrdersRoute() {
   return (
     <ProtectedRoute>
-      <OrdersPage />
+      <div className="customer-page"><CustomerNavigation /><OrdersPage /></div>
     </ProtectedRoute>
   );
 }
