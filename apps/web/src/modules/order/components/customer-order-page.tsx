@@ -13,6 +13,7 @@ import {
   PageSkeleton,
   Textarea,
 } from '@/components/ui';
+import { CustomerNavigation } from '@/components/customer';
 import { ApiError } from '@/lib/api';
 import { useToast } from '@/lib/toast';
 import { useAuth } from '@/modules/auth';
@@ -161,6 +162,7 @@ export function CustomerOrderPage({ slug }: { slug: string }) {
 
   return (
     <div className="customer-order">
+      <CustomerNavigation />
       <header className="customer-order-hero" style={cover ? { backgroundImage: `url(${cover.media.url})` } : undefined}>
         <nav className="customer-order-nav">
           <a href="#menu">Menu</a>
