@@ -15,7 +15,7 @@ describe('OrdersService', () => {
     prismaMock = {
       restaurant: { findFirst: jest.fn() },
       menuItem: { findFirst: jest.fn() },
-      cart: { findFirst: jest.fn(), update: jest.fn() },
+      cart: { findFirst: jest.fn(), update: jest.fn(), updateMany: jest.fn() },
       cartItem: { deleteMany: jest.fn() },
       restaurantTable: { findFirst: jest.fn(), findUnique: jest.fn(), update: jest.fn() },
       address: { findFirst: jest.fn(), create: jest.fn() },
@@ -34,7 +34,7 @@ describe('OrdersService', () => {
         payment: { create: jest.fn() },
         couponUsage: { create: jest.fn() },
         coupon: { update: jest.fn() },
-        cart: { update: jest.fn() },
+        cart: { update: jest.fn(), updateMany: jest.fn().mockResolvedValue({ count: 1 }) },
         cartItem: { deleteMany: jest.fn() },
         restaurantTable: { update: jest.fn() },
         activityLog: { create: jest.fn() },
@@ -262,7 +262,7 @@ describe('OrdersService', () => {
           order: { create: orderCreateMock },
           payment: { create: jest.fn() },
           couponUsage: { create: jest.fn() },
-          cart: { update: jest.fn() },
+        cart: { update: jest.fn(), updateMany: jest.fn().mockResolvedValue({ count: 1 }) },
           cartItem: { deleteMany: jest.fn() },
           restaurantTable: { update: jest.fn() },
           activityLog: { create: jest.fn() },
@@ -475,7 +475,7 @@ describe('OrdersService', () => {
 
       prismaMock.$transaction.mockImplementation(async (cb: any) =>
         cb({
-          order: { update: jest.fn().mockResolvedValue(updatedOrder) },
+          order: { updateMany: jest.fn().mockResolvedValue({ count: 1 }), update: jest.fn().mockResolvedValue(updatedOrder) },
           activityLog: { create: jest.fn() },
         }),
       );
@@ -493,6 +493,18 @@ describe('OrdersService', () => {
         'order:status_changed',
         expect.any(Object),
       );
+    });
+
+    it('rejects a status update when another staff member changed the order first', async () => {
+      prismaMock.order.findFirst.mockResolvedValue({
+        id: 'order-1', restaurantId: 'rest-1', status: OrderStatus.PENDING, tableId: null,
+      });
+      prismaMock.$transaction.mockImplementation(async (cb: any) => cb({
+        order: { updateMany: jest.fn().mockResolvedValue({ count: 0 }), update: jest.fn() },
+      }));
+
+      await expect(service.updateOrderStatus('rest-1', 'order-1', { status: OrderStatus.CONFIRMED }, 'staff-2'))
+        .rejects.toThrow('Order status changed by another staff member');
     });
   });
 });

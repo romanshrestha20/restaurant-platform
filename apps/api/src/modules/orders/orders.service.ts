@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -21,6 +22,14 @@ import type {
 
 const fixed = (value: Prisma.Decimal | number | string) =>
   Number(value).toFixed(2);
+
+const distanceKm = (fromLat: number, fromLng: number, toLat: number, toLng: number) => {
+  const radians = (value: number) => (value * Math.PI) / 180;
+  const dLat = radians(toLat - fromLat);
+  const dLng = radians(toLng - fromLng);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(radians(fromLat)) * Math.cos(radians(toLat)) * Math.sin(dLng / 2) ** 2;
+  return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+};
 
 const orderInclude = {
   restaurant: {
@@ -198,6 +207,16 @@ export class OrdersService {
           where: { id: data.deliveryAddressId, userId },
         });
         if (!address) throw new BadRequestException('Delivery address not found');
+        const restaurantAddress = await this.prisma.restaurantAddress.findFirst({ where: { restaurantId: data.restaurantId, isPrimary: true }, select: { latitude: true, longitude: true } });
+        if (address.latitude !== null && address.longitude !== null && restaurantAddress?.latitude != null && restaurantAddress.longitude != null) {
+          const radians = (value: number) => (value * Math.PI) / 180;
+          const dLat = radians(Number(address.latitude) - Number(restaurantAddress.latitude));
+          const dLng = radians(Number(address.longitude) - Number(restaurantAddress.longitude));
+          const a = Math.sin(dLat / 2) ** 2 + Math.cos(radians(Number(restaurantAddress.latitude))) * Math.cos(radians(Number(address.latitude))) * Math.sin(dLng / 2) ** 2;
+          const distanceKm = 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+          const radiusKm = restaurant.settings ? Number(restaurant.settings.deliveryRadiusKm) : 5;
+          if (distanceKm > radiusKm) throw new BadRequestException(`This restaurant does not deliver within ${radiusKm} km of the selected address`);
+        }
         deliveryAddressId = address.id;
       } else if (data.deliveryAddress) {
         const createdAddress = await this.prisma.address.create({
@@ -267,6 +286,9 @@ export class OrdersService {
 
     const orderNumber = this.generateOrderNumber(restaurant.slug);
 
+    const deliveryAddressSnapshot = deliveryAddressId
+      ? await this.prisma.address.findUnique({ where: { id: deliveryAddressId }, select: { label: true, street: true, city: true, postalCode: true, country: true, latitude: true, longitude: true } })
+      : null;
     const restaurantSnapshot = {
       id: restaurant.id,
       name: restaurant.name,
@@ -278,12 +300,29 @@ export class OrdersService {
             deliveryFee: fixed(restaurant.settings.deliveryFee ?? 0),
             serviceFee: fixed(restaurant.settings.serviceFee ?? 0),
             minimumOrder: fixed(restaurant.settings.minimumOrder ?? 0),
+            deliveryRadiusKm: fixed(restaurant.settings.deliveryRadiusKm ?? 5),
           }
         : null,
+      delivery: data.type === OrderType.DELIVERY ? { fee: fixed(deliveryFee), address: deliveryAddressSnapshot } : null,
     };
 
     // Run order creation in a single transaction
     const order = await this.prisma.$transaction(async (tx) => {
+      // Claim the cart before creating any order side effects. The conditional
+      // update serializes concurrent checkout attempts for the same cart.
+      const claimedCart = await tx.cart.updateMany({
+        where: {
+          id: cart.id,
+          userId,
+          restaurantId: data.restaurantId,
+          status: 'ACTIVE',
+        },
+        data: { status: 'CHECKED_OUT', version: { increment: 1 } },
+      });
+      if (!claimedCart.count) {
+        throw new ConflictException('This cart has already been checked out; reload your cart');
+      }
+
       const createdOrder = await tx.order.create({
         data: {
           orderNumber,
@@ -397,12 +436,6 @@ export class OrdersService {
         },
       });
 
-      // Update Cart Status
-      await tx.cart.update({
-        where: { id: cart.id },
-        data: { status: 'CHECKED_OUT' },
-      });
-
       // Delete checked out cart items so cart starts fresh
       await tx.cartItem.deleteMany({
         where: { cartId: cart.id },
@@ -451,6 +484,27 @@ export class OrdersService {
     });
 
     return orders.map((order) => this.serializeOrder(order));
+  }
+
+  async getDeliveryQuote(userId: string, restaurantId: string, addressId: string) {
+    const [restaurant, address] = await Promise.all([
+      this.prisma.restaurant.findFirst({ where: { id: restaurantId, isActive: true, status: 'ACTIVE', deletedAt: null }, select: { settings: true, addresses: { where: { isPrimary: true }, take: 1, select: { latitude: true, longitude: true } } } }),
+      this.prisma.address.findFirst({ where: { id: addressId, userId } }),
+    ]);
+    if (!restaurant?.settings || !address) throw new NotFoundException('Delivery details not found');
+    const restaurantAddress = restaurant.addresses[0];
+    const hasCoordinates = address.latitude !== null && address.longitude !== null && restaurantAddress?.latitude !== null && restaurantAddress?.longitude !== null;
+    const distance = hasCoordinates ? distanceKm(Number(restaurantAddress!.latitude), Number(restaurantAddress!.longitude), Number(address.latitude), Number(address.longitude)) : null;
+    const radiusKm = Number(restaurant.settings.deliveryRadiusKm);
+    const deliveryAvailable = distance !== null && distance <= radiusKm;
+    return {
+      deliveryAvailable,
+      deliveryFee: deliveryAvailable ? fixed(restaurant.settings.deliveryFee) : fixed(0),
+      minimumOrder: fixed(restaurant.settings.minimumOrder),
+      estimatedDeliveryMinutes: deliveryAvailable ? restaurant.settings.estimatedPrepMinutes + 15 : null,
+      deliveryRadiusKm: fixed(radiusKm),
+      distanceKm: distance === null ? null : Number(distance.toFixed(1)),
+    };
   }
 
   async getCustomerOrder(userId: string, orderId: string) {
@@ -545,10 +599,23 @@ export class OrdersService {
     this.validateStatusTransition(currentOrder.status, data.status);
 
     const updatedOrder = await this.prisma.$transaction(async (tx) => {
-      const updated = await tx.order.update({
-        where: { id: orderId },
+      const updated = await tx.order.updateMany({
+        where: {
+          id: orderId,
+          restaurantId,
+          status: currentOrder.status,
+        },
         data: {
           status: data.status,
+        },
+      });
+      if (!updated.count) {
+        throw new ConflictException('Order status changed by another staff member; reload the order');
+      }
+
+      const updatedWithHistory = await tx.order.update({
+        where: { id: orderId },
+        data: {
           history: {
             create: {
               status: data.status,
@@ -593,7 +660,7 @@ export class OrdersService {
         },
       });
 
-      return updated;
+      return updatedWithHistory;
     });
 
     this.emitOrderEvents(updatedOrder, 'order:status_changed');

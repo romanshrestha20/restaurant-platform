@@ -39,6 +39,12 @@ export class OrdersController {
     return this.ordersService.getCustomerOrders(user.id);
   }
 
+  @Get('customer/orders/delivery-quote')
+  @UseGuards(AccessTokenGuard)
+  async deliveryQuote(@CurrentUser() user: AccessAuthUser, @Query('restaurantId') restaurantId: string, @Query('addressId') addressId: string) {
+    return this.ordersService.getDeliveryQuote(user.id, restaurantId, addressId);
+  }
+
   @Get('customer/orders/:orderId')
   @UseGuards(AccessTokenGuard)
   getCustomerOrder(
