@@ -6,6 +6,7 @@ import { ToastProvider } from '@/lib/toast';
 import { ThemeProvider } from '@/lib/theme';
 import { BrandProvider, type BrandId } from '@/lib/brand';
 import { RealtimeProvider } from '@/lib/realtime';
+import { LocationProvider } from '@/lib/location/location-context';
 
 export function AppProviders({
   brand,
@@ -19,7 +20,9 @@ export function AppProviders({
       <ThemeProvider>
         <ToastProvider>
           <AuthProvider>
-            <RealtimeProvider>{children}</RealtimeProvider>
+            <LocationProvider>
+              <RealtimeProvider>{children}</RealtimeProvider>
+            </LocationProvider>
           </AuthProvider>
         </ToastProvider>
       </ThemeProvider>

@@ -273,6 +273,9 @@ function UserMenu({
         <small>{user?.email}</small>
       </div>
       <Divider className="workspace-menu__divider" />
+      <DropdownItem onClick={() => router.push("/restaurants")}>
+        View customer site
+      </DropdownItem>
       <DropdownItem onClick={() => router.push("/orders")}>
         My orders
       </DropdownItem>
