@@ -19,6 +19,9 @@
 .discovery-hero .customer-navigation nav a { color: #e5e6d8; }
 .discovery-hero .customer-navigation nav a.is-active, .discovery-hero .customer-navigation nav a:hover { color: #fff; }
 .customer-page { min-height: 100vh; background: var(--color-background); }
+.auth-form__forgot { align-self: flex-end; color: var(--color-accent); font-size: .75rem; font-weight: 650; text-decoration: none; }
+.auth-form__forgot:hover { text-decoration: underline; }
+.auth-password-hint { margin: -.35rem 0 0; color: var(--color-text-muted); font-size: .72rem; }
 .customer-empty-page { width: min(100% - 2.5rem, 54rem); margin: 0 auto; padding: clamp(5rem, 12vw, 10rem) 0; }
 .customer-empty-page h1 { max-width: 10ch; margin: .5rem 0 1rem; font-family: var(--font-display); font-size: clamp(3.5rem, 8vw, 7rem); font-weight: 400; letter-spacing: -.06em; line-height: .88; }
 .customer-empty-page p:not(.eyebrow) { max-width: 27rem; margin-bottom: 2rem; color: var(--color-text-muted); font-size: .85rem; line-height: 1.6; }
@@ -1012,7 +1015,7 @@ textarea:focus-visible {
 
 .account-sidebar {
   border-right: 1px solid var(--color-border);
-  padding: 3.8rem 2rem 3rem 0;
+  padding: 3.8rem 2rem 3rem;
 }
 
 .account-sidebar__heading h1 {

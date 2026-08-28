@@ -4,11 +4,11 @@
   --restaurant-cover-border: rgb(255 255 255 / 36%);
   --restaurant-cover-glass: rgb(255 255 255 / 12%);
   --restaurant-cover-muted: rgb(255 255 255 / 64%);
-  --workspace-sidebar-background: #101713;
-  --workspace-sidebar-surface: #18221d;
-  --workspace-sidebar-border: rgb(255 255 255 / 10%);
-  --workspace-sidebar-text: #f4f0e7;
-  --workspace-sidebar-muted: rgb(244 240 231 / 56%);
+  --workspace-sidebar-background: var(--color-brand-background);
+  --workspace-sidebar-surface: color-mix(in srgb, var(--color-brand-background) 82%, var(--color-brand-text));
+  --workspace-sidebar-border: color-mix(in srgb, var(--color-brand-text) 16%, transparent);
+  --workspace-sidebar-text: var(--color-brand-text);
+  --workspace-sidebar-muted: var(--color-brand-muted);
 
   /* Focus */
   --focus-outline: 3px solid var(--color-focus);

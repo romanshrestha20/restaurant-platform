@@ -3,21 +3,21 @@
    ========================================================================== */
 
 :root {
-  --tf-bg-outer: #efebe1;
-  --tf-bg-card: #fbf9f5;
-  --tf-bg-white: #ffffff;
-  --tf-text-primary: #1b1e1b;
-  --tf-text-secondary: #575e55;
-  --tf-text-muted: #747d72;
-  --tf-green-eyebrow: #29553c;
-  --tf-border-subtle: #eae5d9;
-  --tf-border-medium: #d8d2c4;
-  --tf-border-dark: #1b1e1b;
-  --tf-font-serif: Georgia, "Playfair Display", "Times New Roman", serif;
-  --tf-font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --tf-radius-card: 14px;
-  --tf-radius-pill: 999px;
-  --tf-radius-sm: 8px;
+  --tf-bg-outer: var(--color-background);
+  --tf-bg-card: var(--color-surface);
+  --tf-bg-white: var(--color-surface-raised);
+  --tf-text-primary: var(--color-foreground);
+  --tf-text-secondary: var(--color-text-muted);
+  --tf-text-muted: var(--color-text-subtle);
+  --tf-green-eyebrow: var(--color-accent);
+  --tf-border-subtle: var(--color-border);
+  --tf-border-medium: var(--color-border-strong);
+  --tf-border-dark: var(--color-foreground);
+  --tf-font-serif: var(--font-display);
+  --tf-font-sans: var(--font-body);
+  --tf-radius-card: var(--radius-lg);
+  --tf-radius-pill: var(--radius-round);
+  --tf-radius-sm: var(--radius-sm);
 }
 
 /* Prototype Walkthrough Outer Layout */
@@ -1763,6 +1763,14 @@
   margin: 0;
 }
 
+.tf-order-filters { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1.25rem; }
+.tf-order-filters button { border: 1px solid var(--tf-border-medium); border-radius: var(--tf-radius-pill); padding: .45rem .8rem; background: transparent; color: var(--tf-text-secondary); font-size: .75rem; font-weight: 700; cursor: pointer; }
+.tf-order-filters button:hover, .tf-order-filters button.is-active { border-color: var(--tf-text-primary); background: var(--tf-text-primary); color: var(--tf-bg-white); }
+.tf-order-filters button span { margin-left: .35rem; opacity: .7; }
+.tf-orders-sections { display: grid; gap: 2.25rem; }
+.tf-orders-section-title { display: flex; align-items: baseline; gap: .55rem; margin: 0 0 .8rem; font-family: var(--tf-font-serif); font-size: 1.35rem; font-weight: 700; }
+.tf-orders-section-title span { color: var(--tf-text-muted); font-family: var(--tf-font-sans); font-size: .72rem; font-weight: 700; }
+
 .tf-tracking-back-btn {
   display: inline-block;
   color: var(--tf-text-muted);
@@ -1794,6 +1802,7 @@
   border-radius: 14px;
   border: 1px dashed var(--tf-border-medium);
 }
+.tf-orders-empty--filtered { padding: 3rem 2rem; }
 
 .tf-orders-empty-icon {
   font-size: 3rem;
@@ -1864,6 +1873,8 @@
   background: #f5edda;
   color: #805b09;
 }
+.tf-order-badge.is-neutral { background: var(--tf-bg-card); color: var(--tf-text-secondary); }
+.tf-order-badge.is-danger { background: #f7e8e5; color: #84342d; }
 
 .tf-order-card__restaurant {
   font-family: var(--tf-font-serif);
@@ -2257,4 +2268,64 @@
     grid-template-columns: repeat(3, 1fr);
     gap: 0.8rem 0.4rem;
   }
+}
+
+/* Keep customer surfaces readable when the shared dark theme is active. */
+[data-theme='dark'] .tf-cart-empty-state,
+[data-theme='dark'] .tf-cart-restaurant-card,
+[data-theme='dark'] .tf-cart-lines-list,
+[data-theme='dark'] .tf-cart-notes-card,
+[data-theme='dark'] .tf-cart-summary-card,
+[data-theme='dark'] .tf-order-card,
+[data-theme='dark'] .tf-orders-empty {
+  background: var(--tf-bg-white);
+  color: var(--tf-text-primary);
+}
+
+[data-theme='dark'] .tf-cart-empty-state,
+[data-theme='dark'] .tf-order-card {
+  border-color: var(--tf-border-medium);
+}
+
+[data-theme='dark'] .tf-search-input,
+[data-theme='dark'] .tf-hero-search__input,
+[data-theme='dark'] .tf-pill-btn,
+[data-theme='dark'] .tf-menu-tab,
+[data-theme='dark'] .tf-dish-card,
+[data-theme='dark'] .tf-menu-nav-bar {
+  background: var(--tf-bg-white);
+  color: var(--tf-text-primary);
+  border-color: var(--tf-border-medium);
+}
+
+[data-theme='dark'] .tf-order-badge.is-info { background: var(--color-info-soft); color: var(--color-info); }
+[data-theme='dark'] .tf-order-badge.is-success { background: var(--color-success-soft); color: var(--color-success); }
+[data-theme='dark'] .tf-order-badge.is-warning { background: var(--color-warning-soft); color: var(--color-warning); }
+[data-theme='dark'] .tf-order-badge.is-danger { background: var(--color-danger-soft); color: var(--color-danger-text); }
+
+[data-theme='dark'] .tf-btn-primary,
+[data-theme='dark'] .tf-btn-secondary,
+[data-theme='dark'] .tf-checkout-cta,
+[data-theme='dark'] .tf-drawer-checkout-btn {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+[data-theme='dark'] .tf-btn-primary:hover,
+[data-theme='dark'] .tf-btn-secondary:hover,
+[data-theme='dark'] .tf-checkout-cta:hover,
+[data-theme='dark'] .tf-drawer-checkout-btn:hover {
+  background: var(--color-accent-strong);
+}
+
+[data-theme='dark'] .tf-search-input::placeholder,
+[data-theme='dark'] .tf-hero-search__input::placeholder {
+  color: var(--tf-text-muted);
+}
+
+[data-theme='dark'] .tf-cart-empty-subtitle,
+[data-theme='dark'] .tf-orders-empty p,
+[data-theme='dark'] .tf-cart-line-notes,
+[data-theme='dark'] .tf-summary-row {
+  color: var(--tf-text-secondary);
 }
