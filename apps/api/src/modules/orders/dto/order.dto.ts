@@ -74,6 +74,11 @@ export class CheckoutDto {
   @Transform(trim)
   @IsString()
   couponCode?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  tipPercentage?: number;
 }
 
 export class UpdateOrderStatusDto {

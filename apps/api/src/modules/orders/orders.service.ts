@@ -103,6 +103,8 @@ export class OrdersService {
       this.prisma,
       data.restaurantId,
     );
+    // The customer web app uses public slugs; persist the canonical database ID.
+    data = { ...data, restaurantId: restaurant.id };
 
     // Retrieve active cart with detailed items
     const cart = await this.prisma.cart.findFirst({
@@ -274,13 +276,15 @@ export class OrdersService {
         : 0;
     const serviceFee =
       restaurant.settings ? Number(restaurant.settings.serviceFee) : 0;
+    const tipPercentage = Math.min(30, Math.max(0, data.tipPercentage ?? 0));
+    const tipAmount = new Prisma.Decimal(((subtotalNum * tipPercentage) / 100).toFixed(2));
     const taxRate = restaurant.settings ? Number(restaurant.settings.taxRate) : 14;
 
     const finalSubtotal = new Prisma.Decimal(cart.subtotal);
     const taxableAmount = Math.max(0, subtotalNum - Number(discountAmount) + serviceFee);
     const finalTax = new Prisma.Decimal(((taxableAmount * taxRate) / 100).toFixed(2));
     const finalTotal = new Prisma.Decimal(
-      (taxableAmount + Number(finalTax) + deliveryFee).toFixed(2),
+      (taxableAmount + Number(finalTax) + deliveryFee + Number(tipAmount)).toFixed(2),
     );
 
     const orderNumber = this.generateOrderNumber(restaurant.slug);
@@ -335,6 +339,7 @@ export class OrdersService {
           subtotal: finalSubtotal,
           tax: finalTax,
           discount: discountAmount,
+          tip: tipAmount,
           total: finalTotal,
           restaurantSnapshot,
           items: {
@@ -753,6 +758,7 @@ export class OrdersService {
       subtotal: fixed(order.subtotal),
       tax: fixed(order.tax),
       discount: fixed(order.discount),
+      tip: fixed(order.tip ?? 0),
       total: fixed(order.total),
       items: order.items.map((item: any) => ({
         ...item,

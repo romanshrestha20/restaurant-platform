@@ -69,6 +69,9 @@ export const envValidationSchema = Joi.object({
       otherwise: Joi.optional(),
     }),
   HEALTH_DATABASE_TIMEOUT_MS: Joi.number().integer().positive().default(3_000),
+  STRIPE_SECRET_KEY: Joi.string().empty('').optional(),
+  STRIPE_PUBLISHABLE_KEY: Joi.string().empty('').optional(),
+  STRIPE_WEBHOOK_SECRET: Joi.string().empty('').optional(),
 })
   .and('SMTP_USER', 'SMTP_PASSWORD')
   .and('CLOUDINARY_CLOUD_NAME', 'CLOUDINARY_API_KEY', 'CLOUDINARY_API_SECRET');
@@ -98,4 +101,7 @@ export interface AppEnvironment {
   CLOUDINARY_API_KEY?: string;
   CLOUDINARY_API_SECRET?: string;
   HEALTH_DATABASE_TIMEOUT_MS: number;
+  STRIPE_SECRET_KEY?: string;
+  STRIPE_PUBLISHABLE_KEY?: string;
+  STRIPE_WEBHOOK_SECRET?: string;
 }

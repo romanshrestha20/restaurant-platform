@@ -66,7 +66,7 @@ export class MenuAvailabilityService {
     const db = client ?? this.prisma;
     const restaurant = await db.restaurant.findFirst({
       where: {
-        id: restaurantId,
+        OR: [{ id: restaurantId }, { slug: restaurantId }],
         isActive: true,
         status: 'ACTIVE',
         deletedAt: null,

@@ -7,8 +7,9 @@ export class NoopPaymentProvider implements PaymentProvider {
     amount: number;
     currency: string;
     orderId: string;
+    paymentId: string;
     attemptId: string;
-  }): Promise<{ providerPaymentId: string; checkoutUrl?: string }> {
+  }): Promise<{ providerPaymentId: string; clientSecret?: string; checkoutUrl?: string }> {
     return { providerPaymentId: `pending_${input.attemptId}` };
   }
   async refundPayment(_providerPaymentId: string, _amount: number) {}

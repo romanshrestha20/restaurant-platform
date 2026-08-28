@@ -17,6 +17,7 @@ async function bootstrap(): Promise<void> {
   const environment = process.env.NODE_ENV ?? 'development';
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     logger: getLogLevels(environment),
+    rawBody: true,
   });
   const config = app.get<ConfigService<AppEnvironment, true>>(ConfigService);
   const port = config.get('PORT', { infer: true }) ?? 3001;
