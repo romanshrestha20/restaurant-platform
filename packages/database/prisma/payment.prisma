@@ -14,6 +14,8 @@ enum PaymentStatus {
   PAID
   FAILED
   CANCELLED
+  REFUND_PENDING
+  PARTIALLY_REFUNDED
   REFUNDED
 }
 
@@ -37,9 +39,14 @@ model Payment {
 
   transactionId String?
 
+  providerPaymentId String?
+
   provider String?
 
   providerData Json?
+
+  attempts PaymentAttempt[]
+  events PaymentEvent[]
 
   paidAt DateTime?
 
@@ -52,6 +59,32 @@ model Payment {
 
   @@index([status])
   @@map("payments")
+}
+
+model PaymentAttempt {
+  id String @id @default(cuid())
+  paymentId String
+  status PaymentStatus @default(PENDING)
+  providerPaymentId String?
+  failureReason String?
+  startedAt DateTime @default(now())
+  completedAt DateTime?
+  payment Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  @@index([paymentId, status])
+  @@map("payment_attempts")
+}
+
+model PaymentEvent {
+  id String @id @default(cuid())
+  paymentId String?
+  providerEventId String @unique
+  type String
+  payload Json
+  processedAt DateTime?
+  createdAt DateTime @default(now())
+  payment Payment? @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  @@index([paymentId, createdAt])
+  @@map("payment_events")
 }
 
 model Coupon {
