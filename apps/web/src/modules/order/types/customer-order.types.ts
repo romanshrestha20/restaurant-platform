@@ -50,10 +50,16 @@ export type CustomerCart = {
   version: number;
   currency: string;
   subtotal: string;
-  tax: string;
-  discount: string;
+  tax?: string;
+  discount?: string;
   total: string;
-  restaurant: { id: string; name: string; slug: string; currency: string };
+  restaurant: {
+    id: string;
+    name: string;
+    slug: string;
+    currency: string;
+    settings?: { estimatedPrepMinutes: number } | null;
+  };
   items: Array<{
     id: string;
     menuItemId: string;
@@ -98,6 +104,7 @@ export type OrderItemSummary = {
   quantity: number;
   unitPrice: string;
   totalPrice: string;
+  notes?: string | null;
   variantOptions: Array<{ name: string; priceAdjustment: string }>;
   addOns: Array<{ name: string; quantity: number; price: string }>;
 };

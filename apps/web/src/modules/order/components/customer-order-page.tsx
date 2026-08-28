@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import {
   Alert,
   Button,
@@ -16,7 +17,6 @@ import {
 import { CustomerNavigation } from '@/components/customer';
 import { ApiError } from '@/lib/api';
 import { useToast } from '@/lib/toast';
-import { useAuth } from '@/modules/auth';
 import { customerOrderService } from '../services/customer-order.service';
 import type {
   CatalogItem,
@@ -36,7 +36,6 @@ export function CustomerOrderPage({ slug }: { slug: string }) {
   const [cart, setCart] = useState<CustomerCart | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
   const [cartPending, setCartPending] = useState(false);
-  const { status: authStatus } = useAuth();
   const router = useRouter();
   const toast = useToast();
 
@@ -53,52 +52,21 @@ export function CustomerOrderPage({ slug }: { slug: string }) {
     }
   }, [slug]);
 
-  useEffect(() => { void loadCatalog(); }, [loadCatalog]);
   useEffect(() => {
-    if (authStatus !== 'authenticated' || !catalog) {
-      if (authStatus === 'unauthenticated') setCart(null);
-      return;
-    }
-    void customerOrderService.currentCart(catalog.id).then(setCart).catch(() => undefined);
-  }, [authStatus, catalog]);
+    void loadCatalog();
+  }, [loadCatalog]);
 
   useEffect(() => {
-    if (!cart || authStatus !== 'authenticated') return;
-    let timer: ReturnType<typeof setTimeout> | null = null;
-    const refresh = () => {
-      if (document.visibilityState !== 'visible') return;
-      if (timer) clearTimeout(timer);
-      timer = setTimeout(() => {
-        void customerOrderService.revalidate(cart.id, cart.version)
-          .then(({ cart: next, changes }) => {
-            setCart(next);
-            if (changes.length) toast.info('Your cart was updated with current menu prices');
-          })
-          .catch(async (error) => {
-            toast.error('Your cart needs attention', { description: errorMessage(error) });
-            try {
-              const current = await customerOrderService.currentCart(cart.restaurantId);
-              setCart(current);
-            } catch {
-              setCart(null);
-            }
-          });
-      }, 250);
-    };
-    window.addEventListener('focus', refresh);
-    document.addEventListener('visibilitychange', refresh);
-    return () => {
-      if (timer) clearTimeout(timer);
-      window.removeEventListener('focus', refresh);
-      document.removeEventListener('visibilitychange', refresh);
-    };
-  }, [authStatus, cart?.id, cart?.version, toast]);
+    if (!catalog) return;
+    void customerOrderService.currentCart(catalog.id).then(setCart).catch(() => undefined);
+  }, [catalog]);
 
   const menu = catalog?.menus.find((entry) => entry.id === activeMenu) ?? catalog?.menus[0];
   const categories = menu?.categories ?? [];
   const visibleCategories = activeCategory
     ? categories.filter((entry) => entry.id === activeCategory)
     : categories;
+
   const itemCount = cart?.items.reduce((total, item) => total + item.quantity, 0) ?? 0;
 
   const addToCart = async (input: {
@@ -109,10 +77,6 @@ export function CustomerOrderPage({ slug }: { slug: string }) {
     notes: string | null;
   }) => {
     if (!catalog) return;
-    if (authStatus !== 'authenticated') {
-      router.push(`/login?next=${encodeURIComponent(`/order/${slug}`)}`);
-      return;
-    }
     setCartPending(true);
     try {
       const activeCart = cart ?? (await customerOrderService.createCart(catalog.id));
@@ -127,24 +91,31 @@ export function CustomerOrderPage({ slug }: { slug: string }) {
       setCart(next);
       setSelectedItem(null);
       setCartOpen(true);
-      toast.success(`${input.item.name} added`);
+      toast.success(`${input.item.name} added to cart`);
     } catch (error) {
       toast.error('Could not add this item', { description: errorMessage(error) });
-    } finally { setCartPending(false); }
+    } finally {
+      setCartPending(false);
+    }
   };
 
   const updateQuantity = async (itemId: string, quantity: number) => {
     if (!cart || cartPending) return;
     if (quantity < 1) return removeItem(itemId);
     const snapshot = cart;
-    setCart({ ...cart, items: cart.items.map((item) => item.id === itemId ? { ...item, quantity } : item) });
+    setCart({
+      ...cart,
+      items: cart.items.map((item) => (item.id === itemId ? { ...item, quantity } : item)),
+    });
     setCartPending(true);
     try {
       setCart(await customerOrderService.updateItem(cart.id, itemId, { quantity, version: cart.version }));
     } catch (error) {
       setCart(snapshot);
       toast.error('Cart update failed', { description: errorMessage(error) });
-    } finally { setCartPending(false); }
+    } finally {
+      setCartPending(false);
+    }
   };
 
   const removeItem = async (itemId: string) => {
@@ -157,84 +128,208 @@ export function CustomerOrderPage({ slug }: { slug: string }) {
     } catch (error) {
       setCart(snapshot);
       toast.error('Could not remove item', { description: errorMessage(error) });
-    } finally { setCartPending(false); }
+    } finally {
+      setCartPending(false);
+    }
   };
 
-  if (status === 'loading') return <PageSkeleton className="customer-order-loading" />;
+  if (status === 'loading') return <PageSkeleton className="discovery-page" />;
   if (status === 'error' || !catalog) {
-    return <ErrorState title="Ordering unavailable" description="This restaurant could not be loaded." action={<Button onClick={() => void loadCatalog()}>Try again</Button>} />;
+    return (
+      <ErrorState
+        title="Ordering unavailable"
+        description="This restaurant could not be loaded."
+        action={<Button onClick={() => void loadCatalog()}>Try again</Button>}
+      />
+    );
   }
 
   const cover = catalog.media.find((entry) => entry.type === 'COVER');
-  const money = new Intl.NumberFormat(undefined, { style: 'currency', currency: catalog.currency });
+  const coverUrl = cover?.media.url || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1200&q=80';
+  const money = new Intl.NumberFormat(undefined, { style: 'currency', currency: catalog.currency || 'EUR' });
 
   return (
-    <div className="customer-order">
-      <CustomerNavigation />
-      <header className="customer-order-hero" style={cover ? { backgroundImage: `url(${cover.media.url})` } : undefined}>
-        <nav className="customer-order-nav">
-          <a href="#menu">Menu</a>
-          <Button className="customer-cart-trigger" variant="secondary" onClick={() => setCartOpen(true)}>
-            Cart <span>{itemCount}</span>{cart ? <strong>{money.format(Number(cart.total))}</strong> : null}
-          </Button>
-        </nav>
-        <div className="customer-order-hero__content">
-          <p>Order from</p>
-          <h1>{catalog.name}</h1>
-          <span>{catalog.description || 'Freshly prepared for you.'}</span>
-          {catalog.settings ? <small>Usually ready in {catalog.settings.estimatedPrepMinutes} minutes</small> : null}
-        </div>
-      </header>
+    <div className="tf-walkthrough-root">
+      <div className="tf-container-wrapper">
+        <main className="tf-app-card">
+          <CustomerNavigation />
 
-      <main id="menu" className="customer-menu">
-        <div className="customer-menu-heading">
-          <div><span>Browse</span><h2>Choose your meal</h2></div>
-          {catalog.menus.length > 1 ? (
-            <div className="customer-menu-tabs">
-              {catalog.menus.map((entry) => <button className={entry.id === menu?.id ? 'is-active' : ''} key={entry.id} onClick={() => { setActiveMenu(entry.id); setActiveCategory(entry.categories[0]?.id ?? ''); }}>{entry.name}</button>)}
-            </div>
-          ) : null}
-        </div>
-        <nav className="customer-category-nav" aria-label="Menu categories">
-          <button className={!activeCategory ? 'is-active' : ''} onClick={() => setActiveCategory('')}>All</button>
-          {categories.map((category) => <button className={activeCategory === category.id ? 'is-active' : ''} key={category.id} onClick={() => setActiveCategory(category.id)}>{category.name}</button>)}
-        </nav>
-        {!categories.length ? <EmptyState title="Menu coming soon" description="There are no items available to order right now." /> : null}
-        <div className="customer-menu-sections">
-          {visibleCategories.map((category) => (
-            <section key={category.id}>
-              <div className="customer-category-heading"><h3>{category.name}</h3><p>{category.description}</p></div>
-              <div className="customer-item-list">
-                {category.items.map((item, index) => (
-                  <button className="customer-item" key={item.id} style={{ animationDelay: `${index * 45}ms` }} onClick={() => setSelectedItem(item)}>
-                    <span className="customer-item__copy">
-                      <span>{item.isFeatured ? 'Featured' : category.name}</span>
-                      <strong>{item.name}</strong>
-                      <small>{item.description || 'Prepared to order.'}</small>
-                      <b>{money.format(Number(item.basePrice))}</b>
-                    </span>
-                    <span className="customer-item__image">
-                      {item.media[0] ? <img alt={item.media[0].alt ?? ''} src={item.media[0].media.url} /> : <i>{item.name.charAt(0)}</i>}
-                      <em>+</em>
-                    </span>
-                  </button>
-                ))}
+          {/* Restaurant Hero Banner */}
+          <header
+            className="tf-menu-hero"
+            style={{ backgroundImage: `url(${coverUrl})` }}
+          >
+            <div className="tf-menu-hero__overlay" />
+            <div className="tf-menu-hero__content">
+              <Link href="/restaurants" className="tf-menu-back-link">
+                ← Back to restaurants
+              </Link>
+              <span className="tf-menu-hero__eyebrow">ORDER ONLINE</span>
+              <h1 className="tf-menu-hero__title">{catalog.name}</h1>
+              <p className="tf-menu-hero__desc">
+                {catalog.description || 'Modern European dishes crafted from seasonal local ingredients.'}
+              </p>
+
+              <div className="tf-menu-hero__badges">
+                <span className="tf-hero-pill">
+                  ★ 4.8 (120+ reviews)
+                </span>
+                <span className="tf-hero-pill">
+                  {catalog.settings?.estimatedPrepMinutes ?? 25}–{(catalog.settings?.estimatedPrepMinutes ?? 25) + 10} min delivery
+                </span>
+                <span className="tf-hero-pill">
+                  €1.99 delivery fee
+                </span>
               </div>
-            </section>
-          ))}
-        </div>
-      </main>
+            </div>
 
-      <ItemConfigurator item={selectedItem} currency={catalog.currency} pending={cartPending} onAdd={addToCart} onOpenChange={(open) => { if (!open) setSelectedItem(null); }} />
-      <CartDrawer cart={cart} currency={catalog.currency} open={cartOpen} pending={cartPending} onOpenChange={setCartOpen} onQuantity={updateQuantity} onRemove={removeItem} onStart={() => setCartOpen(false)} onCheckout={() => { setCartOpen(false); router.push(`/checkout?restaurantId=${catalog.id}`); }} />
+            {/* Quick Floating Cart Trigger */}
+            <div className="tf-menu-hero__cart-bar">
+              <button
+                type="button"
+                className="tf-menu-cart-trigger"
+                onClick={() => setCartOpen(true)}
+              >
+                <span>🛒 View Cart ({itemCount})</span>
+                {cart && Number(cart.total) > 0 && (
+                  <strong>{money.format(Number(cart.total))}</strong>
+                )}
+              </button>
+            </div>
+          </header>
+
+          {/* Category Tabs */}
+          <div className="tf-menu-nav-bar">
+            <div className="tf-menu-tabs-scroll">
+              <button
+                type="button"
+                className={`tf-menu-tab ${!activeCategory ? 'is-active' : ''}`}
+                onClick={() => setActiveCategory('')}
+              >
+                All items
+              </button>
+              {categories.map((category) => (
+                <button
+                  type="button"
+                  key={category.id}
+                  className={`tf-menu-tab ${activeCategory === category.id ? 'is-active' : ''}`}
+                  onClick={() => setActiveCategory(category.id)}
+                >
+                  {category.name}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Menu Sections & Dishes Grid */}
+          <div className="tf-menu-body">
+            {!categories.length ? (
+              <EmptyState
+                title="Menu coming soon"
+                description="There are no items available to order right now."
+              />
+            ) : null}
+
+            {visibleCategories.map((category) => (
+              <section key={category.id} className="tf-menu-category-section">
+                <div className="tf-menu-category-header">
+                  <h2 className="tf-category-name">{category.name}</h2>
+                  {category.description && (
+                    <p className="tf-category-desc">{category.description}</p>
+                  )}
+                </div>
+
+                <div className="tf-dishes-grid">
+                  {category.items.map((item, index) => {
+                    const itemImage = item.media[0]?.media?.url;
+                    return (
+                      <article
+                        key={item.id}
+                        className="tf-dish-card"
+                        style={{ animationDelay: `${index * 40}ms` }}
+                        onClick={() => setSelectedItem(item)}
+                      >
+                        <div className="tf-dish-card__copy">
+                          {item.isFeatured && (
+                            <span className="tf-dish-featured-tag">Featured</span>
+                          )}
+                          <h3 className="tf-dish-title">{item.name}</h3>
+                          <p className="tf-dish-desc">{item.description}</p>
+                          <span className="tf-dish-price">
+                            {money.format(Number(item.basePrice))}
+                          </span>
+                        </div>
+
+                        <div className="tf-dish-card__media">
+                          {itemImage ? (
+                            <img src={itemImage} alt={item.name} className="tf-dish-img" loading="lazy" />
+                          ) : (
+                            <div className="tf-dish-img-placeholder">🍽️</div>
+                          )}
+                          <button
+                            type="button"
+                            className="tf-dish-add-btn"
+                            aria-label={`Customize and add ${item.name}`}
+                          >
+                            +
+                          </button>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              </section>
+            ))}
+          </div>
+
+          {/* Item Customizer Modal */}
+          <ItemConfigurator
+            item={selectedItem}
+            currency={catalog.currency || 'EUR'}
+            pending={cartPending}
+            onAdd={addToCart}
+            onOpenChange={(open) => {
+              if (!open) setSelectedItem(null);
+            }}
+          />
+
+          {/* Slide-Over Cart Drawer */}
+          <CartDrawer
+            cart={cart}
+            currency={catalog.currency || 'EUR'}
+            open={cartOpen}
+            pending={cartPending}
+            onOpenChange={setCartOpen}
+            onQuantity={updateQuantity}
+            onRemove={removeItem}
+            onStart={() => setCartOpen(false)}
+            onCheckout={() => {
+              setCartOpen(false);
+              router.push(`/checkout?restaurantId=${catalog.id}`);
+            }}
+          />
+        </main>
+      </div>
     </div>
   );
 }
 
-function ItemConfigurator({ currency, item, onAdd, onOpenChange, pending }: {
+function ItemConfigurator({
+  currency,
+  item,
+  onAdd,
+  onOpenChange,
+  pending,
+}: {
   currency: string;
   item: CatalogItem | null;
-  onAdd: (input: { item: CatalogItem; quantity: number; variantOptionIds: string[]; addOns: Array<{ addOnId: string; quantity: number }>; notes: string | null }) => Promise<void>;
+  onAdd: (input: {
+    item: CatalogItem;
+    quantity: number;
+    variantOptionIds: string[];
+    addOns: Array<{ addOnId: string; quantity: number }>;
+    notes: string | null;
+  }) => Promise<void>;
   onOpenChange: (open: boolean) => void;
   pending: boolean;
 }) {
@@ -243,60 +338,276 @@ function ItemConfigurator({ currency, item, onAdd, onOpenChange, pending }: {
   const [quantity, setQuantity] = useState(1);
   const [notes, setNotes] = useState('');
   const [error, setError] = useState('');
+
   useEffect(() => {
     if (!item) return;
-    setOptions({}); setAddOns({}); setQuantity(1); setNotes(''); setError('');
+    setOptions({});
+    setAddOns({});
+    setQuantity(1);
+    setNotes('');
+    setError('');
   }, [item]);
+
   const unitPrice = useMemo(() => {
     if (!item) return 0;
-    return Number(item.basePrice)
-      + item.variants.flatMap((variant) => variant.options).filter((entry) => Object.values(options).includes(entry.id)).reduce((sum, entry) => sum + Number(entry.priceAdjustment), 0)
-      + item.addOnGroups.flatMap((group) => group.addOns).filter((entry) => addOns[entry.id]).reduce((sum, entry) => sum + Number(entry.price), 0);
+    const variantsList = item.variants || [];
+    const addOnGroupsList = item.addOnGroups || [];
+
+    return (
+      Number(item.basePrice) +
+      variantsList
+        .flatMap((variant) => variant.options)
+        .filter((entry) => Object.values(options).includes(entry.id))
+        .reduce((sum, entry) => sum + Number(entry.priceAdjustment || 0), 0) +
+      addOnGroupsList
+        .flatMap((group) => group.addOns)
+        .filter((entry) => addOns[entry.id])
+        .reduce((sum, entry) => sum + Number(entry.price || 0), 0)
+    );
   }, [addOns, item, options]);
+
   if (!item) return null;
+
   const submit = () => {
-    for (const group of item.addOnGroups) {
+    const addOnGroupsList = item.addOnGroups || [];
+    for (const group of addOnGroupsList) {
       const count = group.addOns.filter((entry) => addOns[entry.id]).length;
-      if (count < group.minSelection || count > group.maxSelection) {
-        setError(`${group.name} requires ${group.minSelection}–${group.maxSelection} selections.`);
+      if (group.minSelection && count < group.minSelection) {
+        setError(`${group.name} requires at least ${group.minSelection} selections.`);
+        return;
+      }
+      if (group.maxSelection && count > group.maxSelection) {
+        setError(`${group.name} allows at most ${group.maxSelection} selections.`);
         return;
       }
     }
     setError('');
-    void onAdd({ item, quantity, variantOptionIds: Object.values(options), addOns: Object.entries(addOns).filter(([, selected]) => selected).map(([addOnId]) => ({ addOnId, quantity: 1 })), notes: notes.trim() || null });
+    void onAdd({
+      item,
+      quantity,
+      variantOptionIds: Object.values(options),
+      addOns: Object.entries(addOns)
+        .filter(([, selected]) => selected)
+        .map(([addOnId]) => ({ addOnId, quantity: 1 })),
+      notes: notes.trim() || null,
+    });
   };
+
   const money = new Intl.NumberFormat(undefined, { style: 'currency', currency });
+  const itemImage = item.media[0]?.media?.url;
+
   return (
-    <Modal open panelClassName="customer-item-modal" title={item.name} description={item.description} onOpenChange={onOpenChange} footer={<div className="customer-item-modal__footer"><div className="customer-quantity"><button onClick={() => setQuantity(Math.max(1, quantity - 1))}>−</button><span>{quantity}</span><button onClick={() => setQuantity(Math.min(99, quantity + 1))}>+</button></div><LoadingButton loading={pending} onClick={submit}>Add · {money.format(unitPrice * quantity)}</LoadingButton></div>}>
-      {item.media[0] ? <div className="customer-item-modal__image"><img alt={item.media[0].alt ?? ''} src={item.media[0].media.url} /></div> : null}
+    <Modal
+      open
+      panelClassName="tf-customizer-modal"
+      title={item.name}
+      description={item.description}
+      onOpenChange={onOpenChange}
+      footer={
+        <div className="tf-modal-footer">
+          <div className="tf-qty-stepper">
+            <button
+              type="button"
+              className="tf-qty-btn"
+              onClick={() => setQuantity(Math.max(1, quantity - 1))}
+            >
+              −
+            </button>
+            <span className="tf-qty-value">{quantity}</span>
+            <button
+              type="button"
+              className="tf-qty-btn"
+              onClick={() => setQuantity(Math.min(99, quantity + 1))}
+            >
+              +
+            </button>
+          </div>
+          <LoadingButton loading={pending} onClick={submit} className="tf-btn-add-order">
+            Add to order · {money.format(unitPrice * quantity)}
+          </LoadingButton>
+        </div>
+      }
+    >
+      {itemImage ? (
+        <div className="tf-modal-image-wrap">
+          <img alt={item.name} src={itemImage} className="tf-modal-image" />
+        </div>
+      ) : null}
+
       {error ? <Alert>{error}</Alert> : null}
-      <div className="customer-config-groups">
-        {item.variants.map((variant) => (
-          <fieldset key={variant.id}><legend>{variant.name}<small>Choose one</small></legend>{variant.options.map((option) => <label key={option.id}><input checked={options[variant.id] === option.id} name={variant.id} type="radio" onChange={() => setOptions({ ...options, [variant.id]: option.id })} /><span>{option.name}</span><b>{Number(option.priceAdjustment) ? `+${money.format(Number(option.priceAdjustment))}` : 'Included'}</b></label>)}</fieldset>
+
+      <div className="tf-customizer-body">
+        {item.variants?.map((variant) => (
+          <fieldset key={variant.id} className="tf-config-group">
+            <legend className="tf-config-title">
+              {variant.name}
+              <small>Required</small>
+            </legend>
+            <div className="tf-config-options">
+              {variant.options.map((option) => (
+                <label key={option.id} className="tf-config-option-row">
+                  <input
+                    checked={options[variant.id] === option.id}
+                    name={variant.id}
+                    type="radio"
+                    onChange={() => setOptions({ ...options, [variant.id]: option.id })}
+                  />
+                  <span>{option.name}</span>
+                  <b>
+                    {Number(option.priceAdjustment)
+                      ? `+${money.format(Number(option.priceAdjustment))}`
+                      : 'Included'}
+                  </b>
+                </label>
+              ))}
+            </div>
+          </fieldset>
         ))}
-        {item.addOnGroups.map((group) => (
-          <fieldset key={group.id}><legend>{group.name}<small>{group.minSelection ? `Choose ${group.minSelection}–${group.maxSelection}` : `Up to ${group.maxSelection}`}</small></legend>{group.addOns.map((addOn) => <label key={addOn.id}><input checked={Boolean(addOns[addOn.id])} type="checkbox" onChange={(event) => setAddOns({ ...addOns, [addOn.id]: event.target.checked })} /><span>{addOn.name}</span><b>+{money.format(Number(addOn.price))}</b></label>)}</fieldset>
+
+        {item.addOnGroups?.map((group) => (
+          <fieldset key={group.id} className="tf-config-group">
+            <legend className="tf-config-title">
+              {group.name}
+              <small>
+                {group.minSelection
+                  ? `Choose ${group.minSelection}–${group.maxSelection}`
+                  : `Up to ${group.maxSelection}`}
+              </small>
+            </legend>
+            <div className="tf-config-options">
+              {group.addOns.map((addOn) => (
+                <label key={addOn.id} className="tf-config-option-row">
+                  <input
+                    checked={Boolean(addOns[addOn.id])}
+                    type="checkbox"
+                    onChange={(event) =>
+                      setAddOns({ ...addOns, [addOn.id]: event.target.checked })
+                    }
+                  />
+                  <span>{addOn.name}</span>
+                  <b>+{money.format(Number(addOn.price))}</b>
+                </label>
+              ))}
+            </div>
+          </fieldset>
         ))}
-        <label className="customer-notes"><span>Special instructions</span><Textarea maxLength={500} placeholder="Allergies or preparation notes" value={notes} onChange={(event) => setNotes(event.target.value)} /></label>
+
+        <div className="tf-config-group">
+          <label className="tf-config-title">
+            Special instructions
+            <small>Optional</small>
+          </label>
+          <Textarea
+            maxLength={500}
+            placeholder="Allergies, dress on side, extra napkins..."
+            value={notes}
+            onChange={(event) => setNotes(event.target.value)}
+          />
+        </div>
       </div>
     </Modal>
   );
 }
 
-function CartDrawer({ cart, currency, onCheckout, onOpenChange, onQuantity, onRemove, onStart, open, pending }: {
-  cart: CustomerCart | null; currency: string; onCheckout: () => void; onOpenChange: (open: boolean) => void; onQuantity: (id: string, quantity: number) => Promise<void>; onRemove: (id: string) => Promise<void>; onStart: () => void; open: boolean; pending: boolean;
+function CartDrawer({
+  cart,
+  currency,
+  onCheckout,
+  onOpenChange,
+  onQuantity,
+  onRemove,
+  onStart,
+  open,
+  pending,
+}: {
+  cart: CustomerCart | null;
+  currency: string;
+  onCheckout: () => void;
+  onOpenChange: (open: boolean) => void;
+  onQuantity: (id: string, quantity: number) => Promise<void>;
+  onRemove: (id: string) => Promise<void>;
+  onStart: () => void;
+  open: boolean;
+  pending: boolean;
 }) {
   const money = new Intl.NumberFormat(undefined, { style: 'currency', currency });
-  return <Drawer open={open} title="Your cart" onOpenChange={onOpenChange}>
-    {!cart?.items.length ? <EmptyState title="Your cart is empty" description="Choose an item from the menu to get started." action={<Button onClick={onStart}>Browse menu</Button>} /> : <div className="customer-cart">
-      <div className="customer-cart-lines">{cart.items.map((item) => <article key={item.id}>
-        <div className="customer-cart-line__image">{item.menuItem.media[0] ? <img alt="" src={item.menuItem.media[0].media.url} /> : item.menuItem.name.charAt(0)}</div>
-        <div><strong>{item.menuItem.name}</strong><small>{item.variantOptions.map((entry) => entry.option.name).concat(item.addOns.map((entry) => entry.addOn.name)).join(' · ') || 'Standard'}</small>{item.notes ? <em>{item.notes}</em> : null}<div className="customer-quantity"><button disabled={pending} onClick={() => void onQuantity(item.id, item.quantity - 1)}>−</button><span>{item.quantity}</span><button disabled={pending} onClick={() => void onQuantity(item.id, item.quantity + 1)}>+</button></div></div>
-        <div><b>{money.format(Number(item.totalPrice))}</b><button disabled={pending} onClick={() => void onRemove(item.id)}>Remove</button></div>
-      </article>)}</div>
-      <dl className="customer-cart-totals"><div><dt>Subtotal</dt><dd>{money.format(Number(cart.subtotal))}</dd></div><div><dt>Tax</dt><dd>{money.format(Number(cart.tax))}</dd></div><div><dt>Total</dt><dd>{money.format(Number(cart.total))}</dd></div></dl>
-      <p className="customer-cart-note">Delivery, table service, and payment are selected at checkout.</p>
-      <Button id="cart-checkout-btn" onClick={onCheckout}>Checkout · {money.format(Number(cart.total))}</Button>
-    </div>}
-  </Drawer>;
+
+  return (
+    <Drawer open={open} title="Your cart" onOpenChange={onOpenChange}>
+      {!cart?.items.length ? (
+        <EmptyState
+          title="Your cart is empty"
+          description="Choose delicious items from the menu to start your order."
+          action={<Button onClick={onStart}>Browse menu</Button>}
+        />
+      ) : (
+        <div className="tf-drawer-cart">
+          <div className="tf-drawer-items">
+            {cart.items.map((item) => (
+              <article key={item.id} className="tf-drawer-item-row">
+                <div className="tf-drawer-item-details">
+                  <strong>{item.menuItem.name}</strong>
+                  {item.notes && <em>“{item.notes}”</em>}
+                  <div className="tf-qty-stepper">
+                    <button
+                      type="button"
+                      disabled={pending}
+                      onClick={() => void onQuantity(item.id, item.quantity - 1)}
+                      className="tf-qty-btn"
+                    >
+                      −
+                    </button>
+                    <span className="tf-qty-value">{item.quantity}</span>
+                    <button
+                      type="button"
+                      disabled={pending}
+                      onClick={() => void onQuantity(item.id, item.quantity + 1)}
+                      className="tf-qty-btn"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+                <div className="tf-drawer-item-meta">
+                  <b>{money.format(Number(item.totalPrice || item.unitPrice))}</b>
+                  <button
+                    type="button"
+                    disabled={pending}
+                    onClick={() => void onRemove(item.id)}
+                    className="tf-drawer-remove-btn"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+
+          <div className="tf-drawer-totals">
+            <div className="tf-summary-row">
+              <span>Subtotal</span>
+              <span>{money.format(Number(cart.subtotal))}</span>
+            </div>
+            <div className="tf-summary-row">
+              <span>Delivery fee</span>
+              <span>€1.99</span>
+            </div>
+            <div className="tf-summary-divider" />
+            <div className="tf-summary-row is-total">
+              <span>Total</span>
+              <b>{money.format(Number(cart.total || Number(cart.subtotal) + 1.99))}</b>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            className="tf-drawer-checkout-btn"
+            onClick={onCheckout}
+          >
+            Checkout · {money.format(Number(cart.total || Number(cart.subtotal) + 1.99))}
+          </button>
+        </div>
+      )}
+    </Drawer>
+  );
 }

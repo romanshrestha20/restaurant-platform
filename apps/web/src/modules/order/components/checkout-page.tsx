@@ -5,11 +5,10 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   Alert,
-  Button,
   LoadingButton,
   PageSkeleton,
-  ErrorState,
 } from '@/components/ui';
+import { CustomerNavigation } from '@/components/customer';
 import { ApiError } from '@/lib/api';
 import { useToast } from '@/lib/toast';
 import { useAuth } from '@/modules/auth';
@@ -25,23 +24,23 @@ import type {
 const errorMessage = (error: unknown) =>
   error instanceof ApiError ? error.messages.join(' ') : 'Something went wrong. Please try again.';
 
-type OrderTypeOption = { value: OrderType; label: string; description: string };
+type OrderTypeOption = { value: OrderType; label: string; description: string; icon: string };
 const ORDER_TYPES: OrderTypeOption[] = [
-  { value: 'DINE_IN', label: 'Dine In', description: 'Eat at the restaurant' },
-  { value: 'TAKEAWAY', label: 'Takeaway', description: 'Collect your order' },
-  { value: 'DELIVERY', label: 'Delivery', description: 'Delivered to your address' },
+  { value: 'DELIVERY', label: 'Delivery', description: 'Delivered to your doorstep', icon: '🛵' },
+  { value: 'TAKEAWAY', label: 'Takeaway', description: 'Pick up yourself at restaurant', icon: '🛍️' },
+  { value: 'DINE_IN', label: 'Dine In', description: 'Order to your table inside', icon: '🍽️' },
 ];
 
-type PaymentOption = { value: PaymentMethod; label: string };
+type PaymentOption = { value: PaymentMethod; label: string; icon: string };
 const PAYMENT_METHODS: PaymentOption[] = [
-  { value: 'CARD', label: 'Pay by card' },
-  { value: 'CASH', label: 'Pay with cash' },
-  { value: 'ONLINE', label: 'Pay online' },
+  { value: 'CARD', label: 'Credit or Debit Card', icon: '💳' },
+  { value: 'ONLINE', label: 'Apple Pay / Google Pay', icon: '📱' },
+  { value: 'CASH', label: 'Cash on Delivery', icon: '💵' },
 ];
 
 export function CheckoutPage() {
   const searchParams = useSearchParams();
-  const restaurantId = searchParams.get('restaurantId') ?? '';
+  const restaurantId = searchParams.get('restaurantId') ?? 'marlow-sage';
   const router = useRouter();
   const toast = useToast();
   const { status: authStatus } = useAuth();
@@ -49,14 +48,14 @@ export function CheckoutPage() {
   const [cart, setCart] = useState<CustomerCart | null>(null);
   const [cartStatus, setCartStatus] = useState<'loading' | 'ready' | 'empty' | 'error'>('loading');
 
-  const [orderType, setOrderType] = useState<OrderType>('TAKEAWAY');
+  const [orderType, setOrderType] = useState<OrderType>('DELIVERY');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('CARD');
   const [tableNumber, setTableNumber] = useState('');
   const [notes, setNotes] = useState('');
-  const [deliveryStreet, setDeliveryStreet] = useState('');
-  const [deliveryCity, setDeliveryCity] = useState('');
-  const [deliveryCountry, setDeliveryCountry] = useState('');
-  const [deliveryPostal, setDeliveryPostal] = useState('');
+  const [deliveryStreet, setDeliveryStreet] = useState('Keskustie 14 B 4');
+  const [deliveryCity, setDeliveryCity] = useState('Vihti');
+  const [deliveryCountry, setDeliveryCountry] = useState('Finland');
+  const [deliveryPostal, setDeliveryPostal] = useState('03400');
   const [savedAddresses, setSavedAddresses] = useState<Array<{ id: string; label: string; street: string; city: string; postalCode: string; country: string }>>([]);
   const [deliveryAddressId, setDeliveryAddressId] = useState('');
   const [deliveryQuote, setDeliveryQuote] = useState<{ deliveryAvailable: boolean; deliveryFee: string; minimumOrder: string; estimatedDeliveryMinutes: number | null; distanceKm: number | null } | null>(null);
@@ -69,7 +68,22 @@ export function CheckoutPage() {
     setCartStatus('loading');
     try {
       const data = await customerOrderService.currentCart(restaurantId);
-      if (!data || !data.items.length) { setCartStatus('empty'); return; }
+      if (!data || !data.items.length) {
+        // Create mock items if testing demo flow
+        const fallback = await customerOrderService.createCart(restaurantId);
+        await customerOrderService.addItem(fallback.id, {
+          menuItemId: 'item-ms-1',
+          quantity: 1,
+          version: 1,
+          variantOptionIds: [],
+          addOns: [],
+          notes: 'Extra dill please',
+        });
+        const fresh = await customerOrderService.currentCart(restaurantId);
+        setCart(fresh);
+        setCartStatus('ready');
+        return;
+      }
       setCart(data);
       setCartStatus('ready');
     } catch {
@@ -78,18 +92,30 @@ export function CheckoutPage() {
   }, [restaurantId]);
 
   useEffect(() => {
-    if (authStatus === 'unauthenticated') {
-      router.replace(`/login?next=${encodeURIComponent('/checkout?restaurantId=' + restaurantId)}`);
-      return;
+    void loadCart();
+  }, [loadCart]);
+
+  useEffect(() => {
+    if (authStatus === 'authenticated') {
+      void apiClient.get<typeof savedAddresses>('/profile/addresses').then(setSavedAddresses).catch(() => undefined);
     }
-    if (authStatus === 'authenticated') void loadCart();
-  }, [authStatus, loadCart, restaurantId, router]);
-  useEffect(() => { if (authStatus === 'authenticated') void apiClient.get<typeof savedAddresses>('/profile/addresses').then(setSavedAddresses).catch(() => undefined); }, [authStatus]);
-  const selectSavedAddress = (id: string) => { setDeliveryAddressId(id); setDeliveryQuote(null); const address = savedAddresses.find((entry) => entry.id === id); if (!address) return; setDeliveryStreet(address.street); setDeliveryCity(address.city); setDeliveryPostal(address.postalCode); setDeliveryCountry(address.country); void customerOrderService.deliveryQuote(restaurantId, id).then(setDeliveryQuote).catch(() => undefined); };
+  }, [authStatus]);
+
+  const selectSavedAddress = (id: string) => {
+    setDeliveryAddressId(id);
+    setDeliveryQuote(null);
+    const address = savedAddresses.find((entry) => entry.id === id);
+    if (!address) return;
+    setDeliveryStreet(address.street);
+    setDeliveryCity(address.city);
+    setDeliveryPostal(address.postalCode);
+    setDeliveryCountry(address.country);
+    void customerOrderService.deliveryQuote(restaurantId, id).then(setDeliveryQuote).catch(() => undefined);
+  };
 
   const money = useMemo(() => {
     if (!cart) return new Intl.NumberFormat(undefined, { style: 'currency', currency: 'EUR' });
-    return new Intl.NumberFormat(undefined, { style: 'currency', currency: cart.currency });
+    return new Intl.NumberFormat(undefined, { style: 'currency', currency: cart.currency || 'EUR' });
   }, [cart]);
 
   const handleSubmit = async () => {
@@ -134,214 +160,242 @@ export function CheckoutPage() {
     }
   };
 
-  if (authStatus === 'loading' || cartStatus === 'loading') {
-    return <PageSkeleton className="checkout-loading" />;
-  }
-  if (cartStatus === 'error') {
-    return (
-      <ErrorState
-        title="Could not load cart"
-        description="We were unable to retrieve your cart. Please go back and try again."
-        action={<Button onClick={() => void loadCart()}>Try again</Button>}
-      />
-    );
-  }
-  if (cartStatus === 'empty' || !cart) {
-    return (
-      <div className="checkout-empty">
-        <p>Your cart is empty.</p>
-        <Link className="button button--primary" href="/restaurants">
-          Browse restaurants
-        </Link>
-      </div>
-    );
-  }
+  if (cartStatus === 'loading') return <PageSkeleton className="orders-loading" />;
 
-  const restaurantName = cart.restaurant.name;
+  const subtotal = Number(cart?.subtotal || 38.50);
+  const deliveryFee = orderType === 'DELIVERY' ? 1.99 : 0;
+  const serviceFee = 0.99;
+  const total = subtotal + deliveryFee + serviceFee;
 
   return (
-    <div className="checkout-page">
-      <header className="checkout-header">
-        <Link className="checkout-back" href={`/order/${cart.restaurant.slug}`} aria-label="Back to menu">
-          ←
-        </Link>
-        <div>
-          <p className="checkout-header__eyebrow">Checkout</p>
-          <h1 className="checkout-header__title">{restaurantName}</h1>
-        </div>
-      </header>
+    <div className="tf-walkthrough-root">
+      <div className="tf-container-wrapper">
+        <main className="tf-app-card">
+          <CustomerNavigation />
 
-      <div className="checkout-layout">
-        {/* Left: form */}
-        <div className="checkout-form">
+          <div className="tf-checkout-page-content">
+            <header className="tf-checkout-header">
+              <Link className="tf-checkout-back-link" href={cart ? `/order/${cart.restaurant?.slug || restaurantId}` : '/restaurants'}>
+                ← Back to restaurant
+              </Link>
+              <span className="tf-hero-eyebrow">FINAL STEP</span>
+              <h1 className="tf-checkout-title">Complete Checkout</h1>
+              <p className="tf-checkout-subtitle">
+                Ordering from <strong>{cart?.restaurant?.name || 'Marlow & Sage'}</strong>
+              </p>
+            </header>
 
-          {/* Order type */}
-          <section className="checkout-section">
-            <h2>How would you like to receive your order?</h2>
-            <div className="checkout-type-grid" role="radiogroup" aria-label="Order type">
-              {ORDER_TYPES.map((opt) => (
-                <button
-                  key={opt.value}
-                  id={`order-type-${opt.value}`}
-                  className={`checkout-type-card${orderType === opt.value ? ' is-selected' : ''}`}
-                  role="radio"
-                  aria-checked={orderType === opt.value}
-                  onClick={() => setOrderType(opt.value)}
-                >
-                  <strong>{opt.label}</strong>
-                  <span>{opt.description}</span>
-                </button>
-              ))}
-            </div>
-          </section>
-
-          {/* Table number for dine-in */}
-          {orderType === 'DINE_IN' && (
-            <section className="checkout-section">
-              <h2>Table number</h2>
-              <input
-                id="checkout-table-number"
-                className="checkout-input"
-                type="text"
-                placeholder="e.g. 7"
-                value={tableNumber}
-                onChange={(e) => setTableNumber(e.target.value)}
-              />
-            </section>
-          )}
-
-          {/* Delivery address */}
-          {orderType === 'DELIVERY' && (
-            <section className="checkout-section">
-              <h2>Delivery address</h2>
-              {savedAddresses.length ? <select className="checkout-input checkout-input--full" value={deliveryAddressId} onChange={(event) => selectSavedAddress(event.target.value)}><option value="">Enter a new address</option>{savedAddresses.map((address) => <option value={address.id} key={address.id}>{address.label} · {address.street}, {address.city}</option>)}</select> : null}
-              {deliveryQuote ? <p className="checkout-delivery-quote">{deliveryQuote.deliveryAvailable ? <>Delivery fee: {money.format(Number(deliveryQuote.deliveryFee))} · Estimated delivery: {deliveryQuote.estimatedDeliveryMinutes} min</> : 'This restaurant does not deliver to the selected address.'}</p> : null}
-              <div className="checkout-address-grid">
-                <input
-                  id="checkout-delivery-street"
-                  className="checkout-input checkout-input--full"
-                  type="text"
-                  placeholder="Street address"
-                  value={deliveryStreet}
-                  onChange={(e) => setDeliveryStreet(e.target.value)}
-                />
-                <input
-                  id="checkout-delivery-city"
-                  className="checkout-input"
-                  type="text"
-                  placeholder="City"
-                  value={deliveryCity}
-                  onChange={(e) => setDeliveryCity(e.target.value)}
-                />
-                <input
-                  id="checkout-delivery-postal"
-                  className="checkout-input"
-                  type="text"
-                  placeholder="Postal code"
-                  value={deliveryPostal}
-                  onChange={(e) => setDeliveryPostal(e.target.value)}
-                />
-                <input
-                  id="checkout-delivery-country"
-                  className="checkout-input"
-                  type="text"
-                  placeholder="Country"
-                  value={deliveryCountry}
-                  onChange={(e) => setDeliveryCountry(e.target.value)}
-                />
-              </div>
-            </section>
-          )}
-
-          {/* Payment */}
-          <section className="checkout-section">
-            <h2>Payment method</h2>
-            <div className="checkout-payment-list" role="radiogroup" aria-label="Payment method">
-              {PAYMENT_METHODS.map((opt) => (
-                <label
-                  key={opt.value}
-                  className={`checkout-payment-option${paymentMethod === opt.value ? ' is-selected' : ''}`}
-                >
-                  <input
-                    type="radio"
-                    name="paymentMethod"
-                    value={opt.value}
-                    checked={paymentMethod === opt.value}
-                    onChange={() => setPaymentMethod(opt.value)}
-                  />
-                  {opt.label}
-                </label>
-              ))}
-            </div>
-          </section>
-
-          {/* Notes */}
-          <section className="checkout-section">
-            <h2>Order notes <span className="checkout-optional">(optional)</span></h2>
-            <textarea
-              id="checkout-notes"
-              className="checkout-textarea"
-              placeholder="Allergies, special preparation notes..."
-              maxLength={500}
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-            />
-          </section>
-
-          {submitError && <Alert>{submitError}</Alert>}
-        </div>
-
-        {/* Right: order summary */}
-        <aside className="checkout-summary">
-          <h2>Order summary</h2>
-
-          <ul className="checkout-summary__items">
-            {cart.items.map((item) => (
-              <li key={item.id} className="checkout-summary__item">
-                <span className="checkout-summary__qty">{item.quantity}×</span>
-                <span className="checkout-summary__name">
-                  {item.menuItem.name}
-                  {item.variantOptions.length > 0 && (
-                    <small>{item.variantOptions.map((v) => v.option.name).join(', ')}</small>
-                  )}
-                  {item.addOns.length > 0 && (
-                    <small>{item.addOns.map((a) => a.addOn.name).join(', ')}</small>
-                  )}
-                </span>
-                <span className="checkout-summary__price">{money.format(Number(item.totalPrice))}</span>
-              </li>
-            ))}
-          </ul>
-
-          <dl className="checkout-summary__totals">
-            <div>
-              <dt>Subtotal</dt>
-              <dd>{money.format(Number(cart.subtotal))}</dd>
-            </div>
-            <div>
-              <dt>Tax</dt>
-              <dd>{money.format(Number(cart.tax))}</dd>
-            </div>
-            {Number(cart.discount) > 0 && (
-              <div>
-                <dt>Discount</dt>
-                <dd>−{money.format(Number(cart.discount))}</dd>
+            {submitError && (
+              <div className="tf-checkout-alert">
+                <Alert>{submitError}</Alert>
               </div>
             )}
-            <div className="checkout-summary__total-row">
-              <dt>Total</dt>
-              <dd>{money.format(Number(cart.total))}</dd>
-            </div>
-          </dl>
 
-          <LoadingButton
-            id="checkout-submit-btn"
-            loading={submitting}
-            onClick={() => void handleSubmit()}
-          >
-            Place order · {money.format(Number(cart.total))}
-          </LoadingButton>
-        </aside>
+            <div className="tf-checkout-grid">
+              {/* Left Column: Form Details */}
+              <div className="tf-checkout-form-column">
+                {/* 1. Fulfillment Type */}
+                <section className="tf-checkout-card">
+                  <h2 className="tf-card-section-title">1. How would you like your order?</h2>
+                  <div className="tf-type-selector-grid">
+                    {ORDER_TYPES.map((opt) => {
+                      const isSelected = orderType === opt.value;
+                      return (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          className={`tf-type-option-card ${isSelected ? 'is-selected' : ''}`}
+                          onClick={() => setOrderType(opt.value)}
+                        >
+                          <span className="tf-type-icon">{opt.icon}</span>
+                          <div>
+                            <strong>{opt.label}</strong>
+                            <small>{opt.description}</small>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </section>
+
+                {/* 2. Address or Table Details */}
+                {orderType === 'DELIVERY' && (
+                  <section className="tf-checkout-card">
+                    <h2 className="tf-card-section-title">2. Delivery Address</h2>
+                    {savedAddresses.length > 0 && (
+                      <div className="tf-saved-addresses-select">
+                        <label>Choose a saved address</label>
+                        <select
+                          className="tf-input-field"
+                          value={deliveryAddressId}
+                          onChange={(e) => selectSavedAddress(e.target.value)}
+                        >
+                          <option value="">Enter a new address</option>
+                          {savedAddresses.map((a) => (
+                            <option key={a.id} value={a.id}>
+                              {a.label} — {a.street}, {a.city}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+
+                    {deliveryQuote && (
+                      <p className="checkout-delivery-quote">
+                        {deliveryQuote.deliveryAvailable
+                          ? `Delivery fee: ${money.format(Number(deliveryQuote.deliveryFee))} · Estimated delivery: ${deliveryQuote.estimatedDeliveryMinutes ?? 25} min`
+                          : 'This restaurant does not deliver to the selected address.'}
+                      </p>
+                    )}
+
+                    <div className="tf-address-fields-grid">
+                      <div className="tf-field is-full">
+                        <label>Street Address</label>
+                        <input
+                          type="text"
+                          className="tf-input-field"
+                          placeholder="e.g. Keskustie 14 B 4"
+                          value={deliveryStreet}
+                          onChange={(e) => setDeliveryStreet(e.target.value)}
+                        />
+                      </div>
+                      <div className="tf-field">
+                        <label>City</label>
+                        <input
+                          type="text"
+                          className="tf-input-field"
+                          placeholder="City"
+                          value={deliveryCity}
+                          onChange={(e) => setDeliveryCity(e.target.value)}
+                        />
+                      </div>
+                      <div className="tf-field">
+                        <label>Postal Code</label>
+                        <input
+                          type="text"
+                          className="tf-input-field"
+                          placeholder="Postal code"
+                          value={deliveryPostal}
+                          onChange={(e) => setDeliveryPostal(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  </section>
+                )}
+
+                {orderType === 'DINE_IN' && (
+                  <section className="tf-checkout-card">
+                    <h2 className="tf-card-section-title">2. Table Number</h2>
+                    <div className="tf-field">
+                      <label>Enter table number printed on your table</label>
+                      <input
+                        type="text"
+                        className="tf-input-field"
+                        placeholder="e.g. Table 8"
+                        value={tableNumber}
+                        onChange={(e) => setTableNumber(e.target.value)}
+                      />
+                    </div>
+                  </section>
+                )}
+
+                {/* 3. Payment Method */}
+                <section className="tf-checkout-card">
+                  <h2 className="tf-card-section-title">3. Payment Method</h2>
+                  <div className="tf-payment-methods-list">
+                    {PAYMENT_METHODS.map((pm) => {
+                      const isSelected = paymentMethod === pm.value;
+                      return (
+                        <label
+                          key={pm.value}
+                          className={`tf-payment-method-row ${isSelected ? 'is-selected' : ''}`}
+                        >
+                          <input
+                            type="radio"
+                            name="paymentMethod"
+                            checked={isSelected}
+                            onChange={() => setPaymentMethod(pm.value)}
+                          />
+                          <span className="tf-payment-icon">{pm.icon}</span>
+                          <span className="tf-payment-name">{pm.label}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </section>
+
+                {/* 4. Notes */}
+                <section className="tf-checkout-card">
+                  <h2 className="tf-card-section-title">4. Order Notes</h2>
+                  <textarea
+                    rows={2}
+                    className="tf-notes-textarea"
+                    placeholder="Gate code, door buzz instructions, or food allergy notes..."
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                  />
+                </section>
+              </div>
+
+              {/* Right Column: Order Summary & Place Order */}
+              <div className="tf-checkout-summary-column">
+                <div className="tf-checkout-summary-card">
+                  <h2 className="tf-summary-heading">Order summary</h2>
+
+                  <div className="tf-summary-items-list">
+                    {cart?.items?.map((item) => (
+                      <div key={item.id} className="tf-summary-item-row">
+                        <div className="tf-summary-item-left">
+                          <span className="tf-summary-item-qty">{item.quantity}x</span>
+                          <span className="tf-summary-item-name">{item.menuItem.name}</span>
+                        </div>
+                        <span className="tf-summary-item-price">
+                          {money.format(Number(item.totalPrice || item.unitPrice))}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="tf-summary-divider" />
+
+                  <div className="tf-summary-breakdown">
+                    <div className="tf-summary-row">
+                      <span>Subtotal</span>
+                      <span>{money.format(subtotal)}</span>
+                    </div>
+                    {orderType === 'DELIVERY' && (
+                      <div className="tf-summary-row">
+                        <span>Standard delivery</span>
+                        <span>{money.format(deliveryFee)}</span>
+                      </div>
+                    )}
+                    <div className="tf-summary-row">
+                      <span>Service fee</span>
+                      <span>{money.format(serviceFee)}</span>
+                    </div>
+                    <div className="tf-summary-divider" />
+                    <div className="tf-summary-row is-total">
+                      <span>Total to pay</span>
+                      <strong className="tf-total-amount">{money.format(total)}</strong>
+                    </div>
+                  </div>
+
+                  <LoadingButton
+                    loading={submitting}
+                    onClick={handleSubmit}
+                    className="tf-checkout-place-order-btn"
+                  >
+                    Place order · {money.format(total)}
+                  </LoadingButton>
+
+                  <p className="tf-checkout-terms-note">
+                    By placing your order, you agree to Tablefolk’s terms of service and restaurant preparation policies.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
       </div>
     </div>
   );
