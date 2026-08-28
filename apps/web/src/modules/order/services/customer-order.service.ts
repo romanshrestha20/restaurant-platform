@@ -255,7 +255,10 @@ export const customerOrderService = {
   async checkout(input: CheckoutInput): Promise<CustomerOrder> {
     try {
       return await apiClient.post<CustomerOrder>('/customer/orders/checkout', input);
-    } catch {
+    } catch (error) {
+      throw error;
+      /* Demo fallback retained below for reference; production calls must not
+       * fabricate successful orders when the API is unavailable. */
       const orderNumber = `TF-${Math.floor(100000 + Math.random() * 900000)}`;
       const cart = getLocalCart(input.restaurantId);
       const subtotalVal = cart?.subtotal ?? '38.50';
@@ -284,7 +287,7 @@ export const customerOrderService = {
             { street: 'Keskustie 12', city: 'Vihti', country: 'Finland', isPrimary: true },
           ],
         },
-        table: input.tableNumber ? { id: 't-1', tableNumber: input.tableNumber, capacity: 4 } : null,
+        table: input.tableNumber ? { id: 't-1', tableNumber: input.tableNumber ?? '', capacity: 4 } : null,
         deliveryAddress: input.deliveryAddress ?? {
           street: 'Keskustie 14 B 4',
           city: 'Vihti',

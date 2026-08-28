@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   Alert,
+  ErrorState,
   LoadingButton,
   PageSkeleton,
 } from '@/components/ui';
@@ -69,19 +70,8 @@ export function CheckoutPage() {
     try {
       const data = await customerOrderService.currentCart(restaurantId);
       if (!data || !data.items.length) {
-        // Create mock items if testing demo flow
-        const fallback = await customerOrderService.createCart(restaurantId);
-        await customerOrderService.addItem(fallback.id, {
-          menuItemId: 'item-ms-1',
-          quantity: 1,
-          version: 1,
-          variantOptionIds: [],
-          addOns: [],
-          notes: 'Extra dill please',
-        });
-        const fresh = await customerOrderService.currentCart(restaurantId);
-        setCart(fresh);
-        setCartStatus('ready');
+        setCart(null);
+        setCartStatus('empty');
         return;
       }
       setCart(data);
@@ -161,8 +151,11 @@ export function CheckoutPage() {
   };
 
   if (cartStatus === 'loading') return <PageSkeleton className="orders-loading" />;
+  if (cartStatus === 'empty' || !cart) {
+    return <ErrorState title="Your cart is empty" description="Add a dish before continuing to checkout." action={<Link href="/restaurants">Browse restaurants</Link>} />;
+  }
 
-  const subtotal = Number(cart?.subtotal || 38.50);
+  const subtotal = Number(cart.subtotal);
   const deliveryFee = orderType === 'DELIVERY' ? 1.99 : 0;
   const serviceFee = 0.99;
   const total = subtotal + deliveryFee + serviceFee;
