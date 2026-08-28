@@ -8,6 +8,15 @@ import type {
 let refreshRequest: Promise<AuthSession> | null = null;
 
 export const authService = {
+  requestEmailVerification() {
+    return apiClient.post<{ message: string }>('/auth/email-verification/request');
+  },
+
+  verifyEmail(token: string) {
+    return apiClient.post<{ message: string }>('/auth/email-verification/confirm', { token }, {
+      skipAuthRefresh: true,
+    });
+  },
   forgotPassword(email: string) {
     return apiClient.post<{ message: string }>('/auth/password/forgot', { email }, {
       skipAuthRefresh: true,
