@@ -36,6 +36,7 @@ import type {
   UpdateRestaurantInput,
 } from '../types/restaurant.types';
 import { RestaurantAvatar } from './restaurant-avatar';
+import { hasRestaurantPermission } from '../permissions/restaurant-permissions';
 
 export type RestaurantManagementSection =
   'overview' | 'general' | 'hours' | 'locations' | 'brand' | 'settings';
@@ -117,7 +118,10 @@ export function RestaurantManagementPage({
     );
   }
 
-  const canEdit = restaurant.callerPermissions.includes('restaurant.update');
+  const canEdit = hasRestaurantPermission(
+    restaurant.callerPermissions,
+    'restaurant.update',
+  );
   const cover = restaurant.media.find((item) => item.type === 'COVER');
   const logo = restaurant.media.find((item) => item.type === 'LOGO');
 

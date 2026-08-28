@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Button, ErrorState, PageSkeleton } from '@/components/ui';
 import { CustomerNavigation } from '@/components/customer';
@@ -29,9 +29,51 @@ const STATUS_TONE: Record<OrderStatus, string> = {
   REFUNDED: 'danger',
 };
 
+const PAST_STATUSES: OrderStatus[] = ['COMPLETED', 'CANCELLED', 'REFUNDED'];
+type OrderFilter = 'all' | 'active' | 'past';
+
+const formatOrderDate = (order: CustomerOrder) => {
+  const value = order.createdAt || (order as CustomerOrder & { placedAt?: string }).placedAt;
+  return new Date(value || Date.now()).toLocaleDateString(undefined, {
+    year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+  });
+};
+
+function OrderCard({ order }: { order: CustomerOrder }) {
+  const money = new Intl.NumberFormat(undefined, {
+    style: 'currency', currency: order.currency || order.restaurant?.currency || 'EUR',
+  });
+  const isActive = !PAST_STATUSES.includes(order.status);
+  const itemCount = order.items?.length || 1;
+
+  return (
+    <li className="tf-order-item">
+      <Link className={`tf-order-card ${isActive ? 'is-active-order' : ''}`} href={`/orders/${order.id}`}>
+        <div className="tf-order-card__header">
+          <span className="tf-order-card__number">Order #{order.orderNumber}</span>
+          <span className={`tf-order-badge is-${STATUS_TONE[order.status]}`}>{STATUS_LABEL[order.status]}</span>
+        </div>
+        <h3 className="tf-order-card__restaurant">{order.restaurant?.name || 'Restaurant'}</h3>
+        <div className="tf-order-card__meta">
+          <span>{itemCount} item{itemCount !== 1 ? 's' : ''}</span>
+          <span className="tf-dot">·</span>
+          <span>{order.type?.replace('_', ' ').toLowerCase() || 'delivery'}</span>
+          <span className="tf-dot">·</span>
+          <strong>{money.format(Number(order.total))}</strong>
+        </div>
+        <div className="tf-order-card__footer">
+          <time dateTime={order.createdAt}>{formatOrderDate(order)}</time>
+          <span className="tf-order-view-link">{isActive ? 'View tracking details' : 'View order details'} →</span>
+        </div>
+      </Link>
+    </li>
+  );
+}
+
 export function OrdersPage() {
   const [orders, setOrders] = useState<CustomerOrder[]>([]);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [filter, setFilter] = useState<OrderFilter>('all');
 
   const load = useCallback(async () => {
     setStatus('loading');
@@ -48,6 +90,17 @@ export function OrdersPage() {
     void load();
   }, [load]);
 
+  const { activeOrders, pastOrders } = useMemo(() => ({
+    activeOrders: orders.filter((order) => !PAST_STATUSES.includes(order.status)),
+    pastOrders: orders.filter((order) => PAST_STATUSES.includes(order.status)),
+  }), [orders]);
+
+  const sections = filter === 'active'
+    ? [{ title: 'Active orders', items: activeOrders }]
+    : filter === 'past'
+      ? [{ title: 'Past orders', items: pastOrders }]
+      : [{ title: 'Active orders', items: activeOrders }, { title: 'Past orders', items: pastOrders }];
+
   if (status === 'loading') return <PageSkeleton className="orders-loading" />;
 
   return (
@@ -60,6 +113,14 @@ export function OrdersPage() {
             <header className="tf-orders-header">
               <span className="tf-hero-eyebrow">YOUR ACCOUNT</span>
               <h1 className="tf-orders-title">Past & Active Orders</h1>
+              <div className="tf-order-filters" role="group" aria-label="Filter orders">
+                {(['all', 'active', 'past'] as const).map((option) => (
+                  <button key={option} type="button" className={filter === option ? 'is-active' : ''} onClick={() => setFilter(option)}>
+                    {option === 'all' ? 'All orders' : option === 'active' ? 'Active' : 'Past'}
+                    <span>{option === 'all' ? orders.length : option === 'active' ? activeOrders.length : pastOrders.length}</span>
+                  </button>
+                ))}
+              </div>
             </header>
 
             {status === 'error' ? (
@@ -77,56 +138,16 @@ export function OrdersPage() {
                   Browse restaurants
                 </Link>
               </div>
+            ) : sections.every((section) => section.items.length === 0) ? (
+              <div className="tf-orders-empty tf-orders-empty--filtered">
+                <div className="tf-orders-empty-icon">⌁</div>
+                <h2>No {filter} orders</h2>
+                <p>{filter === 'active' ? 'Your active orders will appear here while they are being prepared.' : 'Completed orders will appear here after you place one.'}</p>
+              </div>
             ) : (
-              <ul className="tf-orders-list" aria-label="Order history">
-                {orders.map((order) => {
-                  const money = new Intl.NumberFormat(undefined, {
-                    style: 'currency',
-                    currency: order.currency || order.restaurant?.currency || 'EUR',
-                  });
-                  const isActive = !['COMPLETED', 'CANCELLED', 'REFUNDED'].includes(order.status);
-                  return (
-                    <li key={order.id} className="tf-order-item">
-                      <Link
-                        className={`tf-order-card ${isActive ? 'is-active-order' : ''}`}
-                        href={`/orders/${order.id}`}
-                      >
-                        <div className="tf-order-card__header">
-                          <span className="tf-order-card__number">Order #{order.orderNumber}</span>
-                          <span className={`tf-order-badge is-${STATUS_TONE[order.status]}`}>
-                            {STATUS_LABEL[order.status]}
-                          </span>
-                        </div>
-
-                        <h3 className="tf-order-card__restaurant">
-                          {order.restaurant?.name || 'Restaurant'}
-                        </h3>
-
-                        <div className="tf-order-card__meta">
-                          <span>{order.items?.length || 1} item{(order.items?.length || 1) !== 1 ? 's' : ''}</span>
-                          <span className="tf-dot">·</span>
-                          <span>{order.type?.replace('_', ' ').toLowerCase() || 'delivery'}</span>
-                          <span className="tf-dot">·</span>
-                          <strong>{money.format(Number(order.total))}</strong>
-                        </div>
-
-                        <div className="tf-order-card__footer">
-                          <time dateTime={order.createdAt || (order as any).placedAt}>
-                            {new Date(order.createdAt || (order as any).placedAt || Date.now()).toLocaleDateString(undefined, {
-                              year: 'numeric',
-                              month: 'short',
-                              day: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </time>
-                          <span className="tf-order-view-link">View tracking details →</span>
-                        </div>
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
+              <div className="tf-orders-sections">
+                {sections.map((section) => section.items.length ? <section key={section.title} aria-labelledby={section.title.replace(' ', '-').toLowerCase()}><h2 id={section.title.replace(' ', '-').toLowerCase()} className="tf-orders-section-title">{section.title}<span>{section.items.length}</span></h2><ul className="tf-orders-list" aria-label={section.title}>{section.items.map((order) => <OrderCard key={order.id} order={order} />)}</ul></section> : null)}
+              </div>
             )}
           </div>
         </main>

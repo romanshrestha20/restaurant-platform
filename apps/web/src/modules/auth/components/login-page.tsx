@@ -55,6 +55,10 @@ export default function LoginPage() {
                 />
             </FormField>
 
+            <Link className="auth-form__forgot" href="/forgot-password">
+              Forgot your password?
+            </Link>
+
             {form.error ? <Alert>{form.error}</Alert> : null}
 
             <LoadingButton fullWidth type="submit" loading={form.submitting} loadingText="Signing in…">Sign in</LoadingButton>

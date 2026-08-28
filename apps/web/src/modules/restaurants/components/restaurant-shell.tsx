@@ -29,37 +29,29 @@ type WorkspaceLink = {
 type NavIconName =
   | "overview"
   | "orders"
-  | "reservations"
   | "menu"
-  | "customers"
+  | "products"
+  | "categories"
   | "general"
   | "staff"
   | "locations"
   | "hours"
   | "media"
-  | "settings";
+  | "settings"
+  | "reports";
 
 const operations: WorkspaceLink[] = [
-  { label: "Overview", segment: "", available: true, icon: "overview" },
+  { label: "Dashboard", segment: "", available: true, icon: "overview" },
   { label: "Orders", segment: "orders", available: false, icon: "orders" },
-  {
-    label: "Reservations",
-    segment: "reservations",
-    available: false,
-    icon: "reservations",
-  },
   { label: "Menu", segment: "menu", available: true, icon: "menu" },
-  {
-    label: "Customers",
-    segment: "customers",
-    available: false,
-    icon: "customers",
-  },
+  { label: "Products", segment: "products", available: false, icon: "products" },
+  { label: "Categories", segment: "categories", available: false, icon: "categories" },
 ];
 
 const management: WorkspaceLink[] = [
   { label: "General", segment: "general", available: true, icon: "general" },
   { label: "Staff", segment: "staff", available: false, icon: "staff" },
+  { label: "Reports", segment: "reports", available: false, icon: "reports" },
   {
     label: "Locations",
     segment: "locations",
@@ -273,12 +265,6 @@ function UserMenu({
         <small>{user?.email}</small>
       </div>
       <Divider className="workspace-menu__divider" />
-      <DropdownItem onClick={() => router.push("/restaurants")}>
-        View customer site
-      </DropdownItem>
-      <DropdownItem onClick={() => router.push("/orders")}>
-        My orders
-      </DropdownItem>
       <DropdownItem onClick={() => router.push("/account/profile")}>
         Profile settings
       </DropdownItem>
@@ -352,22 +338,21 @@ function NavIcon({ name }: { name: NavIconName }) {
         <path d="M9 8h6M9 12h6" />
       </>
     ),
-    reservations: (
-      <>
-        <rect x="3" y="5" width="18" height="16" rx="2" />
-        <path d="M16 3v4M8 3v4M3 10h18M8 15h3" />
-      </>
-    ),
     menu: (
       <>
         <path d="M5 4h14v16H5z" />
         <path d="M9 8h6M9 12h6M9 16h4" />
       </>
     ),
-    customers: (
+    products: (
       <>
-        <circle cx="9" cy="8" r="3" />
-        <path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 6.5a3 3 0 0 1 0 5.8M17 15c2.3.7 4 2.6 4 5" />
+        <path d="M4 7h16v13H4zM7 4h10v3H7z" />
+        <path d="M8 11h8M8 15h5" />
+      </>
+    ),
+    categories: (
+      <>
+        <path d="M4 5h6v6H4zM14 5h6v6h-6zM4 15h6v4H4zM14 15h6v4h-6z" />
       </>
     ),
     general: (
@@ -407,6 +392,12 @@ function NavIcon({ name }: { name: NavIconName }) {
       <>
         <circle cx="12" cy="12" r="3" />
         <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.6v-.2h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1Z" />
+      </>
+    ),
+    reports: (
+      <>
+        <path d="M4 19V5M4 19h16" />
+        <path d="m7 15 3-4 3 2 5-6" />
       </>
     ),
   };

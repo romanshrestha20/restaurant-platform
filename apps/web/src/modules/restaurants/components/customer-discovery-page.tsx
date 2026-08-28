@@ -127,7 +127,7 @@ export function CustomerDiscoveryPage() {
               <span className="tf-hero-eyebrow">
                 DELIVERING TO {currentLocation.fullAddress.toUpperCase()}
               </span>
-              <h2 className="tf-hero-heading">What are you in the mood for?</h2>
+              <h2 className="tf-hero-heading">What are you craving?</h2>
 
               {/* Big Hero Search Bar */}
               <div className="tf-hero-search">
@@ -148,7 +148,7 @@ export function CustomerDiscoveryPage() {
                 <input
                   type="text"
                   className="tf-hero-search__input"
-                  placeholder="Search restaurants or dishes"
+                  placeholder="Search dishes, meals, or cuisines"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                 />
@@ -167,6 +167,7 @@ export function CustomerDiscoveryPage() {
               {/* Cuisine Filter Pills */}
               <div
                 className="tf-cuisine-pills"
+                id="categories"
                 role="tablist"
                 aria-label="Cuisine categories"
               >
@@ -192,20 +193,19 @@ export function CustomerDiscoveryPage() {
           {/* Restaurants Grid Section */}
           <section
             className="tf-restaurants-section"
-            aria-labelledby="nearby-restaurants-heading"
+            aria-labelledby="nearby-dishes-heading"
           >
             <div className="tf-restaurants-header">
-              <h3 id="nearby-restaurants-heading" className="tf-section-title">
-                Nearby restaurants
+              <h3 id="nearby-dishes-heading" className="tf-section-title">
+                Dishes near you
               </h3>
             </div>
 
             {!visible.length ? (
               <div className="tf-empty-discovery">
-                <h4>No matching restaurants</h4>
+                  <h4>No matching dishes</h4>
                 <p>
-                  Try searching for a different dish name or choose another
-                  category filter.
+                  Try another dish, meal, or category.
                 </p>
                 <Button
                   variant="secondary"
@@ -295,6 +295,8 @@ export function CustomerDiscoveryPage() {
 
                         <div className="tf-card-meta">
                           <span>{cuisine}</span>
+                          <span className="tf-dot">·</span>
+                          <span>{restaurant.itemCount} dishes</span>
                           <span className="tf-dot">·</span>
                           <span>{deliveryTime}</span>
                           <span className="tf-dot">·</span>

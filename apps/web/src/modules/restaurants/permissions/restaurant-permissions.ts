@@ -9,3 +9,10 @@ export function canRestaurant(
 ): boolean {
   return membership?.callerPermissions.includes(permission) ?? false;
 }
+
+export function hasRestaurantPermission(
+  permissions: readonly RestaurantPermission[],
+  permission: RestaurantPermission,
+): boolean {
+  return permissions.includes(permission);
+}

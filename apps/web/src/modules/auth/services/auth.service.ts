@@ -8,6 +8,18 @@ import type {
 let refreshRequest: Promise<AuthSession> | null = null;
 
 export const authService = {
+  forgotPassword(email: string) {
+    return apiClient.post<{ message: string }>('/auth/password/forgot', { email }, {
+      skipAuthRefresh: true,
+    });
+  },
+
+  resetPassword(token: string, password: string) {
+    return apiClient.post<{ message: string }>('/auth/password/reset', { token, password }, {
+      skipAuthRefresh: true,
+    });
+  },
+
   login(input: LoginInput) {
     return apiClient.post<AuthSession>('/auth/login', input, {
       skipAuthRefresh: true,

@@ -35,7 +35,7 @@ export const CURATED_RESTAURANTS: CustomerRestaurant[] = [
         alt: 'Marlow & Sage atmosphere',
         media: {
           id: 'med-1',
-          url: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=1000&q=80',
+          url: 'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=1000&q=80',
           type: 'IMAGE',
           width: 1000,
           height: 667,
@@ -85,7 +85,7 @@ export const CURATED_RESTAURANTS: CustomerRestaurant[] = [
         alt: 'Kiln House Pizza',
         media: {
           id: 'med-2',
-          url: 'https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=1000&q=80',
+          url: 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?auto=format&fit=crop&w=1000&q=80',
           type: 'IMAGE',
           width: 1000,
           height: 667,
@@ -135,7 +135,7 @@ export const CURATED_RESTAURANTS: CustomerRestaurant[] = [
         alt: 'Nori & Salt rustic store',
         media: {
           id: 'med-3',
-          url: 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?auto=format&fit=crop&w=1000&q=80',
+          url: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&w=1000&q=80',
           type: 'IMAGE',
           width: 1000,
           height: 667,
@@ -185,7 +185,7 @@ export const CURATED_RESTAURANTS: CustomerRestaurant[] = [
         alt: 'Copper Pot craft and heritage',
         media: {
           id: 'med-4',
-          url: 'https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?auto=format&fit=crop&w=1000&q=80',
+          url: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=1000&q=80',
           type: 'IMAGE',
           width: 1000,
           height: 667,
@@ -235,7 +235,7 @@ export const CURATED_RESTAURANTS: CustomerRestaurant[] = [
         alt: 'Green Terrace organic freshness',
         media: {
           id: 'med-5',
-          url: 'https://images.unsplash.com/photo-1518495973542-4542c06a5843?auto=format&fit=crop&w=1000&q=80',
+          url: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=1000&q=80',
           type: 'IMAGE',
           width: 1000,
           height: 667,
