@@ -7,7 +7,6 @@ import {
 import {
   OrderStatus,
   OrderType,
-  PaymentMethod,
   PaymentStatus,
   Prisma,
 } from '@restaurant/database/generated';
@@ -419,11 +418,7 @@ export class OrdersService {
       }
 
       // Handle Payment
-      const isSimulatedPaid =
-        data.paymentMethod === PaymentMethod.CARD ||
-        data.paymentMethod === PaymentMethod.APPLE_PAY ||
-        data.paymentMethod === PaymentMethod.GOOGLE_PAY ||
-        data.paymentMethod === PaymentMethod.STRIPE;
+      const isSimulatedPaid = false;
 
       await tx.payment.create({
         data: {

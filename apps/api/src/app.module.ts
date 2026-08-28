@@ -14,6 +14,7 @@ import { MenuModule } from './modules/menu/menu.module';
 import { CatalogModule } from './modules/catalog/catalog.module';
 import { CartModule } from './modules/cart/cart.module';
 import { OrdersModule } from './modules/orders/orders.module';
+import { PaymentsModule } from './modules/payments/payments.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { OrdersModule } from './modules/orders/orders.module';
     CatalogModule,
     CartModule,
     OrdersModule,
+    PaymentsModule,
     RealtimeModule,
   ],
   providers: [
