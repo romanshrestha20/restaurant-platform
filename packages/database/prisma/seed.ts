@@ -17,6 +17,8 @@ import {
 } from "./seed/restaurant";
 import { seedRolePermissions, seedRoles } from "./seed/roles";
 import { seedRestaurantTables } from "./seed/tables";
+import { seedCuratedCatalog } from "./seed/catalog";
+import { CURATED_CATALOGS } from "../../../apps/web/src/modules/order/data/curated-catalogs";
 
 async function main() {
   console.log("Seeding permissions...");
@@ -66,6 +68,9 @@ async function main() {
 
   console.log("Seeding coupons...");
   await seedCoupons(prisma);
+
+  console.log("Seeding all customer-facing restaurant dishes...");
+  for (const catalog of Object.values(CURATED_CATALOGS)) await seedCuratedCatalog(catalog);
 
   console.log("Seed completed successfully.");
 }
