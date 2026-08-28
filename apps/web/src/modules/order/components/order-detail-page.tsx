@@ -2,17 +2,17 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Button, ErrorState, PageSkeleton } from '@/components/ui';
+import { Button, ErrorState, LoadingButton, PageSkeleton } from '@/components/ui';
 import { CustomerNavigation } from '@/components/customer';
 import { customerOrderService } from '../services/customer-order.service';
-import type { CustomerOrder, OrderStatus } from '../types/customer-order.types';
+import type { CustomerOrder, OrderStatus, PaymentStatus } from '../types/customer-order.types';
 
 const STATUS_STEPS: OrderStatus[] = [
   'PENDING',
   'CONFIRMED',
   'PREPARING',
   'READY',
-  'COMPLETED',
+  'SERVED',
 ];
 
 const STATUS_LABEL: Record<OrderStatus, string> = {
@@ -37,24 +37,46 @@ const STATUS_DESCRIPTION: Record<OrderStatus, string> = {
   REFUNDED: 'Payment refunded to original method.',
 };
 
+function trackerLabels(type: CustomerOrder['type']): Record<OrderStatus, string> {
+  if (type === 'TAKEAWAY') return { ...STATUS_LABEL, READY: 'Ready for pickup', SERVED: 'Picked up', COMPLETED: 'Picked up' };
+  if (type === 'DINE_IN') return { ...STATUS_LABEL, READY: 'Ready', SERVED: 'Served', COMPLETED: 'Completed' };
+  return { ...STATUS_LABEL, READY: 'Ready', SERVED: 'Delivered', COMPLETED: 'Delivered' };
+}
+
 const TERMINAL_STATUSES: OrderStatus[] = ['COMPLETED', 'CANCELLED', 'REFUNDED', 'SERVED'];
 
-function OrderTracker({ status }: { status: OrderStatus }) {
+function PaymentNotice({ order, currency, onRetry }: { order: CustomerOrder; currency: string; onRetry: () => Promise<void> }) {
+  const [retrying, setRetrying] = useState(false);
+  const payment = order.payment;
+  if (!payment) return null;
+  const money = new Intl.NumberFormat(undefined, { style: 'currency', currency });
+  const labels: Record<PaymentStatus, string> = { PENDING: 'Payment is being confirmed', PROCESSING: 'Payment is processing', PAID: 'Paid', FAILED: 'Payment failed', CANCELLED: 'Payment cancelled', REFUND_PENDING: 'Refund requested', PARTIALLY_REFUNDED: 'Partially refunded', REFUNDED: 'Refunded' };
+  const retry = async () => { setRetrying(true); try { await onRetry(); } finally { setRetrying(false); } };
+  return <section className={`tf-payment-notice is-${payment.status.toLowerCase()}`}>
+    <div><span className="tf-hero-eyebrow">PAYMENT</span><strong>{labels[payment.status]}</strong><span>{money.format(Number(payment.amount))}</span></div>
+    {(payment.status === 'PENDING' || payment.status === 'PROCESSING') && <p>We’re waiting for the provider’s confirmation. This page will update automatically.</p>}
+    {payment.status === 'FAILED' && <><p>We couldn’t complete your payment. Your order has not been charged.</p><LoadingButton loading={retrying} onClick={() => void retry()}>Try payment again</LoadingButton></>}
+    {payment.status === 'REFUNDED' && <p>Your refund has been initiated and will appear with your provider shortly.</p>}
+  </section>;
+}
+
+function OrderTracker({ status, type }: { status: OrderStatus; type: CustomerOrder['type'] }) {
+  const labels = trackerLabels(type);
   const isCancelled = status === 'CANCELLED' || status === 'REFUNDED';
-  const currentIndex = STATUS_STEPS.indexOf(status === 'SERVED' ? 'COMPLETED' : status);
 
   if (isCancelled) {
     return (
       <div className="tf-tracker-cancelled">
         <span className="tf-tracker-icon is-cancelled">✕</span>
         <div>
-          <h3 className="tf-tracker-title">{STATUS_LABEL[status]}</h3>
+        <h3 className="tf-tracker-title">{labels[status]}</h3>
           <p className="tf-tracker-desc">{STATUS_DESCRIPTION[status]}</p>
         </div>
       </div>
     );
   }
 
+  const currentIndex = STATUS_STEPS.indexOf(status === 'COMPLETED' ? 'SERVED' : status);
   return (
     <div className="tf-order-tracker">
       <div className="tf-tracker-current">
@@ -63,7 +85,7 @@ function OrderTracker({ status }: { status: OrderStatus }) {
           <span className="tf-tracker-dot" />
         </div>
         <div>
-          <h3 className="tf-tracker-title">{STATUS_LABEL[status]}</h3>
+        <h3 className="tf-tracker-title">{labels[status]}</h3>
           <p className="tf-tracker-desc">{STATUS_DESCRIPTION[status]}</p>
         </div>
       </div>
@@ -80,7 +102,7 @@ function OrderTracker({ status }: { status: OrderStatus }) {
               <div className="tf-step-icon">
                 {isDone ? '✓' : index + 1}
               </div>
-              <span className="tf-step-label">{STATUS_LABEL[step]}</span>
+              <span className="tf-step-label">{labels[step]}</span>
             </li>
           );
         })}
@@ -137,6 +159,7 @@ export function OrderDetailPage({ orderId }: { orderId: string }) {
   const currency = order.currency || order.restaurant?.currency || 'EUR';
   const money = new Intl.NumberFormat(undefined, { style: 'currency', currency });
   const isActive = !TERMINAL_STATUSES.includes(order.status);
+  const refreshAfterRetry = async () => { await customerOrderService.retryPayment(order.id); await load(); };
 
   return (
     <div className="tf-walkthrough-root">
@@ -164,7 +187,8 @@ export function OrderDetailPage({ orderId }: { orderId: string }) {
               {/* Left Column: Tracker & Map simulation */}
               <div className="tf-tracking-main">
                 <section className="tf-tracking-card">
-                  <OrderTracker status={order.status} />
+                  <OrderTracker status={order.status} type={order.type} />
+                  <PaymentNotice order={order} currency={currency} onRetry={refreshAfterRetry} />
 
                   {isActive && (
                     <div className="tf-eta-banner">
@@ -181,6 +205,10 @@ export function OrderDetailPage({ orderId }: { orderId: string }) {
 
                 {/* Simulated Delivery Map Visual */}
                 <section className="tf-map-card">
+                  {order.type !== 'DELIVERY' || !['READY', 'SERVED', 'COMPLETED'].includes(order.status) ? (
+                    <div className="tf-delivery-waiting"><span className="tf-hero-eyebrow">DELIVERY</span><h2>{order.type === 'TAKEAWAY' ? 'Ready for pickup soon' : 'Your order is being prepared'}</h2><p>{order.type === 'DELIVERY' ? "We'll show courier tracking once your order is on the way." : 'We’ll update this page when your order is ready.'}</p></div>
+                  ) : (
+                  <>
                   <div className="tf-map-visual">
                     <div className="tf-map-grid-bg" />
                     <div className="tf-map-route-line" />
@@ -200,6 +228,8 @@ export function OrderDetailPage({ orderId }: { orderId: string }) {
                   <div className="tf-map-info-bar">
                     <span>Delivering to: <strong>{order.deliveryAddress ? `${order.deliveryAddress.street}, ${order.deliveryAddress.city}` : 'Vihti, Uusimaa'}</strong></span>
                   </div>
+                  </>
+                  )}
                 </section>
               </div>
 
@@ -236,6 +266,8 @@ export function OrderDetailPage({ orderId }: { orderId: string }) {
                       <span>Delivery Fee</span>
                       <span>{money.format(Number((order as any).deliveryFee || '1.99'))}</span>
                     </div>
+                    <div className="tf-receipt-line"><span>Service fee</span><span>{money.format(Number((order as any).serviceFee || '0.00'))}</span></div>
+                    {Number(order.tip || 0) > 0 && <div className="tf-receipt-line"><span>Courier tip</span><span>{money.format(Number(order.tip))}</span></div>}
                     <div className="tf-receipt-line is-total">
                       <span>Total Paid</span>
                       <strong>{money.format(Number(order.total || '0.00'))}</strong>

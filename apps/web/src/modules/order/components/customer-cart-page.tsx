@@ -244,7 +244,8 @@ export function CustomerCartPage() {
                             className={`tf-tip-pill ${tipPercentage === tip ? 'is-active' : ''}`}
                             onClick={() => setTipPercentage(tip)}
                           >
-                            {tip === 0 ? 'None' : `${tip}%`}
+                            <span>{tip === 0 ? 'None' : `${tip}%`}</span>
+                            {tip > 0 && <small>{money.format((subtotal * tip) / 100)}</small>}
                           </button>
                         ))}
                       </div>
@@ -279,7 +280,7 @@ export function CustomerCartPage() {
                     <button
                       type="button"
                       className="tf-checkout-cta"
-                      onClick={() => router.push(`/checkout?restaurantId=${currentCart.restaurantId}`)}
+                      onClick={() => router.push(`/checkout?restaurantId=${currentCart.restaurantId}&tipPercentage=${tipPercentage}`)}
                     >
                       Proceed to Checkout · {money.format(grandTotal)}
                     </button>

@@ -47,6 +47,134 @@
 .address-suggestions button { border: 0; border-bottom: 1px solid var(--color-border); padding: .8rem; background: transparent; color: var(--color-foreground); font: inherit; font-size: .75rem; text-align: left; cursor: pointer; }
 .address-suggestions button:hover { background: var(--color-surface-raised); }
 .checkout-delivery-quote { margin: .75rem 0 0; color: var(--color-text-muted); font-size: .78rem; }
+.tf-payment-complete-page { width: min(100% - 2.5rem, 54rem); margin: 0 auto; padding: clamp(2rem, 7vw, 6rem) 0 8rem; }
+.tf-payment-complete-panel { display: grid; justify-items: start; max-width: 38rem; margin-top: 3rem; border-top: 1px solid var(--color-border); padding-top: 2rem; }
+.tf-payment-complete-mark { display: grid; width: 3.5rem; height: 3.5rem; margin-bottom: 2rem; place-items: center; border-radius: 50%; background: var(--color-accent); color: var(--color-on-accent); font-size: 1.5rem; font-weight: 700; }
+.tf-payment-complete-panel.is-error .tf-payment-complete-mark { background: #a34c35; }
+.tf-payment-complete-panel h1 { max-width: 10ch; margin: .5rem 0 1rem; font-family: var(--font-display); font-size: clamp(3rem, 8vw, 6rem); font-weight: 400; letter-spacing: -.06em; line-height: .88; }
+.tf-payment-complete-panel p { max-width: 30rem; margin: 0 0 2rem; color: var(--color-text-muted); font-size: .88rem; line-height: 1.65; }
+.tf-tip-pill { display: grid; gap: .2rem; justify-items: center; }
+.tf-tip-pill small { color: var(--color-text-muted); font-size: .64rem; font-weight: 500; }
+[data-theme='dark'] .tf-tip-pill small { color: #6b6b67; }
+
+/* Shared dark-mode contrast primitives. Components should inherit these tokens
+   instead of choosing their own light/dark text colors. */
+[data-theme='dark'] :where(input:not([type='radio']):not([type='checkbox']), select, textarea, .ui-select, .tf-input-field, .tf-notes-textarea, .tf-cart-notes-textarea) {
+  background-color: var(--color-control-background);
+  border-color: var(--color-control-border);
+  color: var(--color-foreground);
+}
+[data-theme='dark'] :where(input, select, textarea)::placeholder { color: var(--color-placeholder); }
+[data-theme='dark'] :where(.dropdown__menu, .modal, .drawer, .tf-account-dropdown, .tf-location-dropdown) {
+  background: var(--color-surface);
+  border-color: var(--color-border-strong);
+  color: var(--color-foreground);
+}
+[data-theme='dark'] :where(.dropdown__item, .tf-account-dropdown__item) { color: var(--color-foreground); }
+[data-theme='dark'] :where(.dropdown__item:hover, .dropdown__item:focus-visible, .tf-account-dropdown__item:hover) { background: var(--color-interaction-hover); }
+[data-theme='dark'] :where(.modal__header h2, .drawer__header h2, .modal__body, .drawer__body) { color: var(--color-foreground); }
+[data-theme='dark'] :where(.button--secondary, .button--ghost, .icon-button--secondary) { color: var(--color-foreground); border-color: var(--color-border-strong); }
+[data-theme='dark'] :where(.button--secondary:hover:not(:disabled), .icon-button--secondary:hover) { background: var(--color-interaction-hover); }
+
+/* Navigation overlays use dark surfaces in dark mode, including every row/state. */
+[data-theme='dark'] :where(.tf-location-dropdown, .tf-account-dropdown) {
+  background: var(--color-surface);
+  color: var(--color-foreground);
+}
+[data-theme='dark'] :where(.tf-location-dropdown__item, .tf-account-dropdown__item) {
+  background: transparent;
+  color: var(--color-foreground);
+}
+[data-theme='dark'] :where(.tf-location-dropdown__item:hover, .tf-account-dropdown__item:hover) {
+  background: var(--color-interaction-hover);
+  color: var(--color-foreground);
+}
+[data-theme='dark'] .tf-location-dropdown__item.is-selected {
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+}
+[data-theme='dark'] .tf-account-dropdown__item.is-primary { color: var(--color-accent); }
+[data-theme='dark'] .tf-account-dropdown__item.is-danger { color: var(--color-danger); }
+[data-theme='dark'] :where(.tf-location-dropdown__city, .tf-account-dropdown__user strong, .tf-account-dropdown__guest p) { color: var(--color-foreground); }
+[data-theme='dark'] :where(.tf-location-dropdown__region, .tf-account-dropdown__user span, .tf-account-dropdown__guest span) { color: var(--color-text-muted); }
+[data-theme='dark'] .tf-account-dropdown {
+  width: min(20rem, calc(100vw - 2rem));
+  border-color: #302f2b;
+}
+[data-theme='dark'] .tf-account-dropdown__item {
+  min-height: 2.75rem;
+  padding: .75rem 1rem;
+  border-radius: 10px;
+  transition: background 150ms ease, color 150ms ease;
+}
+[data-theme='dark'] .tf-account-dropdown__item:hover,
+[data-theme='dark'] .tf-account-dropdown__item:focus-visible {
+  background: #24231f;
+  color: #f5f3ee;
+  outline: none;
+}
+[data-theme='dark'] .tf-account-dropdown__item.is-primary {
+  background: #2d2b27;
+  color: #e97752;
+}
+[data-theme='dark'] .tf-account-dropdown__item.is-primary:hover,
+[data-theme='dark'] .tf-account-dropdown__item.is-primary:focus-visible {
+  background: #3a352f;
+  color: #f08a65;
+}
+[data-theme='dark'] .tf-account-dropdown__item.is-danger:hover,
+[data-theme='dark'] .tf-account-dropdown__item.is-danger:focus-visible {
+  background: #321f1f;
+  color: #f08080;
+}
+[data-theme='dark'] .tf-location-dropdown {
+  width: min(20rem, calc(100vw - 2rem));
+  border-color: #302f2b;
+}
+[data-theme='dark'] .tf-location-dropdown__item {
+  min-height: 2.75rem;
+  padding: .75rem 1rem;
+  border-radius: 10px;
+  transition: background 150ms ease, color 150ms ease;
+}
+[data-theme='dark'] .tf-location-dropdown__item:hover,
+[data-theme='dark'] .tf-location-dropdown__item:focus-visible {
+  background: #24231f;
+  color: #f5f3ee;
+  outline: none;
+}
+[data-theme='dark'] .tf-location-dropdown__item.is-selected {
+  background: #2d2b27;
+  color: #e97752;
+}
+[data-theme='dark'] .tf-location-dropdown__item.is-selected:hover,
+[data-theme='dark'] .tf-location-dropdown__item.is-selected:focus-visible {
+  background: #3a352f;
+  color: #f08a65;
+}
+[data-theme='dark'] .tf-location-dropdown__gps {
+  background: #24231f;
+  color: #e97752;
+  border-radius: 10px;
+  transition: background 150ms ease, color 150ms ease;
+}
+[data-theme='dark'] .tf-location-dropdown__gps:hover,
+[data-theme='dark'] .tf-location-dropdown__gps:focus-visible {
+  background: #2d2b27;
+  color: #f08a65;
+  outline: none;
+}
+.tf-payment-notice { display: grid; gap: .7rem; margin-top: 1.5rem; border-top: 1px solid var(--color-border); padding-top: 1.25rem; }
+.tf-payment-notice > div { display: flex; align-items: baseline; gap: .75rem; flex-wrap: wrap; }
+.tf-payment-notice strong { font-size: .95rem; }
+.tf-payment-notice > div > span:last-child { margin-left: auto; color: var(--color-text-muted); font-size: .82rem; }
+.tf-payment-notice p { max-width: 34rem; margin: 0; color: var(--color-text-muted); font-size: .78rem; line-height: 1.55; }
+.tf-payment-notice.is-failed strong { color: #a34c35; }
+.tf-payment-notice.is-paid strong { color: var(--color-accent); }
+.tf-payment-notice button { justify-self: start; }
+.tf-delivery-waiting { min-height: 14rem; display: grid; align-content: center; padding: 2rem; }
+.tf-delivery-waiting h2 { margin: .5rem 0; font-family: var(--font-display); font-size: 1.8rem; font-weight: 400; }
+.tf-delivery-waiting p { max-width: 26rem; margin: 0; color: #6b6b67; font-size: .82rem; line-height: 1.6; }
 @media (max-width: 700px) { .address-form__grid { grid-template-columns: 1fr; } }
 
 /* Customer discovery */

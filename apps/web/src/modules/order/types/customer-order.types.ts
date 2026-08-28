@@ -88,7 +88,7 @@ export type OrderStatus =
 export type OrderType = 'DINE_IN' | 'TAKEAWAY' | 'DELIVERY';
 
 export type PaymentMethod = 'CASH' | 'CARD' | 'ONLINE';
-export type PaymentStatus = 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED';
+export type PaymentStatus = 'PENDING' | 'PROCESSING' | 'PAID' | 'FAILED' | 'CANCELLED' | 'REFUND_PENDING' | 'PARTIALLY_REFUNDED' | 'REFUNDED';
 
 export type OrderDeliveryAddress = {
   street: string;
@@ -126,6 +126,7 @@ export type CustomerOrder = {
   subtotal: string;
   tax: string;
   discount: string;
+  tip?: string;
   total: string;
   currency: string;
   createdAt: string;
@@ -147,6 +148,7 @@ export type CustomerOrder = {
     status: PaymentStatus;
     amount: string;
     paidAt: string | null;
+    refundedAt?: string | null;
   } | null;
   history: OrderHistoryEntry[];
 };
@@ -161,4 +163,5 @@ export type CheckoutInput = {
   notes?: string | null;
   paymentMethod: PaymentMethod;
   couponCode?: string;
+  tipPercentage?: number;
 };

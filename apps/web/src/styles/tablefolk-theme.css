@@ -214,6 +214,7 @@
   padding: 0.6rem;
   z-index: 60;
   animation: tf-fade-in 0.18s ease;
+  color: #171717;
 }
 
 .tf-location-dropdown__header {
@@ -222,7 +223,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--tf-text-muted);
+  color: #6b6b67;
 }
 
 .tf-location-dropdown__gps {
@@ -270,7 +271,7 @@
   font-size: 0.82rem;
   text-align: left;
   cursor: pointer;
-  color: var(--tf-text-primary);
+  color: #171717;
 }
 
 .tf-location-dropdown__item:hover {
@@ -285,7 +286,7 @@
 
 .tf-location-dropdown__region {
   font-size: 0.72rem;
-  color: var(--tf-text-muted);
+  color: #6b6b67;
 }
 
 /* Header Search Form */
@@ -1456,10 +1457,12 @@
 
 .tf-tip-pill {
   flex: 1;
-  padding: 0.4rem 0;
+  min-height: 3.15rem;
+  padding: 0.45rem 0.7rem;
   border: 1px solid var(--tf-border-medium);
-  background: #ffffff;
-  border-radius: 6px;
+  background: var(--tf-bg-white);
+  color: var(--tf-text-primary);
+  border-radius: var(--tf-radius-pill);
   font-size: 0.75rem;
   font-weight: 700;
   cursor: pointer;
@@ -1467,9 +1470,9 @@
 }
 
 .tf-tip-pill.is-active {
-  background: var(--tf-text-primary);
-  color: #ffffff;
-  border-color: var(--tf-text-primary);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  border-color: var(--color-accent);
 }
 
 .tf-summary-breakdown {
@@ -1921,10 +1924,24 @@
 
 .tf-tracking-card {
   background: #ffffff;
+  color: #171717;
   border: 1px solid var(--tf-border-subtle);
   border-radius: 14px;
   padding: 1.8rem;
 }
+
+.tf-tracking-card .tf-tracker-desc,
+.tf-tracking-card .tf-step-label,
+.tf-tracking-card .tf-payment-notice p,
+.tf-map-card .tf-map-info-bar,
+.tf-receipt-card .tf-receipt-qty,
+.tf-receipt-card .tf-receipt-note,
+.tf-receipt-card .tf-receipt-line {
+  color: #6b6b67;
+}
+.tf-receipt-card .tf-receipt-line.is-total { color: #171717; }
+.tf-receipt-card .tf-btn-secondary { background: #171717; color: #ffffff; }
+.tf-receipt-card .tf-btn-outline { color: #171717; }
 
 .tf-order-tracker {
   display: flex;
@@ -2057,6 +2074,7 @@
 /* Simulated Map Visual */
 .tf-map-card {
   background: #ffffff;
+  color: #171717;
   border: 1px solid var(--tf-border-subtle);
   border-radius: 14px;
   overflow: hidden;
@@ -2137,6 +2155,7 @@
 /* Receipt Card */
 .tf-receipt-card {
   background: #ffffff;
+  color: #171717;
   border: 1px solid var(--tf-border-subtle);
   border-radius: 14px;
   padding: 1.5rem;
@@ -2279,7 +2298,40 @@
 [data-theme='dark'] .tf-order-card,
 [data-theme='dark'] .tf-orders-empty {
   background: var(--tf-bg-white);
+  color: #171717;
+  --tf-text-primary: #171717;
+  --tf-text-secondary: #6b6b67;
+  --tf-text-muted: #92918c;
+}
+
+[data-theme='dark'] .tf-checkout-card,
+[data-theme='dark'] .tf-checkout-summary-card,
+[data-theme='dark'] .tf-type-option-card,
+[data-theme='dark'] .tf-dish-card,
+[data-theme='dark'] .tf-restaurant-card,
+[data-theme='dark'] .tf-cart-notes-card,
+[data-theme='dark'] .tf-tracking-card,
+[data-theme='dark'] .tf-map-card,
+[data-theme='dark'] .tf-receipt-card {
+  --tf-text-primary: #171717;
+  --tf-text-secondary: #6b6b67;
+  --tf-text-muted: #92918c;
+  color: #171717;
+}
+
+/* Cart surfaces stay dark in dark mode; do not inherit the light-card contrast rules. */
+[data-theme='dark'] .tf-cart-empty-state,
+[data-theme='dark'] .tf-cart-restaurant-card,
+[data-theme='dark'] .tf-cart-lines-list,
+[data-theme='dark'] .tf-cart-notes-card,
+[data-theme='dark'] .tf-cart-summary-card,
+[data-theme='dark'] .tf-order-card,
+[data-theme='dark'] .tf-orders-empty {
+  background: var(--tf-bg-card);
   color: var(--tf-text-primary);
+  --tf-text-primary: var(--color-foreground);
+  --tf-text-secondary: var(--color-text-muted);
+  --tf-text-muted: var(--color-text-subtle);
 }
 
 [data-theme='dark'] .tf-cart-empty-state,

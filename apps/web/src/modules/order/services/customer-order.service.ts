@@ -365,6 +365,10 @@ export const customerOrderService = {
     }
   },
 
+  async retryPayment(orderId: string): Promise<{ paymentId: string; attemptId: string; status: string; clientSecret: string | null; checkoutUrl: string | null }> {
+    return apiClient.post(`/payments/orders/${encodeURIComponent(orderId)}/retry`);
+  },
+
   async listOrders(): Promise<CustomerOrder[]> {
     try {
       const serverOrders = await apiClient.get<CustomerOrder[]>('/customer/orders');

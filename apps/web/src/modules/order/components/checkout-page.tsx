@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js';
 import {
   Alert,
   ErrorState,
@@ -38,10 +40,29 @@ const PAYMENT_METHODS: PaymentOption[] = [
   { value: 'ONLINE', label: 'Apple Pay / Google Pay', icon: '📱' },
   { value: 'CASH', label: 'Cash on Delivery', icon: '💵' },
 ];
+const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
+
+function CardPaymentForm({ onComplete }: { onComplete: () => void }) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const confirm = async () => {
+    if (!stripe || !elements || submitting) return;
+    setSubmitting(true); setError('');
+    const result = await stripe.confirmPayment({ elements, confirmParams: { return_url: `${window.location.origin}/payments/complete` }, redirect: 'if_required' });
+    if (result.error) setError(result.error.message ?? 'Payment could not be completed.');
+    else onComplete();
+    setSubmitting(false);
+  };
+  return <div className="tf-card-payment-form"><PaymentElement /><p className="tf-payment-security">Your card details are encrypted and handled by Stripe.</p>{error && <Alert>{error}</Alert>}<LoadingButton loading={submitting} onClick={() => void confirm()}>Confirm payment</LoadingButton></div>;
+}
 
 export function CheckoutPage() {
   const searchParams = useSearchParams();
   const restaurantId = searchParams.get('restaurantId') ?? 'marlow-sage';
+  const tipPercentage = Number(searchParams.get('tipPercentage') ?? '0');
   const router = useRouter();
   const toast = useToast();
   const { status: authStatus } = useAuth();
@@ -63,6 +84,8 @@ export function CheckoutPage() {
 
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [paymentOrder, setPaymentOrder] = useState<{ id: string; orderNumber: string } | null>(null);
 
   const loadCart = useCallback(async () => {
     if (!restaurantId) { setCartStatus('empty'); return; }
@@ -125,6 +148,7 @@ export function CheckoutPage() {
       restaurantId,
       type: orderType,
       paymentMethod,
+      tipPercentage: Number.isFinite(tipPercentage) ? tipPercentage : 0,
       notes: notes.trim() || null,
       ...(orderType === 'DINE_IN' ? { tableNumber: tableNumber.trim() } : {}),
       ...(orderType === 'DELIVERY' && deliveryAddressId ? { deliveryAddressId } : orderType === 'DELIVERY' ? {
@@ -141,8 +165,17 @@ export function CheckoutPage() {
     setSubmitting(true);
     try {
       const order = await customerOrderService.checkout(input);
-      toast.success('Order placed!', { description: `Order #${order.orderNumber} confirmed.` });
-      router.replace(`/orders/${order.id}`);
+      // Create the provider intent only after the server has persisted the order total.
+      const payment = paymentMethod === 'CASH' ? null : await customerOrderService.retryPayment(order.id);
+      if (payment?.clientSecret && stripePublishableKey) {
+        setPaymentOrder({ id: order.id, orderNumber: order.orderNumber });
+        setClientSecret(payment.clientSecret);
+      } else if (payment?.clientSecret && !stripePublishableKey) {
+        setSubmitError('Card payments are not configured in the web app. Add NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY and try again.');
+      } else {
+        toast.success('Order created', { description: `We’re confirming payment for order #${order.orderNumber}.` });
+        router.replace(`/orders/${order.id}`);
+      }
     } catch (error) {
       setSubmitError(errorMessage(error));
     } finally {
@@ -158,7 +191,8 @@ export function CheckoutPage() {
   const subtotal = Number(cart.subtotal);
   const deliveryFee = orderType === 'DELIVERY' ? 1.99 : 0;
   const serviceFee = 0.99;
-  const total = subtotal + deliveryFee + serviceFee;
+  const tipAmount = (subtotal * tipPercentage) / 100;
+  const total = subtotal + deliveryFee + serviceFee + tipAmount;
 
   return (
     <div className="tf-walkthrough-root">
@@ -315,6 +349,7 @@ export function CheckoutPage() {
                       );
                     })}
                   </div>
+                  {clientSecret && <Elements stripe={stripePromise} options={{ clientSecret }}><CardPaymentForm onComplete={() => paymentOrder && router.replace(`/orders/${paymentOrder.id}`)} /></Elements>}
                 </section>
 
                 {/* 4. Notes */}
@@ -366,6 +401,7 @@ export function CheckoutPage() {
                       <span>Service fee</span>
                       <span>{money.format(serviceFee)}</span>
                     </div>
+                    {tipAmount > 0 && <div className="tf-summary-row"><span>Courier tip ({tipPercentage}%)</span><span>{money.format(tipAmount)}</span></div>}
                     <div className="tf-summary-divider" />
                     <div className="tf-summary-row is-total">
                       <span>Total to pay</span>
@@ -378,11 +414,11 @@ export function CheckoutPage() {
                     onClick={handleSubmit}
                     className="tf-checkout-place-order-btn"
                   >
-                    Place order · {money.format(total)}
+                    Pay {money.format(total)}
                   </LoadingButton>
 
                   <p className="tf-checkout-terms-note">
-                    By placing your order, you agree to Tablefolk’s terms of service and restaurant preparation policies.
+                    Payment is confirmed securely by our payment provider. Your order is sent to the restaurant only after confirmation.
                   </p>
                 </div>
               </div>
