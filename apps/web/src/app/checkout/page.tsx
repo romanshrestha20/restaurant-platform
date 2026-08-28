@@ -1,5 +1,6 @@
 import { Suspense } from 'react';
 import { CheckoutPage } from '@/modules/order';
+import { ProtectedRoute } from '@/modules/auth';
 
 export const metadata = {
   title: 'Checkout',
@@ -9,7 +10,9 @@ export const metadata = {
 export default function CheckoutRoute() {
   return (
     <Suspense>
-      <CheckoutPage />
+      <ProtectedRoute>
+        <CheckoutPage />
+      </ProtectedRoute>
     </Suspense>
   );
 }
