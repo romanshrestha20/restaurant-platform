@@ -130,6 +130,7 @@ enum OAuthProvider {
 
 enum TokenType {
   EMAIL_VERIFICATION
+  PHONE_VERIFICATION
   PASSWORD_RESET
 }
 
