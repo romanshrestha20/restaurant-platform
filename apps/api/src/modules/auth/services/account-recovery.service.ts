@@ -12,6 +12,7 @@ const EMAIL_VERIFICATION_RESPONSE = {
 const PASSWORD_RESET_RESPONSE = {
   message: 'If an account exists for that email, a reset link has been sent',
 } as const;
+const PHONE_VERIFICATION_RESPONSE = { message: 'If verification is required, a verification code has been sent' } as const;
 
 @Injectable()
 export class AccountRecoveryService {
@@ -68,6 +69,22 @@ export class AccountRecoveryService {
     }
 
     return { message: 'Email verified successfully' } as const;
+  }
+
+  async requestPhoneVerification(userId: string) {
+    const user = await this.authRepository.findUserById(userId);
+    if (user?.phone && user.isActive && user.deletedAt === null && !user.phoneVerified) {
+      const token = this.accountTokenService.createToken(ACCOUNT_TOKEN_TYPES.PHONE_VERIFICATION);
+      await this.authRepository.replaceAccountToken({ userId, type: ACCOUNT_TOKEN_TYPES.PHONE_VERIFICATION, tokenHash: token.tokenHash, expiresAt: token.expiresAt });
+      this.logger.log(`[development phone verification] ${user.phone}: ${token.rawToken}`);
+    }
+    return PHONE_VERIFICATION_RESPONSE;
+  }
+
+  async verifyPhone(rawToken: string) {
+    const verified = await this.authRepository.verifyPhoneWithToken(this.accountTokenService.hashToken(rawToken));
+    if (!verified) throw new BadRequestException('Invalid or expired verification token');
+    return { message: 'Phone verified successfully' } as const;
   }
 
   async requestPasswordReset(emailInput: string) {

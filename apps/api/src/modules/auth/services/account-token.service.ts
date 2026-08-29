@@ -30,7 +30,7 @@ export class AccountTokenService {
   }
 
   private getTtlSeconds(type: AccountTokenType): number {
-    return type === ACCOUNT_TOKEN_TYPES.EMAIL_VERIFICATION
+    return type === ACCOUNT_TOKEN_TYPES.EMAIL_VERIFICATION || type === ACCOUNT_TOKEN_TYPES.PHONE_VERIFICATION
       ? this.config.get('EMAIL_VERIFICATION_TTL_SECONDS', { infer: true })
       : this.config.get('PASSWORD_RESET_TTL_SECONDS', { infer: true });
   }

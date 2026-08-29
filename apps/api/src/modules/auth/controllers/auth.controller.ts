@@ -72,6 +72,17 @@ export class AuthController {
     return this.accountRecoveryService.requestEmailVerification(authUser.id);
   }
 
+  @Post('phone-verification/request')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 3, ttl: 60 * 60_000 } })
+  @UseGuards(AccessTokenGuard)
+  requestPhoneVerification(@CurrentUser() authUser: AccessAuthUser) { return this.accountRecoveryService.requestPhoneVerification(authUser.id); }
+
+  @Post('phone-verification/confirm')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  verifyPhone(@Body() dto: VerifyEmailDto) { return this.accountRecoveryService.verifyPhone(dto.token); }
+
   @Post('email-verification/confirm')
   @HttpCode(HttpStatus.OK)
   @Throttle({ default: { limit: 10, ttl: 60_000 } })

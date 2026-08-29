@@ -283,6 +283,18 @@ export class AuthRepository {
     });
   }
 
+  async verifyPhoneWithToken(tokenHash: string): Promise<boolean> {
+    return this.prisma.$transaction(async (transaction) => {
+      const token = await transaction.verificationToken.findFirst({ where: { token: tokenHash, type: 'PHONE_VERIFICATION', usedAt: null, expiresAt: { gt: new Date() }, user: { isActive: true, deletedAt: null } }, select: { id: true, userId: true } });
+      if (!token) return false;
+      const claim = await transaction.verificationToken.updateMany({ where: { id: token.id, usedAt: null, expiresAt: { gt: new Date() } }, data: { usedAt: new Date() } });
+      if (claim.count !== 1) return false;
+      await transaction.user.update({ where: { id: token.userId }, data: { phoneVerified: true } });
+      await transaction.verificationToken.updateMany({ where: { userId: token.userId, type: 'PHONE_VERIFICATION', usedAt: null }, data: { usedAt: new Date() } });
+      return true;
+    });
+  }
+
   async resetPasswordWithToken(
     tokenHash: string,
     passwordHash: string,

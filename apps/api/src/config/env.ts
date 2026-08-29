@@ -19,7 +19,7 @@ export const envValidationSchema = Joi.object({
   EMAIL_VERIFICATION_TTL_SECONDS: Joi.number()
     .integer()
     .positive()
-    .default(86_400),
+    .default(900),
   PASSWORD_RESET_TTL_SECONDS: Joi.number().integer().positive().default(3_600),
   MAIL_MODE: Joi.string()
     .valid('log', 'smtp')
