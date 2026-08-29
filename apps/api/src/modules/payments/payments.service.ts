@@ -18,6 +18,15 @@ export class PaymentsService {
     return { paymentId: payment.id, attemptId: attempt.id, status: PaymentStatus.PROCESSING, clientSecret: created.clientSecret ?? null, checkoutUrl: created.checkoutUrl ?? null };
   }
 
+  async refundForOrder(orderId: string) {
+    const payment = await this.prisma.payment.findFirst({ where: { orderId } });
+    if (!payment || payment.status === PaymentStatus.REFUNDED) return { refunded: false, alreadyRefunded: true };
+    if (payment.status !== PaymentStatus.PAID || !payment.providerPaymentId) return { refunded: false, pendingProviderPayment: true };
+    await this.provider.refundPayment(payment.providerPaymentId, Number(payment.amount));
+    await this.prisma.payment.updateMany({ where: { id: payment.id, status: PaymentStatus.PAID }, data: { status: PaymentStatus.REFUNDED, refundedAt: new Date() } });
+    return { refunded: true };
+  }
+
   async webhook(event: { id: string; type: string; paymentId: string; providerPaymentId?: string; amount?: number; currency?: string; failureReason?: string; payload?: unknown }) {
     try {
       return await this.prisma.$transaction(async (tx) => {

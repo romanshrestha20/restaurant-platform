@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { Optional } from '@nestjs/common';
 import {
   OrderStatus,
   OrderType,
@@ -13,6 +14,7 @@ import {
 import { PrismaService } from '../../prisma/prisma.service';
 import { RealtimeGateway } from '../../common/realtime/realtime.gateway';
 import { MenuAvailabilityService } from '../menu/menu-availability.service';
+import { PaymentsService } from '../payments/payments.service';
 import type {
   CheckoutDto,
   OrderFilterDto,
@@ -96,6 +98,7 @@ export class OrdersService {
     private readonly prisma: PrismaService,
     private readonly realtimeGateway: RealtimeGateway,
     private readonly menuAvailabilityService: MenuAvailabilityService,
+    @Optional() private readonly paymentsService?: PaymentsService,
   ) {}
 
   async checkout(userId: string, data: CheckoutDto) {
@@ -644,14 +647,6 @@ export class OrdersService {
         });
       }
 
-      // If cancelled and payment was paid, mark payment refunded
-      if (data.status === OrderStatus.CANCELLED) {
-        await tx.payment.updateMany({
-          where: { orderId, status: PaymentStatus.PAID },
-          data: { status: PaymentStatus.REFUNDED, refundedAt: new Date() },
-        });
-      }
-
       // Log activity
       await tx.activityLog.create({
         data: {
@@ -668,6 +663,11 @@ export class OrdersService {
       return updatedWithHistory;
     });
 
+    if (data.status === OrderStatus.CANCELLED) {
+      if (!this.paymentsService) throw new ConflictException('Payment service is not configured');
+      try { await this.paymentsService.refundForOrder(orderId); }
+      catch (error) { throw new ConflictException(`Order cancelled, but payment refund could not be completed: ${error instanceof Error ? error.message : 'payment provider error'}`); }
+    }
     this.emitOrderEvents(updatedOrder, 'order:status_changed');
 
     return this.serializeOrder(updatedOrder);
