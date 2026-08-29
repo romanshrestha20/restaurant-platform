@@ -1,20 +1,25 @@
-'use client';
+"use client";
 
-import { usePathname, useRouter } from 'next/navigation';
-import Link from 'next/link';
-import type { ReactNode } from 'react';
-import { ProtectedRoute } from '@/modules/auth';
-import { CustomerNavigation } from '@/components/customer';
+import { usePathname, useRouter } from "next/navigation";
+import Link from "next/link";
+import type { ReactNode } from "react";
+import { ProtectedRoute } from "@/modules/auth";
+import { CustomerNavigation } from "@/components/customer";
 
 const sections = [
-  { label: 'Profile', href: '/account/profile', available: true },
-  { label: 'Addresses', href: '/account/addresses', available: true },
-  { label: 'Payment methods', href: '/account/payment-methods', available: true },
-  { label: 'Favorites', href: '/account/favorites', available: true },
-  { label: 'Order history', href: '/account/orders', available: true },
-  { label: 'Notifications', href: '/account/notifications', available: true },
-  { label: 'Preferences', href: '/account/preferences', available: true },
-  { label: 'Security', href: '/account/security', available: true },
+  { label: "Profile", href: "/account/profile", available: true },
+  { label: "Addresses", href: "/account/addresses", available: true },
+  {
+    label: "Payment methods",
+    href: "/account/payment-methods",
+    available: true,
+  },
+  { label: "Favorites", href: "/account/favorites", available: true },
+  { label: "Order history", href: "/account/orders", available: true },
+  { label: "Reservations", href: "/account/reservations", available: true },
+  { label: "Notifications", href: "/account/notifications", available: true },
+  { label: "Preferences", href: "/account/preferences", available: true },
+  { label: "Security", href: "/account/security", available: true },
 ];
 
 function AccountShell({ children }: { children: ReactNode }) {
@@ -38,12 +43,12 @@ function AccountShell({ children }: { children: ReactNode }) {
                     <Link
                       className={
                         pathname === section.href
-                          ? 'account-nav__link is-active'
-                          : 'account-nav__link'
+                          ? "account-nav__link is-active"
+                          : "account-nav__link"
                       }
                       href={section.href}
                       aria-current={
-                        pathname === section.href ? 'page' : undefined
+                        pathname === section.href ? "page" : undefined
                       }
                     >
                       {section.label}
@@ -77,7 +82,7 @@ function AccountShell({ children }: { children: ReactNode }) {
                 disabled={!section.available}
               >
                 {section.label}
-                {section.available ? '' : ' — Soon'}
+                {section.available ? "" : " — Soon"}
               </option>
             ))}
           </select>

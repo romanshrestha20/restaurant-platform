@@ -872,6 +872,17 @@
 .tf-menu-cart-trigger:hover {
   transform: scale(1.03);
 }
+.tf-menu-hero__cart-bar { gap: .65rem; }
+.tf-menu-reservation-trigger { border: 1px solid rgba(255,255,255,.7); border-radius: var(--tf-radius-pill); padding: .6rem 1.2rem; background: transparent; color: #fff; font-size: .85rem; font-weight: 700; cursor: pointer; }
+.reservation-dialog { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 1.25rem; background: rgba(0,0,0,.45); }
+.reservation-dialog__panel { position: relative; width: min(100%, 30rem); max-height: 90vh; overflow: auto; background: var(--tf-bg-white); color: var(--tf-text-primary); padding: 2.25rem; }
+.reservation-dialog__panel h2 { margin: .35rem 0 1.5rem; font-family: var(--tf-font-serif); font-size: 2rem; }
+.reservation-dialog__panel form { display: grid; gap: 1rem; }
+.reservation-dialog__panel label { display: grid; gap: .4rem; font-size: .75rem; font-weight: 700; }
+.reservation-dialog__panel input, .reservation-dialog__panel textarea { width: 100%; border: 1px solid var(--tf-border-medium); padding: .7rem; font: inherit; }
+.reservation-form__split { display: grid; grid-template-columns: 1fr 7rem; gap: .75rem; }
+.reservation-dialog__close { position: absolute; top: .75rem; right: .9rem; border: 0; background: transparent; font-size: 1.6rem; cursor: pointer; }
+@media (max-width: 560px) { .tf-menu-hero__cart-bar { flex-wrap: wrap; } .reservation-form__split { grid-template-columns: 1fr; } }
 
 /* Category Tabs */
 .tf-menu-nav-bar {
@@ -1765,6 +1776,7 @@
   font-weight: 700;
   margin: 0;
 }
+.tf-orders-subtitle { max-width: 32rem; margin: .7rem 0 0; color: var(--tf-text-secondary); font-size: .86rem; line-height: 1.55; }
 
 .tf-order-filters { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1.25rem; }
 .tf-order-filters button { border: 1px solid var(--tf-border-medium); border-radius: var(--tf-radius-pill); padding: .45rem .8rem; background: transparent; color: var(--tf-text-secondary); font-size: .75rem; font-weight: 700; cursor: pointer; }
@@ -1884,6 +1896,13 @@
   font-size: 1.25rem;
   margin: 0 0 0.4rem;
 }
+.tf-order-card__title-row { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
+.tf-order-card__total { font-family: var(--tf-font-serif); font-size: 1.25rem; font-weight: 700; white-space: nowrap; }
+.tf-order-card__items { margin: 0 0 .7rem; color: var(--tf-text-primary); font-size: .82rem; line-height: 1.5; }
+.tf-order-card { border-radius: 0; border: 0; border-top: 1px solid var(--tf-border-subtle); background: transparent; padding: 1.35rem 0; }
+.tf-order-card:hover { background: var(--tf-bg-card); box-shadow: none; transform: none; padding-left: .75rem; padding-right: .75rem; }
+.tf-order-card.is-active-order { border-left: 3px solid var(--tf-green-eyebrow); padding-left: 1rem; }
+@media (max-width: 560px) { .tf-order-card__title-row { align-items: flex-start; } .tf-order-card__total { font-size: 1.05rem; } .tf-order-card__items { max-width: 20rem; } }
 
 .tf-order-card__meta {
   font-size: 0.82rem;

@@ -331,6 +331,13 @@ export function CustomerNavigation({
                     >
                       Order History
                     </Link>
+                    <Link
+                      href="/account/reservations"
+                      className="tf-account-dropdown__item"
+                      onClick={() => setAccountMenuOpen(false)}
+                    >
+                      Reservations
+                    </Link>
                     {managedRestaurantsStatus === "ready" &&
                       firstManagedRestaurant && (
                         <Link

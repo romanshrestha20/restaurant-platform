@@ -32,6 +32,65 @@
 .account-placeholder { padding: 3rem 0; }
 .account-placeholder h3 { margin: 0 0 .6rem; font-family: var(--font-display); font-size: 1.8rem; font-weight: 400; }
 .account-placeholder p { max-width: 30rem; margin: 0 0 1.5rem; color: var(--color-text-muted); font-size: .82rem; line-height: 1.6; }
+.favorites-empty { display: grid; grid-template-columns: 8rem minmax(0, 1fr); gap: 2rem; align-items: center; padding: 3.5rem 0; }
+.favorites-empty__mark { display: grid; place-items: center; width: 8rem; height: 10rem; background: var(--color-surface-raised); color: var(--color-accent); transform: rotate(-3deg); }
+.favorites-empty__mark span { font-family: var(--font-display); font-size: 4rem; line-height: 1; transform: rotate(3deg); }
+.favorites-empty__copy .eyebrow { margin-bottom: .6rem; }
+.favorites-empty__copy h3 { margin: 0 0 .6rem; font-family: var(--font-display); font-size: 2rem; font-weight: 400; letter-spacing: -.03em; }
+.favorites-empty__copy > p:not(.eyebrow) { max-width: 27rem; margin: 0 0 1.5rem; color: var(--color-text-muted); font-size: .82rem; line-height: 1.6; }
+.favorites-grid { display: grid; gap: 1rem; }
+.favorite-dish { display: grid; grid-template-columns: 8rem minmax(0, 1fr); gap: 1.5rem; border-top: 1px solid var(--color-border); padding: 1.25rem 0; }
+.favorite-dish__image { display: grid; aspect-ratio: 1; overflow: hidden; place-items: center; background: var(--color-surface-raised); color: var(--color-accent); font-size: 2rem; }
+.favorite-dish__image img { width: 100%; height: 100%; object-fit: cover; }
+.favorite-dish h3 { margin: .2rem 0 .35rem; font-family: var(--font-display); font-size: 1.6rem; font-weight: 400; }
+.favorite-dish > div:last-child > p:not(.eyebrow) { margin: 0 0 1rem; color: var(--color-text-muted); font-size: .82rem; }
+.tf-dish-favorite-btn { position: absolute; right: .65rem; top: .65rem; z-index: 2; display: grid; width: 2.25rem; height: 2.25rem; place-items: center; border: 0; border-radius: 50%; background: var(--color-surface); color: var(--color-foreground); font-size: 1.35rem; cursor: pointer; }
+.tf-dish-favorite-btn.is-favorited { color: var(--color-accent); }
+@media (max-width: 560px) { .favorite-dish { grid-template-columns: 5.5rem minmax(0, 1fr); gap: 1rem; } .favorite-dish h3 { font-size: 1.35rem; } }
+@media (max-width: 560px) { .favorites-empty { grid-template-columns: 5.5rem minmax(0, 1fr); gap: 1.25rem; padding: 2.5rem 0; } .favorites-empty__mark { width: 5.5rem; height: 7rem; } .favorites-empty__mark span { font-size: 3rem; } .favorites-empty__copy h3 { font-size: 1.65rem; } }
+
+/* Account refresh: a quieter workspace with one consistent content rhythm. */
+.account-app { background: var(--color-background); }
+.account-layout { width: min(100%, 90rem); grid-template-columns: 17rem minmax(0, 1fr); }
+.account-sidebar { padding: 4.25rem 2.25rem 3rem; background: color-mix(in srgb, var(--color-surface) 52%, transparent); }
+.account-sidebar__heading .eyebrow { margin-bottom: .8rem; color: var(--color-accent); letter-spacing: .16em; }
+.account-sidebar__heading h1 { font-size: 2.15rem; }
+.account-nav { gap: .2rem; margin-top: 3.4rem; }
+.account-nav__link { min-height: 3rem; border-left-width: 3px; border-radius: 0 .3rem .3rem 0; padding: .7rem .8rem .7rem 1rem; font-size: .86rem; }
+.account-nav__link:hover:not(.is-disabled) { padding-left: 1.25rem; background: var(--color-accent-soft); }
+.account-nav__link.is-active { background: var(--color-accent-soft); }
+.account-main { padding: 5rem clamp(2.5rem, 7vw, 8rem) 6rem; }
+.account-section-page, .profile-page { width: min(100%, 48rem); }
+.account-section-page { animation: fade-in 360ms ease both; }
+.account-section-page > .eyebrow { margin-bottom: .75rem; color: var(--color-accent); letter-spacing: .15em; }
+.account-section-page h2 { max-width: 42rem; margin-bottom: 1rem; font-size: clamp(2.35rem, 5vw, 4.2rem); }
+.account-section-page__description { max-width: 34rem; font-size: .9rem; }
+.account-section-page__body { margin-top: 3.25rem; }
+.account-placeholder { border-top: 0; padding: 3.5rem 0; }
+.account-placeholder__mark { display: block; margin-bottom: 1.3rem; color: var(--color-accent); font-size: 1.7rem; line-height: 1; }
+.account-placeholder h3 { font-size: 2rem; }
+.account-placeholder p { max-width: 34rem; margin-bottom: 0; }
+.address-form { margin-top: 2.5rem; border-top: 1px solid var(--color-border); padding-top: 2.5rem; }
+.address-form h3 { font-family: var(--font-display); font-size: 1.7rem; font-weight: 400; }
+.security-settings { display: grid; }
+.security-block, .security-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(15rem, 22rem); gap: 3rem; border-top: 1px solid var(--color-border); padding: 2.5rem 0; }
+.security-block h3, .security-row h3 { margin: .35rem 0 .45rem; font-family: var(--font-display); font-size: 1.65rem; font-weight: 400; }
+.security-block p:not(.eyebrow), .security-row p:not(.eyebrow) { margin: 0; color: var(--color-text-muted); font-size: .82rem; line-height: 1.6; }
+.security-password-form { display: grid; gap: 1rem; }
+.security-password-form label { display: grid; gap: .4rem; font-size: .75rem; font-weight: 650; }
+.security-status { justify-self: end; color: var(--color-text-muted); font-size: .75rem; font-weight: 700; }
+.security-status.is-good { color: var(--color-success); }
+.security-row > .button { align-self: start; justify-self: end; }
+.security-row--danger .eyebrow, .security-row--danger h3 { color: var(--color-danger-text); }
+.reservation-list { display: grid; }
+.reservation-entry { display: flex; align-items: flex-start; justify-content: space-between; gap: 2rem; border-top: 1px solid var(--color-border); padding: 1.5rem 0; }
+.reservation-entry h3 { margin: .35rem 0 .45rem; font-family: var(--font-display); font-size: 1.65rem; font-weight: 400; }
+.reservation-entry p:not(.eyebrow), .reservation-entry small { color: var(--color-text-muted); font-size: .82rem; }
+.reservation-entry small { display: block; margin-top: .45rem; }
+@media (max-width: 650px) { .security-block, .security-row { grid-template-columns: 1fr; gap: 1.25rem; } .security-row > .button, .security-status { justify-self: start; } }
+@media (max-width: 760px) { .account-main { padding: 3rem 1.25rem 4rem; } .account-section-page h2 { font-size: clamp(2.3rem, 11vw, 3.5rem); } .account-section-page__body { margin-top: 2.5rem; } }
+.account-nav__link { outline: none; }
+.account-nav__link:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 .address-list { display: grid; }
 .address-entry { display: flex; align-items: center; justify-content: space-between; gap: 1rem; border-bottom: 1px solid var(--color-border); padding: 1.25rem 0; }
 .address-entry div { display: grid; gap: .3rem; }

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Button, ErrorState, PageSkeleton } from "@/components/ui";
 import { CustomerNavigation } from "@/components/customer";
 import { customerRestaurantService } from "../services/customer-restaurant.service";
@@ -21,14 +22,35 @@ const CUISINE_PILLS = [
 ];
 
 export function CustomerDiscoveryPage() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [restaurants, setRestaurants] = useState<CustomerRestaurant[]>([]);
   const [query, setQuery] = useState("");
-  const [activeCategory, setActiveCategory] = useState("All");
+  const [activeCategory, setActiveCategory] = useState(
+    () => searchParams.get("category") || "All",
+  );
   const [favorites, setFavorites] = useState<Record<string, boolean>>({});
   const [status, setStatus] = useState<"loading" | "ready" | "error">(
     "loading",
   );
   const { currentLocation } = useLocation();
+
+  useEffect(() => {
+    const category = searchParams.get("category") || "All";
+    setActiveCategory(category);
+  }, [searchParams]);
+
+  const chooseCategory = (category: string) => {
+    setActiveCategory(category);
+    const next = new URLSearchParams(searchParams.toString());
+    if (category === "All") next.delete("category");
+    else next.set("category", category);
+    router.replace(
+      `${pathname}${next.toString() ? `?${next}` : ""}#categories`,
+      { scroll: false },
+    );
+  };
 
   const load = () => {
     setStatus("loading");
@@ -180,7 +202,7 @@ export function CustomerDiscoveryPage() {
                       role="tab"
                       aria-selected={isActive}
                       className={`tf-pill-btn ${isActive ? "is-active" : ""}`}
-                      onClick={() => setActiveCategory(pill)}
+                      onClick={() => chooseCategory(pill)}
                     >
                       {pill}
                     </button>
@@ -203,15 +225,13 @@ export function CustomerDiscoveryPage() {
 
             {!visible.length ? (
               <div className="tf-empty-discovery">
-                  <h4>No matching dishes</h4>
-                <p>
-                  Try another dish, meal, or category.
-                </p>
+                <h4>No matching dishes</h4>
+                <p>Try another dish, meal, or category.</p>
                 <Button
                   variant="secondary"
                   onClick={() => {
                     setQuery("");
-                    setActiveCategory("All");
+                    chooseCategory("All");
                   }}
                 >
                   Reset filters
