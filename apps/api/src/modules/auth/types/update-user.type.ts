@@ -3,4 +3,6 @@ export type UpdateUserInput = {
   lastName?: string;
   email?: string;
   phone?: string;
+  isActive?: boolean;
+  deletedAt?: Date | null;
 };

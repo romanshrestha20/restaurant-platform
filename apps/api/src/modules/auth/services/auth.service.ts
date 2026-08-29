@@ -14,6 +14,7 @@ import {
 import { LoginContext } from '../types/login-context.type';
 import { AuthTokenService } from './auth-token.service';
 import { PasswordService } from './password.service';
+import { UpdateProfileDto } from '../dto/update-profile.dto';
 
 const INVALID_PASSWORD_HASH =
   '$2b$12$NQhfkaL70f.NppT3XQx9LO1SFMLocU.a9GigbRtGGU7xntazI/aqm';
@@ -174,6 +175,34 @@ export class AuthService {
 
   async logoutAll(userId: string): Promise<void> {
     await this.authRepository.deleteAllSessions(userId);
+  }
+
+  async updateProfile(userId: string, dto: UpdateProfileDto) {
+    const user = await this.authRepository.findUserById(userId);
+    if (!user || !user.isActive || user.deletedAt) throw new UnauthorizedException();
+    const { firstName, lastName, email, phone, currentPassword } = dto;
+    if ((email !== undefined && email.trim().toLowerCase() !== user.email) || phone !== undefined) {
+      if (!currentPassword || !user.passwordHash || !(await this.passwordService.verifyPassword(currentPassword, user.passwordHash))) throw new UnauthorizedException('Current password is required');
+    }
+    try {
+      const updated = await this.authRepository.updateUserById(userId, { ...(email !== undefined ? { email: email.trim().toLowerCase(), emailVerified: false } : {}), ...(phone !== undefined ? { phone: phone.trim(), phoneVerified: false } : {}) } as never);
+      if (firstName !== undefined || lastName !== undefined) await this.authRepository.updateProfileByUserId(userId, { ...(firstName !== undefined ? { firstName: firstName.trim() } : {}), ...(lastName !== undefined ? { lastName: lastName.trim() } : {}) });
+      return this.toSafeUser({ ...user, ...updated, profile: null } as never);
+    } catch (error: any) { if (error?.code === 'P2002') throw new ConflictException('Email or phone is already registered'); throw error; }
+  }
+
+  async changePassword(userId: string, currentPassword: string, newPassword: string) {
+    const user = await this.authRepository.findUserById(userId);
+    if (!user?.passwordHash || !(await this.passwordService.verifyPassword(currentPassword, user.passwordHash))) throw new UnauthorizedException('Current password is incorrect');
+    await this.authRepository.updateUserById(userId, { passwordHash: await this.passwordService.hashPassword(newPassword) } as never);
+    await this.logoutAll(userId);
+  }
+
+  async deleteAccount(userId: string, currentPassword: string) {
+    const user = await this.authRepository.findUserById(userId);
+    if (!user?.passwordHash || !(await this.passwordService.verifyPassword(currentPassword, user.passwordHash))) throw new UnauthorizedException('Current password is incorrect');
+    await this.authRepository.updateUserById(userId, { isActive: false, deletedAt: new Date() });
+    await this.logoutAll(userId);
   }
 
   private async createSessionTokens(

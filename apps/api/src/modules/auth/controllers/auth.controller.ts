@@ -1,9 +1,11 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
+  Patch,
   Post,
   Req,
   Res,
@@ -24,6 +26,8 @@ import { REFRESH_TOKEN_COOKIE } from '../constants/auth.constants';
 import { CurrentUser } from '../decorators/current-user.decorator';
 import { CurrentRestaurantMembership } from '../decorators/current-restaurant-membership.decorator';
 import { LoginDto } from '../dto/login.dto';
+import { UpdateProfileDto } from '../dto/update-profile.dto';
+import { ChangePasswordDto } from '../dto/change-password.dto';
 import { RegisterDto } from '../dto/register.dto';
 import { ForgotPasswordDto } from '../dto/forgot-password.dto';
 import { ResetPasswordDto } from '../dto/reset-password.dto';
@@ -125,6 +129,20 @@ export class AuthController {
   me(@CurrentUser() authUser: AccessAuthUser) {
     return authUser;
   }
+
+  @Patch('me')
+  @UseGuards(AccessTokenGuard)
+  updateMe(@CurrentUser() user: AccessAuthUser, @Body() dto: UpdateProfileDto) { return this.authService.updateProfile(user.id, dto); }
+
+  @Patch('me/password')
+  @UseGuards(AccessTokenGuard)
+  @HttpCode(HttpStatus.OK)
+  async changePassword(@CurrentUser() user: AccessAuthUser, @Body() dto: ChangePasswordDto) { await this.authService.changePassword(user.id, dto.currentPassword, dto.newPassword); return { changed: true }; }
+
+  @Delete('me')
+  @UseGuards(AccessTokenGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async deleteMe(@CurrentUser() user: AccessAuthUser, @Body() dto: ChangePasswordDto) { await this.authService.deleteAccount(user.id, dto.currentPassword); }
 
   @Post('logout')
   @HttpCode(HttpStatus.NO_CONTENT)

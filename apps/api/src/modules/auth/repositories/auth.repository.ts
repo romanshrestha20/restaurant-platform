@@ -339,6 +339,10 @@ export class AuthRepository {
     });
   }
 
+  async updateProfileByUserId(id: string, data: { firstName?: string; lastName?: string }) {
+    return this.prisma.profile.update({ where: { userId: id }, data, include: { user: true } });
+  }
+
   async deleteUser(id: string) {
     return this.prisma.user.delete({
       where: { id },
