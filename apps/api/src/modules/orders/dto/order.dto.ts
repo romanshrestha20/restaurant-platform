@@ -112,4 +112,12 @@ export class OrderFilterDto {
   @IsInt()
   @Min(0)
   offset?: number = 0;
+
+  @IsOptional()
+  @Type(() => Date)
+  from?: Date;
+
+  @IsOptional()
+  @Type(() => Date)
+  to?: Date;
 }

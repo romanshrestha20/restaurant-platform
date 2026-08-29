@@ -476,14 +476,19 @@ export class OrdersService {
     return this.serializeOrder(fullOrder);
   }
 
-  async getCustomerOrders(userId: string) {
+  async getCustomerOrders(userId: string, filter: OrderFilterDto = {}) {
+    const where: Prisma.OrderWhereInput = { userId, ...(filter.status ? { status: filter.status } : {}), ...(filter.from || filter.to ? { createdAt: { ...(filter.from ? { gte: filter.from } : {}), ...(filter.to ? { lte: filter.to } : {}) } } : {}) };
+    const limit = filter.limit ?? 20;
+    const offset = filter.offset ?? 0;
     const orders = await this.prisma.order.findMany({
-      where: { userId },
+      where,
       orderBy: { createdAt: 'desc' },
+      take: limit,
+      skip: offset,
       include: orderInclude,
     });
-
-    return orders.map((order) => this.serializeOrder(order));
+    const total = await this.prisma.order.count({ where });
+    return { items: orders.map((order) => this.serializeOrder(order)), total, limit, offset };
   }
 
   async getDeliveryQuote(userId: string, restaurantId: string, addressId: string) {

@@ -35,8 +35,8 @@ export class OrdersController {
 
   @Get('customer/orders')
   @UseGuards(AccessTokenGuard)
-  getCustomerOrders(@CurrentUser() user: AccessAuthUser) {
-    return this.ordersService.getCustomerOrders(user.id);
+  getCustomerOrders(@CurrentUser() user: AccessAuthUser, @Query() filter: OrderFilterDto) {
+    return this.ordersService.getCustomerOrders(user.id, filter);
   }
 
   @Get('customer/orders/delivery-quote')
@@ -53,6 +53,14 @@ export class OrdersController {
   ) {
     return this.ordersService.getCustomerOrder(user.id, orderId);
   }
+
+  @Get('users/me/orders')
+  @UseGuards(AccessTokenGuard)
+  getUserOrders(@CurrentUser() user: AccessAuthUser, @Query() filter: OrderFilterDto) { return this.ordersService.getCustomerOrders(user.id, filter); }
+
+  @Get('users/me/orders/:orderId')
+  @UseGuards(AccessTokenGuard)
+  getUserOrder(@CurrentUser() user: AccessAuthUser, @Param('orderId') orderId: string) { return this.ordersService.getCustomerOrder(user.id, orderId); }
 
   @Get('customer/orders/by-number/:orderNumber')
   @UseGuards(AccessTokenGuard)
