@@ -12,6 +12,9 @@ import type {
 export type SeededRoles = Record<RoleName, string>;
 
 const ALL_PERMISSIONS: PermissionName[] = [
+  "restaurant.read", "restaurant.create", "restaurant.update", "restaurant.delete",
+  "order.read", "order.update", "order.refund", "customer.read", "customer.update", "customer.suspend",
+  "menu.read", "menu.create", "menu.update", "menu.delete", "staff.read", "staff.invite", "staff.update", "staff.remove", "report.read",
   "activity.read",
   "users.manage",
   "restaurants.manage",
@@ -47,7 +50,7 @@ export async function seedRoles(prisma: PrismaClient): Promise<SeededRoles> {
 
   for (const name of ROLE_NAMES) {
     const description = ROLE_DESCRIPTIONS[name];
-    const scope = name === "ADMIN" ? "PLATFORM" : "RESTAURANT";
+    const scope = name === "ADMIN" || name === "SUPER_ADMIN" || name === "PLATFORM_ADMIN" || name === "SUPPORT" || name === "FINANCE" ? "PLATFORM" : "RESTAURANT";
     const role = await prisma.role.upsert({
       where: { name },
       update: { description, scope },

@@ -1,0 +1,2 @@
+import { DataPlaceholder, RestaurantWorkspace } from "@/components/restaurants/restaurant-workspace";
+export default function RestaurantAnalyticsPage() { return <RestaurantWorkspace active="analytics" eyebrow="Restaurant workspace" title="Analytics" description="Track performance, order volume, and customer activity."><DataPlaceholder title="No analytics yet" description="Analytics will be available when this restaurant has operating data." /></RestaurantWorkspace>; }

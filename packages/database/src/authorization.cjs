@@ -1,29 +1,55 @@
-const PLATFORM_ROLE_NAMES = ['ADMIN'];
+const PLATFORM_ROLE_NAMES = ['SUPER_ADMIN', 'PLATFORM_ADMIN', 'SUPPORT', 'FINANCE', 'ADMIN'];
 const RESTAURANT_ROLE_NAMES = ['OWNER', 'MANAGER', 'CHEF', 'WAITER'];
 const RESTAURANT_PERMISSION_NAMES = [
   'restaurant.read',
+  'restaurant.create',
   'restaurant.update',
+  'restaurant.delete',
   'menu.read',
   'menu.create',
   'menu.update',
   'menu.delete',
   'orders.read',
   'orders.update',
+  'orders.refund',
   'reservations.read',
   'reservations.update',
   'customers.read',
+  'customers.update',
+  'customers.suspend',
   'staff.read',
+  'staff.invite',
+  'staff.update',
+  'staff.remove',
   'staff.manage',
+  'report.read',
 ];
 const ROLE_NAMES = [...PLATFORM_ROLE_NAMES, ...RESTAURANT_ROLE_NAMES];
 
 const ROLE_DESCRIPTIONS = {
+  SUPER_ADMIN: 'Full platform administrator',
+  PLATFORM_ADMIN: 'Platform administrator',
+  SUPPORT: 'Customer and restaurant support specialist',
+  FINANCE: 'Finance and payments administrator',
   ADMIN: 'Platform administrator',
   OWNER: 'Restaurant owner',
   MANAGER: 'Restaurant manager',
   CHEF: 'Kitchen staff',
   WAITER: 'Front-of-house staff',
 };
+
+const PLATFORM_ROLE_PERMISSIONS = {
+  SUPER_ADMIN: RESTAURANT_PERMISSION_NAMES,
+  PLATFORM_ADMIN: RESTAURANT_PERMISSION_NAMES,
+  SUPPORT: ['restaurant.read', 'orders.read', 'customers.read', 'customers.update', 'staff.read', 'report.read'],
+  FINANCE: ['orders.read', 'orders.refund', 'report.read'],
+  ADMIN: RESTAURANT_PERMISSION_NAMES,
+};
+const platformPermissionsForRole = (role) => PLATFORM_ROLE_PERMISSIONS[role] ?? [];
+const hasPlatformPermissions = (roles, requiredPermissions) =>
+  requiredPermissions.every((permission) =>
+    roles.some((role) => platformPermissionsForRole(role).includes(permission)),
+  );
 
 const isPlatformRole = (value) => PLATFORM_ROLE_NAMES.includes(value);
 const isRestaurantRole = (value) => RESTAURANT_ROLE_NAMES.includes(value);
@@ -51,4 +77,7 @@ module.exports = {
   isRestaurantRole,
   restaurantPermissionsForRole,
   hasRestaurantPermissions,
+  PLATFORM_ROLE_PERMISSIONS,
+  platformPermissionsForRole,
+  hasPlatformPermissions,
 };

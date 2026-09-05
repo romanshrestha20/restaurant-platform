@@ -1,0 +1,2 @@
+import { DataPlaceholder, RestaurantWorkspace } from "@/components/restaurants/restaurant-workspace";
+export default function RestaurantOrdersPage() { return <RestaurantWorkspace active="orders" eyebrow="Restaurant workspace" title="Orders" description="Review and update orders for this restaurant."><DataPlaceholder title="No orders available" description="Orders from this restaurant will appear here." /></RestaurantWorkspace>; }

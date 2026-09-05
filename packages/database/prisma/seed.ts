@@ -69,8 +69,9 @@ async function main() {
   console.log("Seeding coupons...");
   await seedCoupons(prisma);
 
-  console.log("Seeding all customer-facing restaurant dishes...");
-  for (const catalog of Object.values(CURATED_CATALOGS)) await seedCuratedCatalog(catalog);
+  console.log("Seeding customer-facing dishes for the primary restaurant...");
+  const primaryCatalog = CURATED_CATALOGS[restaurant.slug] ?? Object.values(CURATED_CATALOGS)[0];
+  if (primaryCatalog) await seedCuratedCatalog({ ...primaryCatalog, slug: restaurant.slug });
 
   console.log("Seed completed successfully.");
 }

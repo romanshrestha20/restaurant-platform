@@ -1,0 +1,2 @@
+import { DataPlaceholder, RestaurantWorkspace } from "@/components/restaurants/restaurant-workspace";
+export default function RestaurantStaffPage() { return <RestaurantWorkspace active="staff" eyebrow="Restaurant workspace" title="Staff" description="Manage access for owners, managers, and restaurant staff."><DataPlaceholder title="No staff members" description="Staff invitations and access assignments will appear here." /></RestaurantWorkspace>; }

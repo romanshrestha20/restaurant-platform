@@ -1,0 +1,2 @@
+import { DataPlaceholder, RestaurantWorkspace } from "@/components/restaurants/restaurant-workspace";
+export default function RestaurantMenuPage() { return <RestaurantWorkspace active="menu" eyebrow="Restaurant workspace" title="Menu" description="Manage categories, products, variants, and add-ons."><DataPlaceholder title="No menu data" description="Menu content will appear here once a restaurant is connected." /></RestaurantWorkspace>; }

@@ -1,0 +1,2 @@
+import { DataPlaceholder, RestaurantWorkspace } from "@/components/restaurants/restaurant-workspace";
+export default function RestaurantSettingsPage() { return <RestaurantWorkspace active="settings" eyebrow="Restaurant workspace" title="Settings" description="Configure restaurant profile, locations, hours, and operating preferences."><DataPlaceholder title="No restaurant selected" description="Connect this route to a restaurant record from the Admin API." /></RestaurantWorkspace>; }
