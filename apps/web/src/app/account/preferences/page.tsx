@@ -1,2 +1,0 @@
-import { AccountPlaceholder, AccountSectionPage } from '../_components/account-section-page';
-export default function PreferencesPage() { return <AccountSectionPage eyebrow="Preferences" title="Your preferences" description="Make ordering feel more personal."><AccountPlaceholder title="Preferences" description="Language, dietary preferences, and default order type will appear here." /></AccountSectionPage>; }

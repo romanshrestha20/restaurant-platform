@@ -1,2 +1,0 @@
-import { AccountPlaceholder, AccountSectionPage } from '../_components/account-section-page';
-export default function NotificationsPage() { return <AccountSectionPage eyebrow="Notifications" title="Your notifications" description="Choose which updates you want to receive."><AccountPlaceholder title="Notification settings" description="Order updates and promotional preferences will appear here." /></AccountSectionPage>; }
