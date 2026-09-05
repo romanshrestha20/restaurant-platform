@@ -89,7 +89,8 @@ export class RestaurantRolesGuard implements CanActivate {
       !membership.restaurant.isActive ||
       membership.restaurant.deletedAt !== null ||
       !isRestaurantRole(membership.role.name) ||
-      (requiredRoles?.length && !requiredRoles.includes(membership.role.name)) ||
+      (requiredRoles?.length &&
+        !requiredRoles.includes(membership.role.name)) ||
       (requiredPermissions?.length &&
         !hasRestaurantPermissions(membership.role.name, requiredPermissions))
     ) {

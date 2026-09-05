@@ -18,10 +18,11 @@ import {
   UpdateOrderStatusDto,
 } from './dto/order.dto';
 import { OrdersService } from './orders.service';
+import { PrimaryRestaurantService } from '../restaurants/primary-restaurant.service';
 
 @Controller()
 export class OrdersController {
-  constructor(private readonly ordersService: OrdersService) {}
+  constructor(private readonly ordersService: OrdersService, private readonly primary: PrimaryRestaurantService) {}
 
   // Customer Routes
   @Post('customer/orders/checkout')
@@ -30,7 +31,7 @@ export class OrdersController {
     @CurrentUser() user: AccessAuthUser,
     @Body() data: CheckoutDto,
   ) {
-    return this.ordersService.checkout(user.id, data);
+    return this.primary.getPrimaryRestaurant().then((r) => this.ordersService.checkout(user.id, { ...data, restaurantId: r.id }));
   }
 
   @Get('customer/orders')
@@ -41,8 +42,9 @@ export class OrdersController {
 
   @Get('customer/orders/delivery-quote')
   @UseGuards(AccessTokenGuard)
-  async deliveryQuote(@CurrentUser() user: AccessAuthUser, @Query('restaurantId') restaurantId: string, @Query('addressId') addressId: string) {
-    return this.ordersService.getDeliveryQuote(user.id, restaurantId, addressId);
+  async deliveryQuote(@CurrentUser() user: AccessAuthUser, @Query('restaurantId') _restaurantId: string, @Query('addressId') addressId: string) {
+    const restaurant = await this.primary.getPrimaryRestaurant();
+    return this.ordersService.getDeliveryQuote(user.id, restaurant.id, addressId);
   }
 
   @Get('customer/orders/:orderId')

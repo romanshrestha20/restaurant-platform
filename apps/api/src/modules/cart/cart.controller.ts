@@ -21,23 +21,24 @@ import {
   UpdateCartItemDto,
 } from './dto/cart.dto';
 import { CartService } from './cart.service';
+import { PrimaryRestaurantService } from '../restaurants/primary-restaurant.service';
 
 @Controller('customer/carts')
 @UseGuards(AccessTokenGuard)
 export class CartController {
-  constructor(private readonly cartService: CartService) {}
+  constructor(private readonly cartService: CartService, private readonly primary: PrimaryRestaurantService) {}
 
   @Post()
-  getOrCreate(@CurrentUser() user: AccessAuthUser, @Body() data: CreateCartDto) {
-    return this.cartService.getOrCreate(user.id, data.restaurantId);
+  getOrCreate(@CurrentUser() user: AccessAuthUser, @Body() _data: CreateCartDto) {
+    return this.primary.getPrimaryRestaurant().then((r) => this.cartService.getOrCreate(user.id, r.id));
   }
 
   @Get('current')
   getCurrent(
     @CurrentUser() user: AccessAuthUser,
-    @Query('restaurantId') restaurantId: string,
+    @Query('restaurantId') _restaurantId?: string,
   ) {
-    return this.cartService.getCurrent(user.id, restaurantId);
+    return this.primary.getPrimaryRestaurant().then((r) => this.cartService.getCurrent(user.id, r.id));
   }
 
   @Post(':cartId/items')

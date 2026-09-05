@@ -12,10 +12,11 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { AccessAuthUser } from '../auth/interfaces/auth-user.interface';
 import { CreateReservationDto } from './dto/create-reservation.dto';
 import { ReservationsService } from './reservations.service';
+import { PrimaryRestaurantService } from '../restaurants/primary-restaurant.service';
 @Controller('reservations')
 @UseGuards(AccessTokenGuard)
 export class ReservationsController {
-  constructor(private readonly service: ReservationsService) {}
+  constructor(private readonly service: ReservationsService, private readonly primary: PrimaryRestaurantService) {}
   @Get() list(@CurrentUser() user: AccessAuthUser) {
     return this.service.list(user.id);
   }
@@ -23,7 +24,7 @@ export class ReservationsController {
     @CurrentUser() user: AccessAuthUser,
     @Body() dto: CreateReservationDto,
   ) {
-    return this.service.create(user.id, dto);
+    return this.primary.getPrimaryRestaurant().then((r) => this.service.create(user.id, { ...dto, restaurantId: r.id }));
   }
   @Delete(':id') cancel(
     @CurrentUser() user: AccessAuthUser,

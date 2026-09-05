@@ -10,6 +10,7 @@ import { AccessTokenStrategy } from './strategies/access-token.strategy';
 import { RefreshTokenStrategy } from './strategies/refresh-token.strategy';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { RestaurantRolesGuard } from '../../common/guards/restaurant-roles.guard';
+import { PlatformPermissionsGuard } from '../../common/guards/platform-permissions.guard';
 import { PasswordService } from './services/password.service';
 import { AccountRecoveryService } from './services/account-recovery.service';
 import { AccountTokenService } from './services/account-token.service';
@@ -39,6 +40,7 @@ import { AuthMailService } from './services/auth-mail.service';
     RefreshTokenStrategy,
     RolesGuard,
     RestaurantRolesGuard,
+    PlatformPermissionsGuard,
   ],
   exports: [
     AuthService,
@@ -47,6 +49,7 @@ import { AuthMailService } from './services/auth-mail.service';
     JwtModule,
     RolesGuard,
     RestaurantRolesGuard,
+    PlatformPermissionsGuard,
   ],
 })
 export class AuthModule {}

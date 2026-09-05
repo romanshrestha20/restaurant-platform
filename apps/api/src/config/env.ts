@@ -9,6 +9,7 @@ export const envValidationSchema = Joi.object({
     .uri({ scheme: ['postgresql', 'postgres'] })
     .required(),
   CLIENT_URL: Joi.string().uri().default('http://localhost:3000'),
+  PRIMARY_RESTAURANT_SLUG: Joi.string().default('nordic-table-helsinki'),
   JWT_ACCESS_SECRET: Joi.string().min(32).required(),
   JWT_REFRESH_SECRET: Joi.string()
     .min(32)
@@ -81,6 +82,7 @@ export interface AppEnvironment {
   PORT: number;
   DATABASE_URL: string;
   CLIENT_URL: string;
+  PRIMARY_RESTAURANT_SLUG?: string;
   JWT_ACCESS_SECRET: string;
   JWT_REFRESH_SECRET: string;
   JWT_ACCESS_TTL_SECONDS: number;
