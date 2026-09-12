@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "../styles/globals.css";
 
 export const metadata: Metadata = {
-  title: "Green Haven",
-  description: "Green Haven restaurant platform",
+  title: "Restaurant Platform",
+  description: "Discover restaurants and browse menus",
 };
 
 export default function RootLayout({
