@@ -1,15 +1,9 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
 import { CatalogService } from './catalog.service';
-import { PrimaryRestaurantService } from '../restaurants/primary-restaurant.service';
 
 @Controller('catalog/restaurants')
 export class CatalogController {
-  constructor(private readonly catalogService: CatalogService, private readonly primary: PrimaryRestaurantService) {}
-
-  @Get()
-  getPrimaryCatalog() {
-    return this.primary.getPrimaryRestaurant().then((restaurant) => this.catalogService.getRestaurantCatalog(restaurant.slug));
-  }
+  constructor(private readonly catalogService: CatalogService) {}
 
   @Get()
   listRestaurants(@Query('lat') latitude?: string, @Query('lng') longitude?: string) {
