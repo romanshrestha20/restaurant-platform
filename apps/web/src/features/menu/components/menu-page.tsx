@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Badge, Button, Card, Skeleton } from "@restaurant/ui";
 import { useMenu } from "../hooks/use-menu";
-import type { MenuItem } from "@/types/restaurant";
+import { MenuItemCard } from "./menu-item-card";
 
 export function MenuPage() {
   const { restaurant, sections, currency, isLoading, isError, error, refetch } =
@@ -112,7 +112,7 @@ export function MenuPage() {
               </div>
               <div className="grid gap-x-8 gap-y-8 md:grid-cols-2">
                 {section.items.map((item) => (
-                  <MenuItemRow key={item.id} item={item} currency={currency} />
+                  <MenuItemCard key={item.id} item={item} currency={currency} />
                 ))}
               </div>
             </section>
@@ -141,58 +141,6 @@ function CategoryButton({
       {children}
     </button>
   );
-}
-
-function MenuItemRow({ item, currency }: { item: MenuItem; currency: string }) {
-  const image = item.media[0];
-  return (
-    <article className="group flex min-h-36 gap-4 border-b border-border/70 pb-8 last:border-0 sm:gap-6">
-      <div className="order-2 flex min-w-0 flex-1 flex-col">
-        <div className="flex items-start justify-between gap-3">
-          <h3 className="text-lg font-bold leading-tight group-hover:text-primary transition-colors">
-            {item.name}
-          </h3>
-          <span className="shrink-0 text-base font-bold text-primary">
-            {formatMoney(item.basePrice, currency)}
-          </span>
-        </div>
-        {item.description && (
-          <p className="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground">
-            {item.description}
-          </p>
-        )}
-        {item.isFeatured && (
-          <Badge variant="secondary" className="mt-4 w-fit">
-            Featured
-          </Badge>
-        )}
-      </div>
-      <div className="order-1 h-28 w-28 shrink-0 overflow-hidden rounded-2xl bg-muted sm:h-36 sm:w-36">
-        {image?.media.url ? (
-          <img
-            src={image.media.url}
-            alt={image.alt || item.name}
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-          />
-        ) : (
-          <div className="flex h-full items-center justify-center text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-            {item.name.slice(0, 1)}
-          </div>
-        )}
-      </div>
-    </article>
-  );
-}
-
-function formatMoney(value: string, currency: string) {
-  try {
-    return new Intl.NumberFormat(undefined, {
-      style: "currency",
-      currency,
-    }).format(Number(value));
-  } catch {
-    return `${value} ${currency}`;
-  }
 }
 
 function MenuLoading() {
