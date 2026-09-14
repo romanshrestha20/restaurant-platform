@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import React, {
   createContext,
@@ -7,12 +7,12 @@ import React, {
   useState,
   useMemo,
   type ReactNode,
-} from 'react';
-import { useSearchParams } from 'next/navigation';
-import { resolveDomain, type DomainResolution } from '@/lib/restaurant/domain';
-import { useRestaurantCatalog } from '@/features/restaurant/hooks/use-restaurant';
-import type { RestaurantCatalog, RestaurantSettings } from '@/types/restaurant';
-import type { ApiError } from '@/lib/api/errors';
+} from "react";
+import { useSearchParams } from "next/navigation";
+import { resolveDomain, type DomainResolution } from "@/lib/restaurant/domain";
+import { useRestaurantCatalog } from "@/features/restaurant/hooks/use-restaurant";
+import type { RestaurantCatalog, RestaurantSettings } from "@/types/restaurant";
+import type { ApiError } from "@/lib/api/errors";
 
 export interface RestaurantContextValue {
   restaurant: RestaurantCatalog | null;
@@ -29,7 +29,9 @@ export interface RestaurantContextValue {
   setDevSlug: (slug: string | null) => void;
 }
 
-const RestaurantContext = createContext<RestaurantContextValue | undefined>(undefined);
+const RestaurantContext = createContext<RestaurantContextValue | undefined>(
+  undefined,
+);
 
 interface RestaurantProviderProps {
   children: ReactNode;
@@ -43,13 +45,15 @@ export function RestaurantProvider({
   initialSlug,
 }: RestaurantProviderProps) {
   const searchParams = useSearchParams();
-  const querySlug = searchParams?.get('restaurant') || null;
+  const querySlug = searchParams?.get("restaurant") || null;
 
   const [devSlug, setDevSlug] = useState<string | null>(initialSlug || null);
-  const [hostname, setHostname] = useState<string>(initialHostname || 'localhost');
+  const [hostname, setHostname] = useState<string>(
+    initialHostname || "localhost",
+  );
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       setHostname(window.location.hostname);
     }
   }, []);
@@ -60,7 +64,7 @@ export function RestaurantProvider({
     return resolveDomain(hostname, activeSlugOverride);
   }, [hostname, activeSlugOverride]);
 
-  const slugToFetch = resolution.type === 'tenant' ? resolution.slug : null;
+  const slugToFetch = resolution.type === "tenant" ? resolution.slug : null;
 
   const {
     data: restaurant,
@@ -75,11 +79,11 @@ export function RestaurantProvider({
       restaurant: restaurant || null,
       restaurantId: restaurant?.id || null,
       slug: restaurant?.slug || slugToFetch || null,
-      currency: restaurant?.currency || 'EUR',
+      currency: restaurant?.currency || "EUR",
       settings: restaurant?.settings || null,
-      isTenantMode: resolution.type === 'tenant',
-      isLoading: resolution.type === 'tenant' ? isLoading : false,
-      isError: resolution.type === 'tenant' ? isError : false,
+      isTenantMode: resolution.type === "tenant",
+      isLoading: resolution.type === "tenant" ? isLoading : false,
+      isError: resolution.type === "tenant" ? isError : false,
       error: error || null,
       refetch,
       resolution,
@@ -97,7 +101,7 @@ export function RestaurantProvider({
 export function useRestaurant(): RestaurantContextValue {
   const context = useContext(RestaurantContext);
   if (!context) {
-    throw new Error('useRestaurant must be used within a RestaurantProvider');
+    throw new Error("useRestaurant must be used within a RestaurantProvider");
   }
   return context;
 }
