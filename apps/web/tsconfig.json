@@ -4,9 +4,9 @@
     "sourceMap": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "./src/*"
-      ]
+      "@/*": ["./src/*"],
+      "@restaurant/ui": ["../../packages/ui/src/index.ts"],
+      "@restaurant/ui/*": ["../../packages/ui/src/*"]
     }
   },
   "include": [

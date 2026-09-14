@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import { Button, Card } from '@restaurant/ui';
 
 interface RestaurantNotFoundProps {
   slug?: string | null;
@@ -9,8 +10,8 @@ interface RestaurantNotFoundProps {
 export function RestaurantNotFound({ slug, message }: RestaurantNotFoundProps) {
   return (
     <div className="min-h-[70vh] flex items-center justify-center p-6">
-      <div className="max-w-md w-full text-center bg-white border border-gray-200 rounded-2xl p-8 shadow-sm">
-        <div className="w-16 h-16 mx-auto mb-4 bg-orange-50 text-orange-600 rounded-full flex items-center justify-center">
+      <Card className="max-w-md w-full text-center p-8 border-border bg-card">
+        <div className="w-16 h-16 mx-auto mb-4 bg-accent text-accent-foreground rounded-2xl flex items-center justify-center">
           <svg
             className="w-8 h-8"
             fill="none"
@@ -25,24 +26,21 @@ export function RestaurantNotFound({ slug, message }: RestaurantNotFoundProps) {
             />
           </svg>
         </div>
-        <h2 className="text-xl font-bold text-gray-900 mb-2">
+        <h2 className="text-xl font-bold text-foreground mb-2">
           Restaurant Not Available
         </h2>
-        <p className="text-gray-600 text-sm mb-6">
+        <p className="text-muted-foreground text-sm mb-6">
           {message ||
             (slug
               ? `We couldn't find an active restaurant at "${slug}". It might be temporarily closed or not accepting orders.`
               : 'The requested restaurant storefront could not be resolved.')}
         </p>
-        <div className="space-y-3">
-          <Link
-            href="/"
-            className="inline-block w-full py-2.5 px-4 bg-orange-600 hover:bg-orange-700 text-white font-medium rounded-xl transition text-sm text-center"
-          >
+        <Link href="/">
+          <Button className="w-full">
             Browse All Restaurants
-          </Link>
-        </div>
-      </div>
+          </Button>
+        </Link>
+      </Card>
     </div>
   );
 }

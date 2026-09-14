@@ -12,7 +12,7 @@ export function StorefrontHeader() {
   );
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur border-b border-gray-200">
+    <header className="sticky top-0 z-40 w-full bg-background/95 backdrop-blur-xs border-b border-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Left: Branding */}
         <div className="flex items-center gap-4">
@@ -23,31 +23,31 @@ export function StorefrontHeader() {
                 <img
                   src={logoMedia.media.url}
                   alt={restaurant?.name || 'Restaurant Logo'}
-                  className="w-10 h-10 rounded-full object-cover border border-gray-100 shadow-xs"
+                  className="w-10 h-10 rounded-xl object-cover border border-border shadow-xs"
                 />
               ) : (
-                <div className="w-10 h-10 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center font-bold text-lg">
+                <div className="w-10 h-10 rounded-xl bg-accent text-accent-foreground flex items-center justify-center font-bold text-lg">
                   {restaurant?.name ? restaurant.name[0]?.toUpperCase() : 'R'}
                 </div>
               )}
               <div className="flex flex-col">
-                <span className="font-bold text-gray-900 text-base leading-tight group-hover:text-orange-600 transition">
+                <span className="font-bold text-foreground text-base leading-tight group-hover:text-primary transition-colors">
                   {isLoading ? 'Loading restaurant...' : restaurant?.name || 'Storefront'}
                 </span>
                 {restaurant?.settings?.estimatedPrepMinutes && (
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-muted-foreground">
                     Prep: ~{restaurant.settings.estimatedPrepMinutes} mins
                   </span>
                 )}
               </div>
             </Link>
           ) : (
-            <Link href="/" className="flex items-center gap-2">
-              <div className="w-9 h-9 rounded-xl bg-orange-600 text-white flex items-center justify-center font-black text-xl shadow-xs">
+            <Link href="/" className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-primary text-primary-foreground flex items-center justify-center font-black text-xl shadow-xs">
                 P
               </div>
-              <span className="font-extrabold text-xl tracking-tight text-gray-900">
-                Restaurant<span className="text-orange-600">Platform</span>
+              <span className="font-extrabold text-xl tracking-tight text-foreground">
+                Restaurant<span className="text-primary">Platform</span>
               </span>
             </Link>
           )}
@@ -59,25 +59,25 @@ export function StorefrontHeader() {
             <>
               <Link
                 href="/menu"
-                className="text-sm font-medium text-gray-700 hover:text-orange-600 transition py-1"
+                className="text-sm font-medium text-foreground hover:text-primary transition-colors py-1"
               >
                 Menu
               </Link>
               <Link
                 href="/orders"
-                className="text-sm font-medium text-gray-700 hover:text-orange-600 transition py-1"
+                className="text-sm font-medium text-foreground hover:text-primary transition-colors py-1"
               >
                 Orders
               </Link>
               <Link
                 href="/account"
-                className="text-sm font-medium text-gray-700 hover:text-orange-600 transition py-1"
+                className="text-sm font-medium text-foreground hover:text-primary transition-colors py-1"
               >
                 Account
               </Link>
               <Link
                 href="/cart"
-                className="flex items-center gap-2 px-3 py-1.5 bg-orange-50 text-orange-700 hover:bg-orange-100 rounded-lg text-sm font-medium transition"
+                className="flex items-center gap-2 px-3 py-1.5 bg-accent text-accent-foreground hover:bg-accent/80 rounded-xl text-sm font-semibold transition-colors"
               >
                 <svg
                   className="w-4 h-4"
@@ -99,13 +99,13 @@ export function StorefrontHeader() {
             <>
               <Link
                 href="/"
-                className="text-sm font-medium text-gray-700 hover:text-orange-600 transition py-1"
+                className="text-sm font-medium text-foreground hover:text-primary transition-colors py-1"
               >
                 Discover
               </Link>
               <Link
                 href="/account"
-                className="text-sm font-medium text-gray-700 hover:text-orange-600 transition py-1"
+                className="text-sm font-medium text-foreground hover:text-primary transition-colors py-1"
               >
                 Sign In
               </Link>

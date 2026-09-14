@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { useRestaurant } from '@/providers/restaurant-provider';
+import { Badge, Button, Card } from '@restaurant/ui';
 
 export function StorefrontLanding() {
   const { restaurant } = useRestaurant();
@@ -19,22 +20,21 @@ export function StorefrontLanding() {
     ),
   );
 
-  // Total items
   const allCategories = restaurant.menus.flatMap((menu) => menu.categories);
 
   return (
     <div>
       {/* Cover / Hero Header */}
-      <div className="relative h-64 sm:h-80 w-full bg-gray-900 overflow-hidden">
+      <div className="relative h-64 sm:h-80 w-full bg-muted overflow-hidden">
         {coverMedia?.media?.url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={coverMedia.media.url}
             alt={coverMedia.alt || restaurant.name}
-            className="w-full h-full object-cover opacity-80"
+            className="w-full h-full object-cover opacity-85"
           />
         ) : (
-          <div className="w-full h-full bg-gradient-to-r from-orange-600 to-amber-500 opacity-90" />
+          <div className="w-full h-full bg-gradient-to-r from-primary/80 to-primary/40" />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
 
@@ -44,10 +44,10 @@ export function StorefrontLanding() {
             <img
               src={logoMedia.media.url}
               alt={restaurant.name}
-              className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover border-4 border-white shadow-md shrink-0 bg-white"
+              className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover border-4 border-background shadow-md shrink-0 bg-card"
             />
           ) : (
-            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-orange-500 text-white font-bold text-3xl flex items-center justify-center border-4 border-white shadow-md shrink-0">
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-primary text-primary-foreground font-bold text-3xl flex items-center justify-center border-4 border-background shadow-md shrink-0">
               {restaurant.name[0]}
             </div>
           )}
@@ -66,40 +66,39 @@ export function StorefrontLanding() {
       </div>
 
       {/* Highlights Bar */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="bg-card border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4 text-sm">
-          <div className="flex items-center gap-6 text-gray-600">
+          <div className="flex items-center gap-6 text-muted-foreground">
             {restaurant.settings?.estimatedPrepMinutes && (
               <div className="flex items-center gap-1.5">
-                <span className="font-semibold text-gray-900">
+                <span className="font-semibold text-foreground">
                   {restaurant.settings.estimatedPrepMinutes} mins
                 </span>
-                <span className="text-gray-400">prep time</span>
+                <span>prep time</span>
               </div>
             )}
             {restaurant.settings?.deliveryFee != null && (
               <div className="flex items-center gap-1.5">
-                <span className="font-semibold text-gray-900">
+                <span className="font-semibold text-foreground">
                   €{Number(restaurant.settings.deliveryFee).toFixed(2)}
                 </span>
-                <span className="text-gray-400">delivery</span>
+                <span>delivery</span>
               </div>
             )}
             {restaurant.settings?.minimumOrder != null && (
               <div className="flex items-center gap-1.5">
-                <span className="font-semibold text-gray-900">
+                <span className="font-semibold text-foreground">
                   €{Number(restaurant.settings.minimumOrder).toFixed(2)}
                 </span>
-                <span className="text-gray-400">min order</span>
+                <span>min order</span>
               </div>
             )}
           </div>
 
-          <Link
-            href="/menu"
-            className="px-5 py-2 bg-orange-600 hover:bg-orange-700 text-white font-semibold rounded-xl text-sm transition shadow-xs"
-          >
-            Order Now
+          <Link href="/menu">
+            <Button size="sm">
+              Order Now
+            </Button>
           </Link>
         </div>
       </div>
@@ -109,13 +108,13 @@ export function StorefrontLanding() {
         {/* Categories Bar */}
         {allCategories.length > 0 && (
           <div>
-            <h2 className="text-lg font-bold text-gray-900 mb-4">Categories</h2>
+            <h2 className="text-lg font-bold text-foreground mb-4">Categories</h2>
             <div className="flex flex-wrap gap-2">
               {allCategories.map((category) => (
                 <Link
                   key={category.id}
                   href={`/menu#category-${category.id}`}
-                  className="px-4 py-2 bg-gray-100 hover:bg-orange-50 hover:text-orange-600 text-gray-700 font-medium rounded-xl text-sm transition"
+                  className="px-4 py-2 bg-secondary hover:bg-accent hover:text-accent-foreground text-secondary-foreground font-medium rounded-xl text-sm transition-colors"
                 >
                   {category.name} ({category.items.length})
                 </Link>
@@ -128,10 +127,10 @@ export function StorefrontLanding() {
         {featuredItems.length > 0 && (
           <div>
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-900">Featured Items</h2>
+              <h2 className="text-xl font-bold text-foreground">Featured Items</h2>
               <Link
                 href="/menu"
-                className="text-sm font-semibold text-orange-600 hover:text-orange-700"
+                className="text-sm font-semibold text-primary hover:underline"
               >
                 See all menu items &rarr;
               </Link>
@@ -141,9 +140,9 @@ export function StorefrontLanding() {
               {featuredItems.slice(0, 6).map((item) => {
                 const itemMedia = item.media?.[0];
                 return (
-                  <div
+                  <Card
                     key={item.id}
-                    className="flex flex-col justify-between bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-md transition p-4"
+                    className="flex flex-col justify-between p-4 hover:shadow-md transition-shadow"
                   >
                     <div className="flex gap-4">
                       {itemMedia?.media?.url && (
@@ -151,31 +150,33 @@ export function StorefrontLanding() {
                         <img
                           src={itemMedia.media.url}
                           alt={item.name}
-                          className="w-20 h-20 rounded-xl object-cover shrink-0 bg-gray-50"
+                          className="w-20 h-20 rounded-xl object-cover shrink-0 bg-muted"
                         />
                       )}
                       <div className="flex-1">
-                        <h3 className="font-bold text-gray-900 text-base">{item.name}</h3>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-bold text-foreground text-base">{item.name}</h3>
+                          <Badge variant="accent" className="text-[10px] px-1.5 py-0">Featured</Badge>
+                        </div>
                         {item.description && (
-                          <p className="text-xs text-gray-500 line-clamp-2 mt-1">
+                          <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
                             {item.description}
                           </p>
                         )}
                       </div>
                     </div>
 
-                    <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
-                      <span className="font-extrabold text-gray-900 text-base">
+                    <div className="mt-4 pt-3 border-t border-border flex items-center justify-between">
+                      <span className="font-extrabold text-foreground text-base">
                         €{Number(item.basePrice).toFixed(2)}
                       </span>
-                      <Link
-                        href="/menu"
-                        className="px-3 py-1 bg-orange-50 text-orange-600 hover:bg-orange-100 font-semibold rounded-lg text-xs transition"
-                      >
-                        Customize & Add
+                      <Link href="/menu">
+                        <Button variant="secondary" size="sm">
+                          Customize
+                        </Button>
                       </Link>
                     </div>
-                  </div>
+                  </Card>
                 );
               })}
             </div>
@@ -183,18 +184,17 @@ export function StorefrontLanding() {
         )}
 
         {/* Call To Action */}
-        <div className="bg-orange-50 border border-orange-100 rounded-3xl p-8 text-center max-w-3xl mx-auto">
-          <h3 className="text-xl font-bold text-orange-950">Ready to place your order?</h3>
-          <p className="text-sm text-orange-800 mt-1 mb-6">
+        <Card className="bg-accent/40 border-accent p-8 text-center max-w-3xl mx-auto rounded-3xl">
+          <h3 className="text-xl font-bold text-foreground">Ready to place your order?</h3>
+          <p className="text-sm text-muted-foreground mt-1 mb-6">
             Browse our complete selection of fresh, made-to-order items.
           </p>
-          <Link
-            href="/menu"
-            className="inline-block px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-xl text-sm transition shadow-sm"
-          >
-            Explore Full Menu
+          <Link href="/menu">
+            <Button size="lg">
+              Explore Full Menu
+            </Button>
           </Link>
-        </div>
+        </Card>
       </div>
     </div>
   );
