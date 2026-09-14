@@ -1,717 +1,574 @@
 # AGENTS.md
 
-## Project Overview
+## Purpose
 
-Restaurant Platform is a production-oriented multi-tenant restaurant management and ordering platform.
+`apps/web` is the customer-facing storefront for the Restaurant Platform.
 
-The repository is a TypeScript monorepo managed with pnpm workspaces and Turborepo.
+It provides the customer experience for restaurant discovery, restaurant storefronts, menus, carts, checkout, orders, and customer accounts.
 
-Main applications:
+The application is multi-tenant.
 
-```text
-apps/
-  api/       NestJS backend API
-  web/       Customer-facing storefront
-  admin/     Restaurant and platform administration
-```
+The restaurant is resolved from the request hostname.
 
-Shared packages:
+## Technology
 
-```text
-packages/
-  database/
-  auth/
-  validation/
-  types/
-  typescript-config/
-  ui/
-```
+Use the technologies already configured in this workspace:
 
-Infrastructure:
+* Next.js 16
+* React 19
+* TypeScript
+* Tailwind CSS v4
+* TanStack Query
+* pnpm
+
+Do not replace the existing framework or introduce another frontend framework.
+
+## Application Architecture
+
+Follow:
 
 ```text
-docker/
-docs/
-```
-
-## Core Architecture
-
-The platform follows this flow:
-
-```text
-Customer Web
-      │
-Admin Portal
-      │
-      ▼
+Browser
+   ↓
+Hostname
+   ↓
+Restaurant Resolver
+   ↓
+Restaurant Context
+   ↓
+Next.js Page
+   ↓
+Feature
+   ↓
+Hook
+   ↓
+API Service
+   ↓
+API Client
+   ↓
 NestJS API
-      │
-      ▼
-Domain Modules
-      │
-      ▼
-Database Package
-      │
-      ▼
-PostgreSQL
 ```
 
-The API is the central application boundary.
+Pages should compose features.
 
-Web and admin applications must communicate with backend services through the API.
+Features contain customer functionality.
 
-Do not access PostgreSQL directly from `apps/web` or `apps/admin`.
+API infrastructure belongs in the API layer.
 
-## Package Manager
+Do not put backend business logic in the web application.
 
-Use pnpm only.
+## Restaurant Context
 
-Do not use npm or yarn.
-
-The repository uses pnpm workspaces and Turborepo.
-
-Run commands from the repository root whenever possible.
-
-Common commands:
-
-```bash
-pnpm dev
-pnpm build
-pnpm typecheck
-pnpm lint
-```
-
-For a specific workspace:
-
-```bash
-pnpm --filter web <command>
-pnpm --filter admin <command>
-pnpm --filter api <command>
-```
-
-Do not manually modify `pnpm-lock.yaml`.
-
-## Applications
-
-### apps/api
-
-Backend API built with:
-
-```text
-NestJS
-TypeScript
-Prisma
-PostgreSQL
-JWT authentication
-WebSockets
-```
-
-Main entry points:
-
-```text
-apps/api/src/main.ts
-apps/api/src/app.module.ts
-```
-
-`main.ts` is responsible for application bootstrap and global infrastructure such as:
-
-```text
-/api prefix
-API versioning
-CORS
-Helmet
-Cookies
-File uploads
-WebSocket initialization
-```
-
-`app.module.ts` is the root NestJS module.
-
-Domain functionality belongs in NestJS modules under:
-
-```text
-apps/api/src/modules/
-```
-
-Examples include:
-
-```text
-auth/
-restaurants/
-menu/
-catalog/
-cart/
-orders/
-payments/
-reservations/
-profile/
-users/
-health/
-```
-
-Follow NestJS conventions:
-
-```text
-controller
-service
-module
-dto
-guards
-decorators
-```
-
-Controllers handle HTTP concerns.
-
-Services contain business logic.
-
-Guards handle authorization and access control.
-
-DTOs define validated request boundaries.
-
-Do not place large business logic blocks inside controllers.
-
-### apps/web
-
-Customer-facing Next.js application.
-
-Technology:
-
-```text
-Next.js 16
-React 19
-TypeScript
-Tailwind CSS
-TanStack Query
-```
-
-Main application directory:
-
-```text
-apps/web/src/app/
-```
-
-Feature-specific code belongs under:
-
-```text
-apps/web/src/features/
-```
-
-Shared UI belongs under the existing component/shared directories.
-
-API infrastructure belongs under:
-
-```text
-apps/web/src/lib/api/
-```
-
-The storefront should remain focused on customer workflows such as:
-
-```text
-restaurant discovery
-restaurant menus
-menu item browsing
-cart
-checkout
-orders
-customer account
-```
-
-Do not place backend business logic in the web application.
-
-### apps/admin
-
-Administration application for platform and restaurant operations.
-
-Technology:
-
-```text
-Next.js 16
-React 19
-TypeScript
-Tailwind CSS
-```
-
-Main entry points:
-
-```text
-apps/admin/src/app/layout.tsx
-apps/admin/src/app/page.tsx
-apps/admin/src/app/dashboard/page.tsx
-```
-
-The root page redirects to the dashboard.
-
-Major areas include:
-
-```text
-dashboard
-restaurants
-catalog
-orders
-customers
-reservations
-reports
-auth
-```
-
-Admin API communication belongs in:
-
-```text
-apps/admin/src/lib/admin-api/
-```
-
-Do not duplicate backend business logic in the admin application.
-
-## Multi-Tenancy
-
-Restaurant is the tenant boundary.
-
-Restaurant-owned resources must be associated with the appropriate restaurant.
+Restaurant identity comes from the hostname.
 
 Examples:
 
 ```text
-menus
-categories
-menu items
-variants
-add-ons
-carts
-orders
-reservations
+pizza-house.yourplatform.com
+www.pizzahouse.fi
 ```
 
-Use `restaurantId` or the existing tenant identifier consistently.
+The hostname resolves to a restaurant.
 
-Never hardcode restaurant IDs or restaurant names to implement tenant-specific behavior.
-
-### Authorization
-
-The platform has two authorization levels:
+Conceptually:
 
 ```text
-Platform role
-    ↓
-UserRole
-
-Restaurant role
-    ↓
-RestaurantMember
+Hostname
+   ↓
+RestaurantDomain
+   ↓
+Restaurant
+   ↓
+RestaurantContext
 ```
 
-Restaurant-specific permissions must be enforced at the API boundary.
+Do not hardcode restaurant IDs.
 
-Existing authorization infrastructure includes:
+Do not hardcode restaurant names.
 
-```text
-apps/api/src/common/guards/
-apps/api/src/common/decorators/
-```
+Do not require customers to provide `restaurantId` manually when the domain already identifies the restaurant.
 
-In particular, follow the existing restaurant role guard implementation.
+## Domain Architecture
 
-Frontend route protection is not a replacement for API authorization.
-
-## Database
-
-Database functionality belongs in:
-
-```text
-packages/database/
-```
-
-Prisma configuration is managed by:
-
-```text
-packages/database/prisma.config.ts
-```
-
-Prisma schema definitions are under:
-
-```text
-packages/database/prisma/
-```
-
-The database package owns Prisma client creation and database access.
-
-Use the existing Prisma client from:
-
-```text
-packages/database/src/client.ts
-```
-
-Do not create independent Prisma clients inside applications.
-
-Do not access PostgreSQL directly from frontend applications.
-
-## Shared Packages
-
-Before creating duplicate functionality, check shared packages.
-
-### database
-
-Database schema, Prisma client, migrations, and seed functionality.
-
-### auth
-
-Shared authentication functionality.
-
-### validation
-
-Shared validation schemas and validation utilities.
-
-### types
-
-Shared TypeScript types.
-
-### typescript-config
-
-Shared TypeScript configurations.
-
-### ui
-
-Reusable UI components and design primitives.
-
-Prefer existing shared components before creating new versions.
-
-## Web Request Flow
-
-Customer-facing data should generally follow:
-
-```text
-Next.js Page
-    ↓
-Feature Component
-    ↓
-Feature Hook
-    ↓
-API Service
-    ↓
-Shared API Client
-    ↓
-HTTP Request
-    ↓
-NestJS Controller
-    ↓
-Guard / Validation
-    ↓
-NestJS Service
-    ↓
-Database Package
-    ↓
-Prisma
-    ↓
-PostgreSQL
-```
-
-Keep each layer responsible for one concern.
-
-Do not bypass the API.
-
-## Admin Request Flow
-
-Admin operations should generally follow:
-
-```text
-Admin Page
-    ↓
-Admin Feature
-    ↓
-Admin API Client
-    ↓
-HTTP Request
-    ↓
-NestJS Controller
-    ↓
-Authentication
-    ↓
-Restaurant / Platform Authorization
-    ↓
-NestJS Service
-    ↓
-Database Package
-    ↓
-Prisma
-    ↓
-PostgreSQL
-```
-
-Authorization must ultimately be enforced by the API.
-
-## File Organization
-
-Before creating a new file:
-
-1. Inspect the existing feature.
-2. Search for an existing implementation.
-3. Reuse existing shared utilities.
-4. Follow the local directory convention.
-5. Create the smallest appropriate file.
-
-Prefer feature-oriented organization.
-
-For web features:
-
-```text
-features/
-  restaurants/
-    components/
-    hooks/
-    services/
-    types/
-    utils/
-```
-
-For API modules:
-
-```text
-modules/
-  restaurants/
-    restaurants.controller.ts
-    restaurants.service.ts
-    restaurants.module.ts
-    dto/
-```
-
-Do not create generic dumping-ground directories such as:
-
-```text
-misc/
-stuff/
-helpers/
-random/
-```
-
-unless an established project convention requires them.
-
-## Testing
-
-Use the testing framework already configured for each workspace.
-
-Do not replace the existing testing framework.
-
-Before adding tests:
-
-1. Inspect the workspace configuration.
-2. Find existing tests.
-3. Follow the existing test naming and organization.
-4. Reuse existing mocks and fixtures where possible.
-
-New business logic should have appropriate tests.
-
-API behavior should have integration/API coverage where appropriate.
-
-Never remove tests simply to make a change pass.
-
-## Validation
-
-After changes, run relevant validation.
-
-API:
-
-```bash
-pnpm --filter api typecheck
-pnpm --filter api lint
-pnpm --filter api test
-```
-
-Web:
-
-```bash
-pnpm --filter web typecheck
-pnpm --filter web lint
-pnpm --filter web test
-```
-
-Admin:
-
-```bash
-pnpm --filter admin typecheck
-pnpm --filter admin lint
-pnpm --filter admin test
-```
-
-For cross-workspace changes:
-
-```bash
-pnpm typecheck
-pnpm lint
-pnpm build
-```
-
-Never claim that a command passed unless it was actually executed.
-
-## Dependency Rules
-
-Do not add a dependency before checking whether the repository already provides equivalent functionality.
-
-Do not introduce duplicate libraries.
-
-Do not upgrade framework or major dependency versions as part of an unrelated task.
-
-Major dependency changes require explicit user approval.
-
-## Environment Variables
-
-Never commit secrets.
-
-Do not expose:
-
-```text
-passwords
-JWT secrets
-database credentials
-API keys
-private tokens
-```
-
-Do not modify real `.env` files unless the task explicitly requires it.
-
-Use `.env.example` for documenting required configuration.
-
-Never print credentials in terminal output.
-
-## Database Safety
-
-Never perform destructive database operations without explicit confirmation.
-
-Do not:
-
-```text
-drop databases
-reset production databases
-truncate production tables
-delete production data
-rewrite migration history
-```
-
-Do not use destructive Prisma commands against production.
-
-When working on migrations, inspect the current schema and migration history first.
-
-## Git Safety
-
-Do not run destructive Git operations without explicit confirmation.
-
-Never run:
-
-```bash
-git reset --hard
-git clean -fd
-git push --force
-git push --force-with-lease
-```
-
-Do not delete branches.
-
-Do not rewrite commit history.
-
-Do not discard existing user changes.
-
-Preserve unrelated modifications.
-
-## Protected Files
-
-Do not modify these files for unrelated reasons:
-
-```text
-pnpm-lock.yaml
-package.json
-pnpm-workspace.yaml
-tsconfig.json
-next.config.*
-prisma.config.ts
-packages/database/prisma/**
-docker/**
-.env
-.env.*
-.github/**
-```
-
-If a requested task requires modifying one of these files, make only the required change.
-
-Never modify real credentials.
-
-## API Contract Rules
-
-When changing an API contract:
-
-1. Update the NestJS controller or DTO.
-2. Update the service if required.
-3. Update affected frontend API clients.
-4. Update shared types or validation schemas where applicable.
-5. Update tests.
-6. Run relevant type checks and tests.
-
-Do not silently break existing consumers.
-
-## UI Rules
-
-Use existing shared UI components and design patterns.
-
-Do not introduce a new UI library without explicit approval.
-
-Pages should compose features.
-
-Components should focus on presentation and interaction.
-
-Business logic should live in appropriate hooks/services.
-
-Handle relevant:
-
-```text
-loading
-error
-empty
-success
-```
-
-states.
-
-Keep customer and admin interfaces responsive.
-
-## Error Handling
-
-Use the existing API error-handling and normalization mechanisms.
-
-Do not silently ignore errors.
-
-Do not expose internal stack traces, database errors, or implementation details to users.
-
-Return clear user-facing error states.
-
-## Documentation
-
-Important architectural decisions should be documented under:
-
-```text
-docs/
-```
-
-The primary architecture reference is:
+Read and follow:
 
 ```text
 docs/architecture.md
+docs/domain-routing.md
 ```
 
-When changing architecture, update the relevant documentation if the change is intended to become the new project convention.
+Do not implement domain resolution independently in multiple pages or features.
+
+Create one reusable restaurant-resolution mechanism.
+
+The implementation should support platform subdomains first and remain compatible with future custom domains.
+
+## Routing
+
+Restaurant storefronts should be accessible through the restaurant hostname.
+
+Preferred production URLs:
+
+```text
+https://pizza-house.yourplatform.com/
+https://www.pizzahouse.fi/
+```
+
+Restaurant-specific pages can use paths:
+
+```text
+/menu
+/cart
+/checkout
+/orders
+/account
+```
+
+The hostname provides restaurant identity.
+
+Do not make this the primary architecture:
+
+```text
+/restaurants/[slug]
+```
+
+A platform-level discovery page may still exist:
+
+```text
+yourplatform.com/restaurants
+```
+
+Selecting a restaurant should lead to its restaurant storefront domain.
+
+## Directory Structure
+
+Use feature-oriented organization.
+
+```text
+src/
+│
+├── app/
+│
+├── features/
+│   ├── restaurant/
+│   ├── menu/
+│   ├── cart/
+│   ├── checkout/
+│   ├── orders/
+│   └── account/
+│
+├── components/
+│   ├── ui/
+│   ├── layout/
+│   └── navigation/
+│
+├── lib/
+│   ├── api/
+│   ├── auth/
+│   └── restaurant/
+│
+└── providers/
+```
+
+Follow existing directories before creating new ones.
+
+Do not create duplicate folders for the same responsibility.
+
+## App Directory
+
+Use `src/app/` for:
+
+* Routes
+* Layouts
+* Loading states
+* Error boundaries
+* Route-level composition
+
+Do not put large business logic directly inside page components.
+
+Example:
+
+```text
+app/
+├── layout.tsx
+├── page.tsx
+├── cart/
+│   └── page.tsx
+├── checkout/
+│   └── page.tsx
+├── orders/
+│   └── page.tsx
+└── account/
+    └── page.tsx
+```
+
+## Features
+
+Customer functionality belongs under:
+
+```text
+src/features/
+```
+
+Example:
+
+```text
+features/menu/
+├── components/
+├── hooks/
+├── services/
+├── types/
+└── utils/
+```
+
+Use the same structure only when the feature actually needs those layers.
+
+Do not create empty directories without a purpose.
+
+## Restaurant Feature
+
+The restaurant feature owns restaurant storefront concerns such as:
+
+* Restaurant information
+* Restaurant branding
+* Restaurant status
+* Restaurant settings exposed to customers
+* Restaurant context helpers
+
+It must not contain database access.
+
+## Menu Feature
+
+The menu feature owns:
+
+* Menus
+* Categories
+* Menu items
+* Variants
+* Add-ons
+* Menu presentation
+
+Menu data must come from the API.
+
+Do not create hardcoded production menu data.
+
+## Cart Feature
+
+The cart feature owns:
+
+* Cart state
+* Cart items
+* Quantity changes
+* Item removal
+* Cart totals
+* Cart validation
+
+Do not mix cart state with restaurant discovery logic.
+
+The cart must remain associated with the correct restaurant.
+
+## Checkout Feature
+
+The checkout feature owns:
+
+* Checkout UI
+* Customer information
+* Delivery or pickup information
+* Order confirmation
+* Payment initiation
+
+Payment processing must be handled by the API and payment infrastructure.
+
+Never implement secret payment credentials in the frontend.
+
+## Orders Feature
+
+The orders feature owns:
+
+* Order history
+* Order details
+* Order status
+* Customer-facing order tracking
+
+Restaurant and customer authorization must be enforced by the API.
+
+## API Layer
+
+All backend requests must use the centralized API infrastructure.
+
+Use:
+
+```text
+src/lib/api/
+```
+
+Do not create random `fetch()` calls throughout components.
+
+Before creating a new API service:
+
+1. Check the existing API client.
+2. Check existing error handling.
+3. Check existing types.
+4. Check whether the endpoint is already implemented.
+
+## Data Fetching
+
+Use TanStack Query for server state where appropriate.
+
+Do not create a second caching or server-state system.
+
+Keep query keys predictable and tenant-aware where necessary.
+
+Tenant-specific data must never leak between restaurants through client or server caching.
+
+## Error Handling
+
+Use the existing API error normalization.
+
+Handle relevant states:
+
+```text
+Loading
+Error
+Empty
+Success
+```
+
+Do not expose internal API, database, or stack-trace information to customers.
+
+## Authentication
+
+Use the existing authentication architecture.
+
+Do not implement a separate authentication mechanism inside a feature.
+
+Authentication determines the user identity.
+
+Restaurant authorization remains a backend responsibility.
+
+Never assume that hiding a UI element provides authorization.
+
+## UI
+
+Use existing shared UI components where possible.
+
+Check:
+
+```text
+packages/ui/
+```
+
+before creating reusable components.
+
+Do not introduce a new UI library without explicit approval.
+
+Keep components focused.
+
+Prefer:
+
+```text
+Page
+  ↓
+Feature Component
+  ↓
+Feature Hook
+  ↓
+Service
+```
+
+instead of placing everything in a single page component.
+
+## Styling
+
+Use the existing Tailwind CSS v4 configuration.
+
+Do not introduce another CSS framework.
+
+Follow the existing design system and shared UI patterns.
+
+Do not introduce arbitrary global styles when a component-level solution is appropriate.
+
+## Types
+
+Use TypeScript strictly.
+
+Avoid `any`.
+
+Reuse shared types from:
+
+```text
+packages/types/
+```
+
+when appropriate.
+
+Do not duplicate API response types unnecessarily.
+
+If the API contract changes, update all affected consumers.
+
+## API Contract Changes
+
+When a frontend feature requires an API contract change:
+
+1. Inspect the existing API implementation.
+2. Confirm that the existing API cannot satisfy the requirement.
+3. Update the API contract.
+4. Update API types.
+5. Update the web client.
+6. Update affected tests.
+7. Run validation.
+
+Do not silently invent frontend assumptions about API responses.
+
+## Caching and Tenant Isolation
+
+Tenant-specific data must remain isolated.
+
+Never allow:
+
+```text
+Pizza House data
+      ↓
+Burger House storefront
+```
+
+through:
+
+* React Query cache
+* Next.js cache
+* Server cache
+* CDN cache
+* Browser state
+
+Include restaurant context in cache/query identity where required.
+
+## Customer Experience
+
+The customer flow should follow:
+
+```text
+Restaurant Storefront
+       ↓
+Menu
+       ↓
+Menu Item
+       ↓
+Cart
+       ↓
+Checkout
+       ↓
+Order
+       ↓
+Order History
+```
+
+Keep the flow consistent across restaurant domains.
+
+## Development
+
+Use pnpm.
+
+Examples:
+
+```bash
+pnpm --filter web dev
+pnpm --filter web typecheck
+pnpm --filter web lint
+pnpm --filter web test
+pnpm --filter web build
+```
+
+Do not use npm or yarn.
+
+## Testing
+
+Use the testing framework already configured in the workspace.
+
+Before adding tests:
+
+1. Inspect the existing test setup.
+2. Follow existing conventions.
+3. Reuse existing test utilities.
+4. Add tests for new business logic.
+
+Important areas include:
+
+* Domain resolution
+* Restaurant context
+* API client
+* Menu fetching
+* Cart behavior
+* Checkout behavior
+* Authentication
+* Error states
+
+Do not remove tests to make implementation pass.
+
+## Protected Operations
+
+Do not modify these for unrelated frontend tasks:
+
+```text
+apps/api/
+packages/database/prisma/
+docker/
+.env
+.env.*
+```
+
+Do not modify database schema or API behavior unless the requested feature genuinely requires it.
+
+Never modify real secrets.
+
+## Dependencies
+
+Do not add dependencies without checking whether the repository already provides the required functionality.
+
+Do not replace existing libraries unnecessarily.
+
+Do not upgrade major framework dependencies as part of a feature task.
 
 ## Agent Workflow
 
-For every task:
+Before implementing a feature:
 
-1. Inspect the existing implementation.
-2. Identify the affected application or package.
-3. Identify the existing architectural pattern.
-4. Search for related implementations.
-5. Make the smallest appropriate change.
-6. Avoid unrelated refactoring.
-7. Run relevant validation.
-8. Inspect the final diff.
-9. Report changed files and verification results.
+1. Read the root `AGENTS.md`.
+2. Read this file.
+3. Read `docs/architecture.md`.
+4. Read `docs/domain-routing.md`.
+5. Inspect the existing web application.
+6. Inspect the relevant API endpoint.
+7. Inspect shared packages.
+8. Search for existing implementations.
+9. Implement the smallest appropriate change.
+10. Run relevant validation.
+11. Review the final diff.
 
 Do not guess when the repository can answer the question.
 
-Do not introduce a new pattern when an existing pattern already solves the problem.
+Do not refactor unrelated code.
 
-Do not claim work was completed or verified unless it actually was.
+Do not create parallel implementations of existing functionality.
+
+## Completion Report
+
+After completing a task, report:
+
+```text
+Changed:
+- files created
+- files modified
+
+Architecture:
+- relevant architectural decisions
+
+Validation:
+- commands executed
+- results
+
+Remaining:
+- unfinished work
+- known limitations
+```
+
+Never claim validation passed unless the command was actually executed.
