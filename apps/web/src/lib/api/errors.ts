@@ -7,6 +7,19 @@ export interface ApiErrorResponse {
   timestamp?: string;
 }
 
+const CUSTOMER_NETWORK_MESSAGE = 'Unable to connect to the restaurant service.';
+const CUSTOMER_UNKNOWN_MESSAGE = 'Something went wrong. Please try again.';
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const isApiErrorResponse = (value: unknown): value is ApiErrorResponse =>
+  isRecord(value) &&
+  typeof value.statusCode === 'number' &&
+  (typeof value.message === 'string' ||
+    (Array.isArray(value.message) && value.message.every((item) => typeof item === 'string'))) &&
+  typeof value.error === 'string';
+
 export class ApiError extends Error {
   readonly statusCode: number;
   readonly error: string;
@@ -36,13 +49,36 @@ export function normalizeError(error: unknown): ApiError {
   }
 
   if (typeof error === 'object' && error !== null && 'response' in error) {
-    const axiosError = error as { response?: { data?: ApiErrorResponse; status?: number; statusText?: string } };
-    if (axiosError.response?.data) {
+    const axiosError = error as {
+      response?: { data?: unknown; status?: number; statusText?: string };
+      request?: unknown;
+    };
+    if (!axiosError.response && axiosError.request) {
+      return new ApiError({
+        statusCode: 0,
+        message: CUSTOMER_NETWORK_MESSAGE,
+        error: 'NetworkError',
+      });
+    }
+    if (isApiErrorResponse(axiosError.response?.data)) {
       return new ApiError(axiosError.response.data);
     }
     return new ApiError({
       statusCode: axiosError.response?.status ?? 500,
-      message: axiosError.response?.statusText ?? 'Network error',
+      message: 'The restaurant service returned an invalid error response.',
+      error: 'ApiError',
+    });
+  }
+
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'request' in error &&
+    !('response' in error)
+  ) {
+    return new ApiError({
+      statusCode: 0,
+      message: CUSTOMER_NETWORK_MESSAGE,
       error: 'NetworkError',
     });
   }
@@ -50,14 +86,14 @@ export function normalizeError(error: unknown): ApiError {
   if (error instanceof Error) {
     return new ApiError({
       statusCode: 500,
-      message: error.message,
-      error: error.name,
+      message: CUSTOMER_UNKNOWN_MESSAGE,
+      error: 'InternalError',
     });
   }
 
   return new ApiError({
     statusCode: 500,
-    message: 'An unknown error occurred',
+    message: CUSTOMER_UNKNOWN_MESSAGE,
     error: 'UnknownError',
   });
 }

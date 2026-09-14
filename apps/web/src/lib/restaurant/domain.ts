@@ -26,6 +26,23 @@ const PLATFORM_DOMAINS = [
   'lvh.me',
 ];
 
+const VERIFIED_CUSTOM_DOMAINS = new Map(
+  (process.env.NEXT_PUBLIC_VERIFIED_CUSTOM_DOMAINS || '')
+    .split(',')
+    .map((entry) => entry.trim().split('='))
+    .filter(
+      ([hostname, slug]) => Boolean(hostname && slug),
+    )
+    .map(([hostname, slug]) => [normalizeHostname(hostname!), slug!.trim()] as const),
+);
+
+const isLocalHostname = (hostname: string): boolean =>
+  hostname === 'localhost' ||
+  hostname === '127.0.0.1' ||
+  hostname.endsWith('.localhost') ||
+  hostname.endsWith('.nip.io') ||
+  hostname.endsWith('.lvh.me');
+
 /**
  * Normalizes an incoming hostname string by stripping port, lowercasing,
  * and removing leading 'www.'.
@@ -52,17 +69,17 @@ export function resolveDomain(
   rawHost: string | null | undefined,
   overrideSlug?: string | null,
 ): DomainResolution {
-  // If an explicit override/param is provided (e.g. in local dev), use it
-  if (overrideSlug) {
+  const hostname = normalizeHostname(rawHost);
+
+  // Query-string overrides are intentionally local-development-only.
+  if (overrideSlug && process.env.NODE_ENV !== 'production' && isLocalHostname(hostname)) {
     return {
       type: 'tenant',
       slug: overrideSlug.toLowerCase().trim(),
-      hostname: normalizeHostname(rawHost),
+      hostname,
       isCustomDomain: false,
     };
   }
-
-  const hostname = normalizeHostname(rawHost);
 
   // Check if matches apex localhost or platform domain -> Platform Discovery
   for (const platformDomain of PLATFORM_DOMAINS) {
@@ -99,12 +116,21 @@ export function resolveDomain(
     }
   }
 
-  // If none of the platform domains matched, treat as potential custom domain.
-  // In the current phase (platform subdomains first), if it's a domain with a single name or not recognized:
+  const verifiedCustomSlug = VERIFIED_CUSTOM_DOMAINS.get(hostname);
+  if (verifiedCustomSlug) {
+    return {
+      type: 'tenant',
+      slug: verifiedCustomSlug,
+      hostname,
+      isCustomDomain: true,
+    };
+  }
+
+  // Unknown custom domains must not be guessed as restaurant tenants. They
+  // need to be verified and mapped explicitly before becoming tenant traffic.
   return {
-    type: 'tenant',
-    slug: hostname.split('.')[0] || hostname,
+    type: 'unknown',
     hostname,
-    isCustomDomain: true,
+    isCustomDomain: false,
   };
 }

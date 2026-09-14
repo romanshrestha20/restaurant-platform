@@ -1,17 +1,21 @@
-'use client';
+"use client";
 
-import React from 'react';
-import Link from 'next/link';
-import { useRestaurant } from '@/providers/restaurant-provider';
-import { Badge, Button, Card } from '@restaurant/ui';
+import React from "react";
+import Link from "next/link";
+import { useRestaurant } from "@/providers/restaurant-provider";
+import { Badge, Button, Card } from "@restaurant/ui";
 
 export function StorefrontLanding() {
   const { restaurant } = useRestaurant();
 
   if (!restaurant) return null;
 
-  const coverMedia = restaurant.media?.find((m) => m.type.toLowerCase() === 'cover');
-  const logoMedia = restaurant.media?.find((m) => m.type.toLowerCase() === 'logo');
+  const coverMedia = restaurant.media?.find(
+    (m) => m.type.toLowerCase() === "cover",
+  );
+  const logoMedia = restaurant.media?.find(
+    (m) => m.type.toLowerCase() === "logo",
+  );
 
   // Collect featured items from all menus & categories
   const featuredItems = restaurant.menus.flatMap((menu) =>
@@ -96,9 +100,7 @@ export function StorefrontLanding() {
           </div>
 
           <Link href="/menu">
-            <Button size="sm">
-              Order Now
-            </Button>
+            <Button size="sm">Order Now</Button>
           </Link>
         </div>
       </div>
@@ -108,7 +110,9 @@ export function StorefrontLanding() {
         {/* Categories Bar */}
         {allCategories.length > 0 && (
           <div>
-            <h2 className="text-lg font-bold text-foreground mb-4">Categories</h2>
+            <h2 className="text-lg font-bold text-foreground mb-4">
+              Categories
+            </h2>
             <div className="flex flex-wrap gap-2">
               {allCategories.map((category) => (
                 <Link
@@ -127,7 +131,9 @@ export function StorefrontLanding() {
         {featuredItems.length > 0 && (
           <div>
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-foreground">Featured Items</h2>
+              <h2 className="text-xl font-bold text-foreground">
+                Featured Items
+              </h2>
               <Link
                 href="/menu"
                 className="text-sm font-semibold text-primary hover:underline"
@@ -155,8 +161,15 @@ export function StorefrontLanding() {
                       )}
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <h3 className="font-bold text-foreground text-base">{item.name}</h3>
-                          <Badge variant="accent" className="text-[10px] px-1.5 py-0">Featured</Badge>
+                          <h3 className="font-bold text-foreground text-base">
+                            {item.name}
+                          </h3>
+                          <Badge
+                            variant="accent"
+                            className="text-[10px] px-1.5 py-0"
+                          >
+                            Featured
+                          </Badge>
                         </div>
                         {item.description && (
                           <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
@@ -185,14 +198,14 @@ export function StorefrontLanding() {
 
         {/* Call To Action */}
         <Card className="bg-accent/40 border-accent p-8 text-center max-w-3xl mx-auto rounded-3xl">
-          <h3 className="text-xl font-bold text-foreground">Ready to place your order?</h3>
+          <h3 className="text-xl font-bold text-foreground">
+            Ready to place your order?
+          </h3>
           <p className="text-sm text-muted-foreground mt-1 mb-6">
             Browse our complete selection of fresh, made-to-order items.
           </p>
           <Link href="/menu">
-            <Button size="lg">
-              Explore Full Menu
-            </Button>
+            <Button size="lg">Explore Full Menu</Button>
           </Link>
         </Card>
       </div>
