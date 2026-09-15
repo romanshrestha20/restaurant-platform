@@ -3,12 +3,6 @@ import type { PrismaClient } from "../../src/generated";
 const RESTAURANT_SLUG = "nordic-table-helsinki";
 
 export async function seedRestaurant(prisma: PrismaClient) {
-  const otherActiveRestaurants = await prisma.restaurant.count({
-    where: { isActive: true, status: "ACTIVE", deletedAt: null, slug: { not: RESTAURANT_SLUG } },
-  });
-  if (otherActiveRestaurants > 0) {
-    throw new Error(`Seed aborted: active restaurants other than ${RESTAURANT_SLUG} already exist.`);
-  }
   return prisma.restaurant.upsert({
     where: { slug: RESTAURANT_SLUG },
     update: {
