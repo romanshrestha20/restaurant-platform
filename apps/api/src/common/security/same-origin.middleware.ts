@@ -16,10 +16,14 @@ const normalizeOrigin = (value: string): string | null => {
  * headers adds CSRF protection to cookie-backed auth routes and future writes.
  * Requests without Origin remain available to non-browser API clients.
  */
-export const createSameOriginMiddleware = (clientUrl: string) => {
-  const allowedOrigin = normalizeOrigin(clientUrl);
+export const createSameOriginMiddleware = (clientUrls: string | string[]) => {
+  const allowedOrigins = new Set(
+    (Array.isArray(clientUrls) ? clientUrls : [clientUrls])
+      .map(normalizeOrigin)
+      .filter((origin): origin is string => Boolean(origin)),
+  );
 
-  if (!allowedOrigin) {
+  if (allowedOrigins.size === 0) {
     throw new Error('CLIENT_URL must contain a valid origin');
   }
 
@@ -29,7 +33,7 @@ export const createSameOriginMiddleware = (clientUrl: string) => {
     if (
       origin &&
       !SAFE_METHODS.has(request.method.toUpperCase()) &&
-      normalizeOrigin(origin) !== allowedOrigin
+      !allowedOrigins.has(normalizeOrigin(origin) ?? '')
     ) {
       response.status(403).json({
         statusCode: 403,

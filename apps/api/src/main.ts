@@ -22,6 +22,10 @@ async function bootstrap(): Promise<void> {
   const config = app.get<ConfigService<AppEnvironment, true>>(ConfigService);
   const port = config.get('PORT', { infer: true }) ?? 3001;
   const clientUrl = config.get('CLIENT_URL', { infer: true });
+  const clientOrigins = [clientUrl];
+  if (clientUrl.includes('localhost')) {
+    clientOrigins.push(clientUrl.replace('localhost', '127.0.0.1'));
+  }
 
   app.setGlobalPrefix('api');
   app.enableVersioning({
@@ -36,12 +40,12 @@ async function bootstrap(): Promise<void> {
     }),
   );
   app.enableCors({
-    origin: clientUrl,
+    origin: clientOrigins,
     credentials: true,
   });
   app.use(requestIdMiddleware);
   app.useWebSocketAdapter(new RealtimeIoAdapter(app, clientUrl));
-  app.use(createSameOriginMiddleware(clientUrl));
+  app.use(createSameOriginMiddleware(clientOrigins));
   app.use(helmet());
   app.use(compression());
   app.use(cookieParser());
