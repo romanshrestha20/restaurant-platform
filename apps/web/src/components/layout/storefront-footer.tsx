@@ -7,22 +7,22 @@ export function StorefrontFooter() {
   const { restaurant, isTenantMode } = useRestaurant();
 
   return (
-    <footer className="w-full bg-muted/40 border-t border-border mt-auto py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-sm text-muted-foreground flex flex-col sm:flex-row items-center justify-between gap-4">
+    <footer className="mt-auto w-full border-t border-foreground/10 bg-foreground py-10 text-background">
+      <div className="mx-auto flex max-w-[90rem] flex-col items-center justify-between gap-4 px-5 text-sm sm:flex-row sm:px-8">
         {isTenantMode && restaurant ? (
           <div>
-            <p className="font-semibold text-foreground">{restaurant.name}</p>
+            <p className="font-semibold">{restaurant.name}</p>
             {restaurant.description && (
-              <p className="text-xs text-muted-foreground mt-0.5">{restaurant.description}</p>
+              <p className="mt-0.5 text-xs text-background/60">{restaurant.description}</p>
             )}
           </div>
         ) : (
           <div>
-            <p className="font-semibold text-foreground">Restaurant Platform</p>
-            <p className="text-xs text-muted-foreground">Order from your favorite local restaurants</p>
+            <p className="font-semibold">Restaurant Platform</p>
+            <p className="text-xs text-background/60">Order from your favorite local restaurants</p>
           </div>
         )}
-        <div className="text-xs text-muted-foreground">
+          <div className="text-xs text-background/50">
           &copy; {new Date().getFullYear()} All rights reserved.
         </div>
       </div>

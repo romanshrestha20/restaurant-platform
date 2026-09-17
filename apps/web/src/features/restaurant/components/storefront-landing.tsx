@@ -27,41 +27,42 @@ export function StorefrontLanding() {
   const allCategories = restaurant.menus.flatMap((menu) => menu.categories);
 
   return (
-    <div>
+    <div className="overflow-hidden bg-background">
       {/* Cover / Hero Header */}
-      <div className="relative h-64 sm:h-80 w-full bg-muted overflow-hidden">
+      <div className="relative min-h-[34rem] w-full overflow-hidden bg-[#27332e] sm:min-h-[39rem]">
         {coverMedia?.media?.url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={coverMedia.media.url}
             alt={coverMedia.alt || restaurant.name}
-            className="w-full h-full object-cover opacity-85"
+            className="h-full w-full object-cover opacity-75"
           />
         ) : (
-          <div className="w-full h-full bg-gradient-to-r from-primary/80 to-primary/40" />
+          <div className="h-full w-full bg-[radial-gradient(circle_at_70%_20%,#c58a52_0%,transparent_38%),linear-gradient(135deg,#26362f_0%,#51614f_55%,#b7673e_100%)]" />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
 
-        <div className="absolute bottom-0 inset-x-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-6 flex items-end gap-5">
+        <div className="absolute inset-x-0 bottom-0 mx-auto flex max-w-[90rem] items-end gap-5 px-5 pb-10 sm:px-8 sm:pb-14">
           {logoMedia?.media?.url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={logoMedia.media.url}
               alt={restaurant.name}
-              className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover border-4 border-background shadow-md shrink-0 bg-card"
+            className="h-20 w-20 shrink-0 rounded-full border-4 border-background object-cover shadow-2xl sm:h-24 sm:w-24"
             />
           ) : (
-            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-primary text-primary-foreground font-bold text-3xl flex items-center justify-center border-4 border-background shadow-md shrink-0">
+            <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full border-4 border-background bg-primary text-3xl font-bold text-primary-foreground shadow-2xl sm:h-24 sm:w-24">
               {restaurant.name[0]}
             </div>
           )}
 
           <div className="text-white">
-            <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-[0.28em] text-[#e7c46b]">Helsinki · seasonal kitchen</p>
+            <h1 className="max-w-3xl text-4xl font-black tracking-[-0.04em] sm:text-7xl">
               {restaurant.name}
             </h1>
             {restaurant.description && (
-              <p className="mt-1 text-xs sm:text-sm text-gray-200 line-clamp-2 max-w-2xl">
+              <p className="mt-3 max-w-xl text-sm leading-6 text-white/75 sm:text-base">
                 {restaurant.description}
               </p>
             )}
@@ -70,9 +71,9 @@ export function StorefrontLanding() {
       </div>
 
       {/* Highlights Bar */}
-      <div className="bg-card border-b border-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4 text-sm">
-          <div className="flex items-center gap-6 text-muted-foreground">
+      <div className="border-b border-foreground/10 bg-card">
+        <div className="mx-auto flex max-w-[90rem] flex-wrap items-center justify-between gap-4 px-5 py-5 text-sm sm:px-8">
+          <div className="flex flex-wrap items-center gap-x-8 gap-y-2 text-muted-foreground">
             {restaurant.settings?.estimatedPrepMinutes && (
               <div className="flex items-center gap-1.5">
                 <span className="font-semibold text-foreground">
@@ -106,21 +107,22 @@ export function StorefrontLanding() {
       </div>
 
       {/* Main Content Area */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12">
+      <div className="mx-auto max-w-[90rem] space-y-20 px-5 py-16 sm:px-8 sm:py-24">
         {/* Categories Bar */}
         {allCategories.length > 0 && (
           <div>
-            <h2 className="text-lg font-bold text-foreground mb-4">
-              Categories
-            </h2>
-            <div className="flex flex-wrap gap-2">
+            <div className="mb-6 flex items-end justify-between border-b border-foreground/10 pb-4">
+              <h2 className="text-3xl font-black tracking-tight text-foreground">Start with a section</h2>
+              <span className="hidden text-xs uppercase tracking-[0.2em] text-muted-foreground sm:block">The menu</span>
+            </div>
+            <div className="grid grid-cols-2 gap-px overflow-hidden border border-foreground/10 bg-foreground/10 sm:grid-cols-4">
               {allCategories.map((category) => (
                 <Link
                   key={category.id}
                   href={`/menu#category-${category.id}`}
-                  className="px-4 py-2 bg-secondary hover:bg-accent hover:text-accent-foreground text-secondary-foreground font-medium rounded-xl text-sm transition-colors"
+                  className="group bg-card p-5 text-sm font-semibold text-secondary-foreground transition-colors hover:bg-accent sm:p-7"
                 >
-                  {category.name} ({category.items.length})
+                <span className="block text-lg transition-transform group-hover:translate-x-1 sm:text-xl">{category.name}</span><span className="mt-2 block text-xs font-normal text-muted-foreground">{category.items.length} dishes →</span>
                 </Link>
               ))}
             </div>
@@ -131,12 +133,12 @@ export function StorefrontLanding() {
         {featuredItems.length > 0 && (
           <div>
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-foreground">
-                Featured Items
+              <h2 className="text-3xl font-black tracking-tight text-foreground">
+                A few favourites
               </h2>
               <Link
                 href="/menu"
-                className="text-sm font-semibold text-primary hover:underline"
+                className="text-sm font-semibold text-primary transition-transform hover:translate-x-1"
               >
                 See all menu items &rarr;
               </Link>
@@ -148,7 +150,7 @@ export function StorefrontLanding() {
                 return (
                   <Card
                     key={item.id}
-                    className="flex flex-col justify-between p-4 hover:shadow-md transition-shadow"
+                    className="flex flex-col justify-between rounded-none border-0 border-b border-foreground/10 bg-transparent p-0 pb-5 shadow-none transition-transform hover:-translate-y-1"
                   >
                     <div className="flex gap-4">
                       {itemMedia?.media?.url && (
@@ -161,7 +163,7 @@ export function StorefrontLanding() {
                       )}
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <h3 className="font-bold text-foreground text-base">
+                          <h3 className="font-bold text-foreground text-lg">
                             {item.name}
                           </h3>
                           <Badge
@@ -180,7 +182,7 @@ export function StorefrontLanding() {
                     </div>
 
                     <div className="mt-4 pt-3 border-t border-border flex items-center justify-between">
-                      <span className="font-extrabold text-foreground text-base">
+                        <span className="font-extrabold text-foreground text-base">
                         €{Number(item.basePrice).toFixed(2)}
                       </span>
                       <Link href="/menu">
@@ -197,11 +199,11 @@ export function StorefrontLanding() {
         )}
 
         {/* Call To Action */}
-        <Card className="bg-accent/40 border-accent p-8 text-center max-w-3xl mx-auto rounded-3xl">
-          <h3 className="text-xl font-bold text-foreground">
+        <Card className="mx-auto max-w-3xl rounded-none border-0 bg-[#26362f] p-10 text-center text-white shadow-none sm:p-14">
+          <h3 className="text-3xl font-black">
             Ready to place your order?
           </h3>
-          <p className="text-sm text-muted-foreground mt-1 mb-6">
+          <p className="mb-6 mt-2 text-sm text-white/65">
             Browse our complete selection of fresh, made-to-order items.
           </p>
           <Link href="/menu">

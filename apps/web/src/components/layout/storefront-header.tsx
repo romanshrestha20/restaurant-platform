@@ -12,8 +12,8 @@ export function StorefrontHeader() {
   );
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-background/95 backdrop-blur-xs border-b border-border">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+    <header className="sticky top-0 z-40 w-full border-b border-foreground/10 bg-background/90 backdrop-blur-md">
+      <div className="mx-auto flex h-[4.5rem] max-w-[90rem] items-center justify-between px-5 sm:px-8">
         {/* Left: Branding */}
         <div className="flex items-center gap-4">
           {isTenantMode ? (
@@ -26,7 +26,7 @@ export function StorefrontHeader() {
                   className="w-10 h-10 rounded-xl object-cover border border-border shadow-xs"
                 />
               ) : (
-                <div className="w-10 h-10 rounded-xl bg-accent text-accent-foreground flex items-center justify-center font-bold text-lg">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-lg font-bold text-primary-foreground">
                   {restaurant?.name ? restaurant.name[0]?.toUpperCase() : 'R'}
                 </div>
               )}
@@ -59,25 +59,25 @@ export function StorefrontHeader() {
             <>
               <Link
                 href="/menu"
-                className="text-sm font-medium text-foreground hover:text-primary transition-colors py-1"
+                    className="py-1 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
               >
                 Menu
               </Link>
               <Link
                 href="/orders"
-                className="text-sm font-medium text-foreground hover:text-primary transition-colors py-1"
+                className="hidden py-1 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground sm:block"
               >
                 Orders
               </Link>
               <Link
                 href="/account"
-                className="text-sm font-medium text-foreground hover:text-primary transition-colors py-1"
+                className="hidden py-1 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground sm:block"
               >
                 Account
               </Link>
               <Link
                 href="/cart"
-                className="flex items-center gap-2 px-3 py-1.5 bg-accent text-accent-foreground hover:bg-accent/80 rounded-xl text-sm font-semibold transition-colors"
+                className="flex items-center gap-2 rounded-full bg-foreground px-4 py-2 text-sm font-semibold text-background transition-transform hover:-translate-y-0.5"
               >
                 <svg
                   className="w-4 h-4"

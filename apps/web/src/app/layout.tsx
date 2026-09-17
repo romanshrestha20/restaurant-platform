@@ -4,6 +4,7 @@ import './globals.css';
 import { QueryProvider } from '@/providers/query-provider';
 import { RestaurantProvider } from '@/providers/restaurant-provider';
 import { StorefrontShell } from '@/components/layout/storefront-shell';
+import { AuthProvider } from '@/features/auth/providers/auth-provider';
 
 export const metadata: Metadata = {
   title: 'Restaurant Platform',
@@ -24,9 +25,11 @@ export default function RootLayout({
               <div className="w-8 h-8 border-2 border-orange-200 border-t-orange-600 rounded-full animate-spin" />
             </div>
           }>
-            <RestaurantProvider>
-              <StorefrontShell>{children}</StorefrontShell>
-            </RestaurantProvider>
+            <AuthProvider>
+              <RestaurantProvider>
+                <StorefrontShell>{children}</StorefrontShell>
+              </RestaurantProvider>
+            </AuthProvider>
           </Suspense>
         </QueryProvider>
       </body>

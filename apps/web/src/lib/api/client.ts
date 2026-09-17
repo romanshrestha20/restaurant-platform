@@ -5,11 +5,14 @@ import axios, {
 } from 'axios';
 import { normalizeError } from './errors';
 import { accessTokenStore } from '@/features/auth/services/access-token.store';
+import type { AuthSessionResponse } from '@/features/auth/types';
 
 type RetryableRequestConfig = AxiosRequestConfig & {
   _authRetry?: boolean;
   _skipAuthRefresh?: boolean;
 };
+
+export type RefreshedSession = AuthSessionResponse;
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
@@ -54,11 +57,11 @@ apiClient.interceptors.response.use(
   },
 );
 
-let refreshPromise: Promise<{ accessToken: string }> | null = null;
+let refreshPromise: Promise<RefreshedSession> | null = null;
 
-async function refreshAccessToken(): Promise<{ accessToken: string }> {
+export async function refreshAccessToken(): Promise<RefreshedSession> {
   try {
-    const response = await apiClient.post<{ accessToken: string }>('/auth/refresh', undefined, {
+    const response = await apiClient.post<RefreshedSession>('/auth/refresh', undefined, {
       _skipAuthRefresh: true,
     } as RetryableRequestConfig);
     return response.data;

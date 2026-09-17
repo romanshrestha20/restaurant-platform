@@ -47,18 +47,15 @@ export function MenuPage() {
 
   return (
     <div className="bg-background">
-      <section className="border-b border-border bg-accent/40">
-        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
-          <Badge variant="secondary" className="mb-4">
-            {sections.length} categories
-          </Badge>
-          <h1 className="max-w-3xl text-4xl font-black tracking-tight text-foreground sm:text-6xl">
-            {restaurant.name}
-            <span className="text-primary">’s menu</span>
+      <section className="relative overflow-hidden border-b border-foreground/10 bg-[#26362f] text-white">
+        <div className="absolute -right-24 -top-32 h-96 w-96 rounded-full bg-[#c98a56]/30 blur-3xl" />
+        <div className="relative mx-auto max-w-[90rem] px-5 py-20 sm:px-8 sm:py-28">
+          <p className="mb-5 text-xs font-semibold uppercase tracking-[0.28em] text-[#e7c46b]">The kitchen is open</p>
+          <h1 className="max-w-4xl text-5xl font-black tracking-[-0.05em] sm:text-8xl">
+            {restaurant.name}<span className="text-[#e7c46b]">’s menu</span>
           </h1>
-          <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg">
-            Take your time. Every dish is prepared to order with a focus on
-            generous flavour and good ingredients.
+          <p className="mt-6 max-w-xl text-base leading-7 text-white/65 sm:text-lg">
+            Prepared to order, rooted in good ingredients, and made for a slow moment around the table.
           </p>
         </div>
       </section>
@@ -67,7 +64,7 @@ export function MenuPage() {
         aria-label="Menu categories"
         className="sticky top-16 z-30 border-b border-border bg-background/95 backdrop-blur-sm"
       >
-        <div className="mx-auto flex max-w-7xl gap-2 overflow-x-auto px-4 py-3 sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-[90rem] gap-1 overflow-x-auto px-5 py-4 sm:px-8">
           <CategoryButton
             active={!activeCategory}
             onClick={() => setActiveCategory(null)}
@@ -94,9 +91,9 @@ export function MenuPage() {
               id={`category-${section.id}`}
               className="scroll-mt-32"
             >
-              <div className="mb-6 flex items-end justify-between gap-4 border-b border-border pb-4">
+              <div className="mb-8 flex items-end justify-between gap-4 border-b border-foreground/10 pb-5">
                 <div>
-                  <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
+                  <h2 className="text-3xl font-black tracking-tight sm:text-4xl">
                     {section.name}
                   </h2>
                   {section.description && (

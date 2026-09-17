@@ -21,7 +21,7 @@ export function MenuItemCard({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="group flex min-h-36 w-full gap-4 border-b border-border/70 pb-8 text-left last:border-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4 sm:gap-6"
+        className="group flex min-h-36 w-full gap-4 border-b border-foreground/10 pb-8 text-left last:border-0 transition-transform duration-300 hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4 sm:gap-6"
         aria-label={`Customize ${item.name}`}
       >
         <div className="order-2 flex min-w-0 flex-1 flex-col">
@@ -43,7 +43,7 @@ export function MenuItemCard({
             {cartAdded ? <span role="status" className="text-xs font-semibold text-primary">Added to cart</span> : <span className="text-xs font-semibold text-primary opacity-0 transition-opacity group-hover:opacity-100">Customize →</span>}
           </div>
         </div>
-        <div className="order-1 h-28 w-28 shrink-0 overflow-hidden rounded-2xl bg-muted sm:h-36 sm:w-36">
+        <div className="order-1 h-28 w-28 shrink-0 overflow-hidden rounded-none bg-muted sm:h-36 sm:w-36">
           {image?.media.url ? (
             <img
               src={image.media.url}
