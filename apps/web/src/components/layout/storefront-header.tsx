@@ -28,7 +28,7 @@ function CartBadge({ restaurantId }: { restaurantId: string }) {
 
 export function StorefrontHeader() {
   const { restaurant, isTenantMode, isLoading, restaurantId } = useRestaurant();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, isLoading: isAuthLoading, user } = useAuth();
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -96,7 +96,10 @@ export function StorefrontHeader() {
 
         {/* Desktop Navigation */}
         {isTenantMode ? (
-          <nav className="hidden sm:flex items-center gap-6">
+          <nav
+            aria-label="Storefront"
+            className="hidden sm:flex items-center gap-6"
+          >
             {tenantNavLinks.map(({ href, label }) => (
               <Link key={href} href={href} className={navLinkClass(href)}>
                 {label}
@@ -124,16 +127,24 @@ export function StorefrontHeader() {
             </Link>
           </nav>
         ) : (
-          <nav className="flex items-center gap-3 sm:gap-6">
+          <nav
+            aria-label="Platform"
+            className="flex items-center gap-3 sm:gap-6"
+          >
             <Link
               href="/"
               className="text-sm font-medium text-foreground hover:text-primary transition-colors py-1"
             >
               Discover
             </Link>
-            {isAuthenticated && user ? (
+            {isAuthLoading ? (
+              <span
+                aria-label="Checking account"
+                className="h-8 w-8 animate-pulse rounded-full bg-muted"
+              />
+            ) : isAuthenticated && user ? (
               <Link
-                href="/auth"
+                href="/account"
                 className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground"
                 title={user.email}
               >
@@ -141,7 +152,7 @@ export function StorefrontHeader() {
               </Link>
             ) : (
               <Link
-                href="/account"
+                href="/auth"
                 className="text-sm font-medium text-foreground hover:text-primary transition-colors py-1"
               >
                 Sign In
