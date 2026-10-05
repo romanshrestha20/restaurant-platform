@@ -94,8 +94,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         // Remove all auth queries and protected customer queries so they
         // refetch cleanly on the next authenticated session.
-        queryClient.removeQueries({ queryKey: ['auth'] });
-        queryClient.removeQueries({ queryKey: ['cart'] });
+        for (const queryKey of [['auth'], ['cart'], ['account'], ['orders'], ['checkout']]) {
+          queryClient.removeQueries({ queryKey });
+        }
       }
     },
     [queryClient],
