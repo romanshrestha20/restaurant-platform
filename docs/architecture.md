@@ -38,6 +38,15 @@ restaurant-platform/
 │   ├── types/
 │   ├── typescript-config/
 │   └── ui/
+│   ├── database/          Prisma schema, client, migrations, seeds
+│   ├── ui/                Shared React component library
+│   ├── types/             Shared TypeScript types
+│   ├── auth/              Shared authentication primitives
+│   ├── validation/        Shared validation schemas
+│   ├── utils/             Shared utility functions
+│   ├── config/            Shared configuration helpers
+│   ├── eslint-config/     Shared ESLint configuration
+│   └── typescript-config/ Shared tsconfig bases
 │
 ├── docs/
 ├── docker/
@@ -515,6 +524,7 @@ Owns:
 * Migrations
 * Seeds
 * Database adapters
+* Authorization constants (`PlatformRoleName` etc.)
 
 Location:
 
@@ -522,25 +532,92 @@ Location:
 packages/database/
 ```
 
+### ui
+
+Contains reusable React components and design primitives shared across `web` and `admin`.
+
+Location:
+
+```text
+packages/ui/
+```
+
 ### auth
 
 Contains shared authentication primitives.
+Contains shared authentication primitives used by API and frontend packages.
+
+Location:
+
+```text
+packages/auth/
+```
+
+### types
+
+Contains shared TypeScript types consumed by multiple packages.
+
+Location:
+
+```text
+packages/types/
+```
 
 ### validation
 
 Contains shared validation schemas and utilities.
 
 ### types
+Location:
 
 Contains shared TypeScript types.
+```text
+packages/validation/
+```
 
 ### ui
+### utils
 
 Contains reusable UI components and design primitives.
+Contains shared utility functions.
+
+Location:
+
+```text
+packages/utils/
+```
+
+### config
+
+Contains shared configuration helpers.
+
+Location:
+
+```text
+packages/config/
+```
+
+### eslint-config
+
+Contains the shared ESLint configuration extended by all packages and apps.
+
+Location:
+
+```text
+packages/eslint-config/
+```
 
 ### typescript-config
 
 Contains shared TypeScript configurations.
+Contains shared TypeScript configurations (`base.json`, `react-library.json`, etc.).
+
+Location:
+
+```text
+packages/typescript-config/
+```
+
 
 ## 14. Database Architecture
 

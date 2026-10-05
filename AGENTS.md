@@ -148,6 +148,7 @@ Use feature-oriented organization.
 src/
 │
 ├── app/
+├── app/                       Next.js routes and layouts
 │
 ├── features/
 │   ├── restaurant/
@@ -156,18 +157,31 @@ src/
 │   ├── checkout/
 │   ├── orders/
 │   └── account/
+│   ├── auth/                  ✅ Implemented
+│   ├── restaurant/            ✅ Implemented
+│   ├── menu/                  ✅ Implemented
+│   ├── cart/                  ✅ Implemented
+│   ├── checkout/              📋 Planned
+│   ├── orders/                📋 Planned
+│   └── account/               📋 Planned
 │
 ├── components/
 │   ├── ui/
 │   ├── layout/
 │   └── navigation/
+│   ├── ui/                    Shared UI components
+│   ├── layout/                Layout components (shell, header, footer)
+│   └── navigation/            Navigation components
 │
 ├── lib/
 │   ├── api/
 │   ├── auth/
 │   └── restaurant/
+│   ├── api/                   API client, error normalisation
+│   └── restaurant/            Domain resolution utilities
 │
 └── providers/
+└── providers/                 Application-level providers
 ```
 
 Follow existing directories before creating new ones.
@@ -338,9 +352,49 @@ Do not expose internal API, database, or stack-trace information to customers.
 
 ## Authentication
 
+The authentication system is implemented under `src/features/auth/`.
+
+### Architecture
+
+```text
+httpOnly refresh cookie  (managed by the API server)
+        ↓
+accessTokenStore         in-memory Bearer token (never persisted to localStorage)
+        ↓
+Axios request interceptor   attaches Authorization: Bearer <token>
+        ↓
+Axios response interceptor  handles 401 → single-flight token refresh → retry
+        ↓
+AuthProvider             React context: user, isLoading, isAuthenticated
+        ↓
+useAuth()                hook for all feature components
+        ↓
+QueryProvider            global 401 handler clears auth state on unrecoverable errors
+```
+
+### Key files
+
+```text
+src/features/auth/
+├── providers/auth-provider.tsx   AuthContext, session recovery, login/register/logout
+├── hooks/use-auth.ts             useAuth() hook — must be used within AuthProvider
+├── services/auth.service.ts      API calls: login, register, refresh, logout
+├── services/access-token.store.ts in-memory token singleton with onClear listeners
+└── types/index.ts                AuthUser, AuthSessionUser, normalizeSessionUser()
+
+src/lib/api/client.ts             Axios client, Bearer interceptor, single-flight refresh
+src/providers/query-provider.tsx  Global React Query 401 handler
+```
+
+### Rules
+
 Use the existing authentication architecture.
 
 Do not implement a separate authentication mechanism inside a feature.
+
+Do not store the access token in `localStorage` or `sessionStorage`.
+
+Do not call `GET /auth/me` after login or register — the session response body already contains the user.
 
 Authentication determines the user identity.
 
