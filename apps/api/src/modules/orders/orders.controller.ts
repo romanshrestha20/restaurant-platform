@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -18,11 +19,10 @@ import {
   UpdateOrderStatusDto,
 } from './dto/order.dto';
 import { OrdersService } from './orders.service';
-import { PrimaryRestaurantService } from '../restaurants/primary-restaurant.service';
 
 @Controller()
 export class OrdersController {
-  constructor(private readonly ordersService: OrdersService, private readonly primary: PrimaryRestaurantService) {}
+  constructor(private readonly ordersService: OrdersService) {}
 
   // Customer Routes
   @Post('customer/orders/checkout')
@@ -31,7 +31,7 @@ export class OrdersController {
     @CurrentUser() user: AccessAuthUser,
     @Body() data: CheckoutDto,
   ) {
-    return this.primary.getPrimaryRestaurant().then((r) => this.ordersService.checkout(user.id, { ...data, restaurantId: r.id }));
+    return this.ordersService.checkout(user.id, data);
   }
 
   @Get('customer/orders')
@@ -42,9 +42,19 @@ export class OrdersController {
 
   @Get('customer/orders/delivery-quote')
   @UseGuards(AccessTokenGuard)
-  async deliveryQuote(@CurrentUser() user: AccessAuthUser, @Query('restaurantId') _restaurantId: string, @Query('addressId') addressId: string) {
-    const restaurant = await this.primary.getPrimaryRestaurant();
-    return this.ordersService.getDeliveryQuote(user.id, restaurant.id, addressId);
+  deliveryQuote(
+    @CurrentUser() user: AccessAuthUser,
+    @Query('restaurantId') restaurantId: string,
+    @Query('addressId') addressId: string,
+  ) {
+    // Prisma ignores undefined filters, so a missing id would match any record.
+    if (!restaurantId || !addressId)
+      throw new BadRequestException('restaurantId and addressId are required');
+    return this.ordersService.getDeliveryQuote(
+      user.id,
+      restaurantId,
+      addressId,
+    );
   }
 
   @Get('customer/orders/:orderId')

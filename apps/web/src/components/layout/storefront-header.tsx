@@ -3,17 +3,12 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
 import { useRestaurant } from "@/providers/restaurant-provider";
-import { cartService } from "@/features/cart/services/cart.service";
+import { useCurrentCart } from "@/features/cart/hooks/use-cart";
 import { useAuth } from "@/features/auth/hooks/use-auth";
 
-function CartBadge({ restaurantId }: { restaurantId: string }) {
-  const { data: cart } = useQuery({
-    queryKey: ["cart", "current", restaurantId],
-    queryFn: () => cartService.getCurrent(restaurantId),
-    staleTime: 30_000,
-  });
+function CartBadge() {
+  const { data: cart } = useCurrentCart();
 
   const count = cart?.items?.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
 
@@ -123,7 +118,7 @@ export function StorefrontHeader() {
                 />
               </svg>
               <span>Cart</span>
-              {restaurantId && <CartBadge restaurantId={restaurantId} />}
+              {restaurantId && <CartBadge />}
             </Link>
           </nav>
         ) : (
@@ -182,7 +177,7 @@ export function StorefrontHeader() {
                   d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
                 />
               </svg>
-              {restaurantId && <CartBadge restaurantId={restaurantId} />}
+              {restaurantId && <CartBadge />}
             </Link>
             <button
               type="button"
