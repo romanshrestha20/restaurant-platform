@@ -10,6 +10,7 @@ import { io, type Socket } from 'socket.io-client';
 import request from 'supertest';
 import type { App } from 'supertest/types';
 import { RealtimeGateway, RealtimeIoAdapter } from '../src/common/realtime';
+import { createOriginPolicy } from '../src/common/security/origin-policy';
 import type {
   ClientToServerEvents,
   ServerToClientEvents,
@@ -144,7 +145,13 @@ describe('Authenticated realtime connection (e2e)', () => {
     );
     app.use(cookieParser());
     app.useWebSocketAdapter(
-      new RealtimeIoAdapter(app, 'http://localhost:3000'),
+      new RealtimeIoAdapter(
+        app,
+        createOriginPolicy({
+          clientUrl: 'http://localhost:3000',
+          isProduction: false,
+        }),
+      ),
     );
 
     gateway = moduleFixture.get(RealtimeGateway);
