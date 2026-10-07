@@ -1,6 +1,6 @@
 # Restaurant Platform
 
-A multi-tenant SaaS platform for restaurants, built as a TypeScript monorepo.
+A multi-tenant SaaS restaurant platform — customer storefronts, restaurant administration, and a central API — built as a TypeScript monorepo.
 
 The project provides the foundation for restaurant storefronts, restaurant administration, authentication, menus, carts, orders, payments, reservations, and tenant-aware domain routing.
 
@@ -23,6 +23,16 @@ The repository already contains a working application architecture with:
 
 Some product areas and production infrastructure are still being expanded.
 
+| Area | Status |
+|---|---|
+| API foundation, auth, restaurant RBAC | ✅ Implemented |
+| Menu catalog, public menu endpoints | ✅ Implemented |
+| Cart, checkout, orders | ✅ Implemented |
+| Customer storefront (web) | 🚧 In progress |
+| Admin portal | 🚧 Scaffolded |
+| Payments, reservations | 🚧 Scaffolded |
+| Custom domains, email verification | 📋 Planned |
+
 ## Architecture
 
 The platform is organized as a monorepo:
@@ -30,24 +40,28 @@ The platform is organized as a monorepo:
 ```text
 restaurant-platform/
 ├── apps/
-│   ├── web/                 # Customer-facing Next.js application
-│   ├── api/                 # NestJS backend API
+│   ├── web/                 # Customer-facing Next.js storefront (multi-tenant)
+│   ├── api/                 # NestJS REST API + WebSocket server
 │   └── admin/               # Restaurant/platform administration
 │
 ├── packages/
-│   ├── database/            # Prisma client and database infrastructure
-│   ├── auth/                # Shared authentication package
-│   ├── validation/          # Shared validation
+│   ├── database/            # Prisma schema, client, migrations, seeds
+│   ├── auth/                # Shared authentication primitives
+│   ├── validation/          # Shared validation schemas
 │   ├── types/               # Shared TypeScript types
-│   ├── typescript-config/   # Shared TypeScript configuration
-│   └── ui/                  # Shared React UI components
+│   ├── ui/                  # Shared React UI components
+│   ├── utils/               # Shared utility functions
+│   ├── config/              # Shared configuration helpers
+│   ├── eslint-config/       # Shared ESLint configuration
+│   └── typescript-config/   # Shared TypeScript configuration
 │
 ├── docs/
-│   ├── architecture.md
-│   └── domain-routing.md
+│   ├── architecture.md      # System architecture reference
+│   └── domain-routing.md    # Multi-tenant domain routing
 │
 ├── docker/
-├── AGENTS.md
+│   └── docker-compose.yml   # PostgreSQL + local services
+├── AGENTS.md                # AI agent coding guidelines (web app)
 ├── package.json
 ├── pnpm-workspace.yaml
 └── turbo.json
@@ -85,6 +99,7 @@ restaurant-platform/
 - pnpm 12
 - Turborepo
 - Docker
+- Node.js 22
 - Cloudinary for configurable image storage
 - Stripe provider integration
 - SMTP email support
@@ -118,6 +133,8 @@ pizza-house.yourplatform.com
 www.pizzahouse.fi
 ```
 
+Customer authentication uses an httpOnly refresh cookie with an in-memory access token, single-flight token refresh, and global 401 handling via React Query.
+
 ### API
 
 `apps/api`
@@ -150,6 +167,21 @@ The API also includes:
 - Request IDs
 - Cookie parsing
 - Configurable file uploads
+
+All routes are served under `/api/v1`.
+
+Auth endpoints:
+
+- `POST /api/v1/auth/register`
+- `POST /api/v1/auth/login`
+- `POST /api/v1/auth/refresh`
+- `POST /api/v1/auth/logout`
+- `GET /api/v1/auth/me`
+
+Health endpoints:
+
+- `GET /api/v1/health` — liveness
+- `GET /api/v1/health/ready` — readiness (requires DB)
 
 ### Admin
 
@@ -327,6 +359,63 @@ Supported providers are:
 
 Cloudinary is the default storage provider outside test environments when the required credentials are configured.
 
+## Local development
+
+### Prerequisites
+
+- Node.js 22
+- pnpm 12
+- Docker (for PostgreSQL)
+
+### Setup
+
+```bash
+# 1. Start the database
+docker compose -f docker/docker-compose.yml up -d
+
+# 2. Install dependencies
+pnpm install
+
+# 3. Generate the Prisma client
+pnpm --filter @restaurant/database generate
+
+# 4. Run migrations
+pnpm --filter @restaurant/database migrate
+
+# 5. Start all services
+pnpm dev
+```
+
+The API runs at `http://localhost:3001/api/v1`.
+The customer web runs at `http://localhost:3000`.
+
+### Environment variables
+
+Copy the API example file and fill in the required values:
+
+```bash
+cp apps/api/.env.example apps/api/.env
+```
+
+Minimum required for local development:
+
+```dotenv
+# Database
+DATABASE_URL=postgresql://postgres:password@localhost:5432/restaurant_platform
+
+# API
+PORT=3001
+CLIENT_URL=http://localhost:3000
+JWT_ACCESS_SECRET=changeme
+JWT_REFRESH_SECRET=changeme
+JWT_ACCESS_TTL_SECONDS=900
+JWT_REFRESH_TTL_SECONDS=604800
+
+# Web — the storefront proxies /api/v1/* to the API (next.config.ts).
+# Read at build time; leave NEXT_PUBLIC_API_URL unset so requests stay same-origin.
+API_PROXY_TARGET=http://localhost:3001
+```
+
 ## Project commands
 
 Install dependencies:
@@ -379,6 +468,15 @@ pnpm --filter api dev
 pnpm --filter admin dev
 ```
 
+Per-package verification:
+
+```bash
+pnpm --filter web typecheck
+pnpm --filter api typecheck
+pnpm --filter api test --runInBand
+pnpm --filter api test:e2e
+```
+
 ## Database commands
 
 Database commands are provided by `@restaurant/database`.
@@ -424,6 +522,9 @@ NODE_ENV
 PORT
 DATABASE_URL
 CLIENT_URL
+PLATFORM_DOMAIN
+CUSTOM_DOMAINS
+TRUST_PROXY_HOPS
 
 JWT_ACCESS_SECRET
 JWT_REFRESH_SECRET

@@ -1,14 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
+import type { OriginPolicy } from './origin-policy';
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
-
-const normalizeOrigin = (value: string): string | null => {
-  try {
-    return new URL(value).origin;
-  } catch {
-    return null;
-  }
-};
 
 /**
  * CORS controls whether another origin can read a response, but does not stop a
@@ -16,24 +9,15 @@ const normalizeOrigin = (value: string): string | null => {
  * headers adds CSRF protection to cookie-backed auth routes and future writes.
  * Requests without Origin remain available to non-browser API clients.
  */
-export const createSameOriginMiddleware = (clientUrls: string | string[]) => {
-  const allowedOrigins = new Set(
-    (Array.isArray(clientUrls) ? clientUrls : [clientUrls])
-      .map(normalizeOrigin)
-      .filter((origin): origin is string => Boolean(origin)),
-  );
-
-  if (allowedOrigins.size === 0) {
-    throw new Error('CLIENT_URL must contain a valid origin');
-  }
-
-  return (request: Request, response: Response, next: NextFunction): void => {
+export const createSameOriginMiddleware =
+  (isAllowedOrigin: OriginPolicy) =>
+  (request: Request, response: Response, next: NextFunction): void => {
     const origin = request.get('origin');
 
     if (
       origin &&
       !SAFE_METHODS.has(request.method.toUpperCase()) &&
-      !allowedOrigins.has(normalizeOrigin(origin) ?? '')
+      !isAllowedOrigin(origin)
     ) {
       response.status(403).json({
         statusCode: 403,
@@ -47,4 +31,3 @@ export const createSameOriginMiddleware = (clientUrls: string | string[]) => {
 
     next();
   };
-};

@@ -3,17 +3,12 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
 import { useRestaurant } from "@/providers/restaurant-provider";
-import { cartService } from "@/features/cart/services/cart.service";
+import { useCurrentCart } from "@/features/cart/hooks/use-cart";
 import { useAuth } from "@/features/auth/hooks/use-auth";
 
-function CartBadge({ restaurantId }: { restaurantId: string }) {
-  const { data: cart } = useQuery({
-    queryKey: ["cart", "current", restaurantId],
-    queryFn: () => cartService.getCurrent(restaurantId),
-    staleTime: 30_000,
-  });
+function CartBadge() {
+  const { data: cart } = useCurrentCart();
 
   const count = cart?.items?.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
 
@@ -28,7 +23,7 @@ function CartBadge({ restaurantId }: { restaurantId: string }) {
 
 export function StorefrontHeader() {
   const { restaurant, isTenantMode, isLoading, restaurantId } = useRestaurant();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, isLoading: isAuthLoading, user } = useAuth();
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -96,7 +91,10 @@ export function StorefrontHeader() {
 
         {/* Desktop Navigation */}
         {isTenantMode ? (
-          <nav className="hidden sm:flex items-center gap-6">
+          <nav
+            aria-label="Storefront"
+            className="hidden sm:flex items-center gap-6"
+          >
             {tenantNavLinks.map(({ href, label }) => (
               <Link key={href} href={href} className={navLinkClass(href)}>
                 {label}
@@ -120,20 +118,28 @@ export function StorefrontHeader() {
                 />
               </svg>
               <span>Cart</span>
-              {restaurantId && <CartBadge restaurantId={restaurantId} />}
+              {restaurantId && <CartBadge />}
             </Link>
           </nav>
         ) : (
-          <nav className="flex items-center gap-3 sm:gap-6">
+          <nav
+            aria-label="Platform"
+            className="flex items-center gap-3 sm:gap-6"
+          >
             <Link
               href="/"
               className="text-sm font-medium text-foreground hover:text-primary transition-colors py-1"
             >
               Discover
             </Link>
-            {isAuthenticated && user ? (
+            {isAuthLoading ? (
+              <span
+                aria-label="Checking account"
+                className="h-8 w-8 animate-pulse rounded-full bg-muted"
+              />
+            ) : isAuthenticated && user ? (
               <Link
-                href="/auth"
+                href="/account"
                 className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground"
                 title={user.email}
               >
@@ -141,7 +147,7 @@ export function StorefrontHeader() {
               </Link>
             ) : (
               <Link
-                href="/account"
+                href="/auth"
                 className="text-sm font-medium text-foreground hover:text-primary transition-colors py-1"
               >
                 Sign In
@@ -171,7 +177,7 @@ export function StorefrontHeader() {
                   d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
                 />
               </svg>
-              {restaurantId && <CartBadge restaurantId={restaurantId} />}
+              {restaurantId && <CartBadge />}
             </Link>
             <button
               type="button"

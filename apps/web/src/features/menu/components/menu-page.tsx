@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Badge, Button, Card, Skeleton } from "@restaurant/ui";
+import { Button, Card, Skeleton } from "@restaurant/ui";
 import { useMenu } from "../hooks/use-menu";
 import { MenuItemCard } from "./menu-item-card";
 

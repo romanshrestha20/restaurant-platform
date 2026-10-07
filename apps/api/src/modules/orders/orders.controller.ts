@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -14,15 +15,15 @@ import type { AccessAuthUser } from '../auth/interfaces/auth-user.interface';
 import { RequireRestaurantPermissions } from '../../common/decorators/roles.decorator';
 import {
   CheckoutDto,
+  CustomerOrderFilterDto,
   OrderFilterDto,
   UpdateOrderStatusDto,
 } from './dto/order.dto';
 import { OrdersService } from './orders.service';
-import { PrimaryRestaurantService } from '../restaurants/primary-restaurant.service';
 
 @Controller()
 export class OrdersController {
-  constructor(private readonly ordersService: OrdersService, private readonly primary: PrimaryRestaurantService) {}
+  constructor(private readonly ordersService: OrdersService) {}
 
   // Customer Routes
   @Post('customer/orders/checkout')
@@ -31,20 +32,30 @@ export class OrdersController {
     @CurrentUser() user: AccessAuthUser,
     @Body() data: CheckoutDto,
   ) {
-    return this.primary.getPrimaryRestaurant().then((r) => this.ordersService.checkout(user.id, { ...data, restaurantId: r.id }));
+    return this.ordersService.checkout(user.id, data);
   }
 
   @Get('customer/orders')
   @UseGuards(AccessTokenGuard)
-  getCustomerOrders(@CurrentUser() user: AccessAuthUser, @Query() filter: OrderFilterDto) {
+  getCustomerOrders(@CurrentUser() user: AccessAuthUser, @Query() filter: CustomerOrderFilterDto) {
     return this.ordersService.getCustomerOrders(user.id, filter);
   }
 
   @Get('customer/orders/delivery-quote')
   @UseGuards(AccessTokenGuard)
-  async deliveryQuote(@CurrentUser() user: AccessAuthUser, @Query('restaurantId') _restaurantId: string, @Query('addressId') addressId: string) {
-    const restaurant = await this.primary.getPrimaryRestaurant();
-    return this.ordersService.getDeliveryQuote(user.id, restaurant.id, addressId);
+  deliveryQuote(
+    @CurrentUser() user: AccessAuthUser,
+    @Query('restaurantId') restaurantId: string,
+    @Query('addressId') addressId: string,
+  ) {
+    // Prisma ignores undefined filters, so a missing id would match any record.
+    if (!restaurantId || !addressId)
+      throw new BadRequestException('restaurantId and addressId are required');
+    return this.ordersService.getDeliveryQuote(
+      user.id,
+      restaurantId,
+      addressId,
+    );
   }
 
   @Get('customer/orders/:orderId')
@@ -58,7 +69,7 @@ export class OrdersController {
 
   @Get('users/me/orders')
   @UseGuards(AccessTokenGuard)
-  getUserOrders(@CurrentUser() user: AccessAuthUser, @Query() filter: OrderFilterDto) { return this.ordersService.getCustomerOrders(user.id, filter); }
+  getUserOrders(@CurrentUser() user: AccessAuthUser, @Query() filter: CustomerOrderFilterDto) { return this.ordersService.getCustomerOrders(user.id, filter); }
 
   @Get('users/me/orders/:orderId')
   @UseGuards(AccessTokenGuard)
