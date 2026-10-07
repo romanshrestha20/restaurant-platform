@@ -30,7 +30,7 @@ export function usePlaceOrder() {
     },
     onSuccess: (order) => {
       // The API checks the cart out, so the cached copy is stale.
-      queryClient.setQueryData(orderKeys.byNumber(order.orderNumber), order);
+      queryClient.setQueryData(orderKeys.byNumber(order.restaurantId, order.orderNumber), order);
       void queryClient.invalidateQueries({ queryKey: orderKeys.all });
       if (restaurantId) void queryClient.invalidateQueries({ queryKey: cartKey(restaurantId) });
     },
