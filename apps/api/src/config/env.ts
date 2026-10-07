@@ -9,6 +9,11 @@ export const envValidationSchema = Joi.object({
     .uri({ scheme: ['postgresql', 'postgres'] })
     .required(),
   CLIENT_URL: Joi.string().uri().default('http://localhost:3000'),
+  // Storefronts on these hosts may call the API (see common/security/origin-policy).
+  PLATFORM_DOMAIN: Joi.string().hostname().optional(),
+  CUSTOM_DOMAINS: Joi.string().allow('').default(''),
+  // Proxies (e.g. the storefront /api rewrite) in front of the API; 0 = none.
+  TRUST_PROXY_HOPS: Joi.number().integer().min(0).default(0),
   JWT_ACCESS_SECRET: Joi.string().min(32).required(),
   JWT_REFRESH_SECRET: Joi.string()
     .min(32)
@@ -81,6 +86,9 @@ export interface AppEnvironment {
   PORT: number;
   DATABASE_URL: string;
   CLIENT_URL: string;
+  PLATFORM_DOMAIN?: string;
+  CUSTOM_DOMAINS: string;
+  TRUST_PROXY_HOPS: number;
   JWT_ACCESS_SECRET: string;
   JWT_REFRESH_SECRET: string;
   JWT_ACCESS_TTL_SECONDS: number;
