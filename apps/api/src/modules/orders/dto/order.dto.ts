@@ -121,3 +121,11 @@ export class OrderFilterDto {
   @Type(() => Date)
   to?: Date;
 }
+
+/** Storefronts show only the orders placed with the restaurant they serve. */
+export class CustomerOrderFilterDto extends OrderFilterDto {
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  restaurantId?: string;
+}

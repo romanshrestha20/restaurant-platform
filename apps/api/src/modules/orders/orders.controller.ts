@@ -15,6 +15,7 @@ import type { AccessAuthUser } from '../auth/interfaces/auth-user.interface';
 import { RequireRestaurantPermissions } from '../../common/decorators/roles.decorator';
 import {
   CheckoutDto,
+  CustomerOrderFilterDto,
   OrderFilterDto,
   UpdateOrderStatusDto,
 } from './dto/order.dto';
@@ -36,7 +37,7 @@ export class OrdersController {
 
   @Get('customer/orders')
   @UseGuards(AccessTokenGuard)
-  getCustomerOrders(@CurrentUser() user: AccessAuthUser, @Query() filter: OrderFilterDto) {
+  getCustomerOrders(@CurrentUser() user: AccessAuthUser, @Query() filter: CustomerOrderFilterDto) {
     return this.ordersService.getCustomerOrders(user.id, filter);
   }
 
@@ -68,7 +69,7 @@ export class OrdersController {
 
   @Get('users/me/orders')
   @UseGuards(AccessTokenGuard)
-  getUserOrders(@CurrentUser() user: AccessAuthUser, @Query() filter: OrderFilterDto) { return this.ordersService.getCustomerOrders(user.id, filter); }
+  getUserOrders(@CurrentUser() user: AccessAuthUser, @Query() filter: CustomerOrderFilterDto) { return this.ordersService.getCustomerOrders(user.id, filter); }
 
   @Get('users/me/orders/:orderId')
   @UseGuards(AccessTokenGuard)
