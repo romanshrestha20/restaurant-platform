@@ -411,8 +411,9 @@ JWT_REFRESH_SECRET=changeme
 JWT_ACCESS_TTL_SECONDS=900
 JWT_REFRESH_TTL_SECONDS=604800
 
-# Web
-NEXT_PUBLIC_API_URL=http://localhost:3001/api/v1
+# Web — the storefront proxies /api/v1/* to the API (next.config.ts).
+# Read at build time; leave NEXT_PUBLIC_API_URL unset so requests stay same-origin.
+API_PROXY_TARGET=http://localhost:3001
 ```
 
 ## Project commands
@@ -521,6 +522,9 @@ NODE_ENV
 PORT
 DATABASE_URL
 CLIENT_URL
+PLATFORM_DOMAIN
+CUSTOM_DOMAINS
+TRUST_PROXY_HOPS
 
 JWT_ACCESS_SECRET
 JWT_REFRESH_SECRET
