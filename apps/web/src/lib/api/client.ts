@@ -14,8 +14,9 @@ type RetryableRequestConfig = AxiosRequestConfig & {
 
 export type RefreshedSession = AuthSessionResponse;
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
+// Same-origin by default: next.config.ts rewrites /api/v1 to the API so the
+// httpOnly refresh cookie is first-party on every storefront domain.
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
 
 export const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
