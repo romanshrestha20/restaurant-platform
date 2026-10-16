@@ -1,11 +1,12 @@
 import type { INestApplicationContext } from '@nestjs/common';
 import { IoAdapter } from '@nestjs/platform-socket.io';
 import type { ServerOptions } from 'socket.io';
+import type { OriginPolicy } from '../security/origin-policy';
 
 export class RealtimeIoAdapter extends IoAdapter {
   constructor(
     app: INestApplicationContext,
-    private readonly clientUrl: string,
+    private readonly isAllowedOrigin: OriginPolicy,
   ) {
     super(app);
   }
@@ -14,7 +15,10 @@ export class RealtimeIoAdapter extends IoAdapter {
     return super.createIOServer(port, {
       ...options,
       cors: {
-        origin: this.clientUrl,
+        origin: (
+          origin: string | undefined,
+          callback: (error: Error | null, allow?: boolean) => void,
+        ) => callback(null, !origin || this.isAllowedOrigin(origin)),
         credentials: true,
       },
     });

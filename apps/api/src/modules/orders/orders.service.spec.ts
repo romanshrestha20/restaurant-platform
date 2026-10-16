@@ -429,6 +429,38 @@ describe('OrdersService', () => {
     });
   });
 
+  describe('getCustomerOrders', () => {
+    let orderMock: { findMany: jest.Mock; count: jest.Mock };
+
+    beforeEach(() => {
+      orderMock = (prismaMock as { order: typeof orderMock }).order;
+      orderMock.findMany.mockResolvedValue([]);
+      orderMock.count.mockResolvedValue(0);
+    });
+
+    it('scopes the list to one restaurant when a storefront asks for it', async () => {
+      await service.getCustomerOrders('user-1', {
+        restaurantId: 'restaurant-1',
+        limit: 10,
+        offset: 20,
+      });
+
+      const where = { userId: 'user-1', restaurantId: 'restaurant-1' };
+      expect(orderMock.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where, take: 10, skip: 20 }),
+      );
+      expect(orderMock.count).toHaveBeenCalledWith({ where });
+    });
+
+    it('lists orders across restaurants when no restaurant is given', async () => {
+      await service.getCustomerOrders('user-1');
+
+      expect(orderMock.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { userId: 'user-1' } }),
+      );
+    });
+  });
+
   describe('updateOrderStatus', () => {
     it('validates invalid status transitions', async () => {
       prismaMock.order.findFirst.mockResolvedValue({

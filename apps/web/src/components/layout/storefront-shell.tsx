@@ -14,14 +14,14 @@ export function StorefrontShell({ children }: StorefrontShellProps) {
   const { isTenantMode, isLoading, isError, slug, error } = useRestaurant();
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
+    <div className="min-h-screen flex flex-col bg-background">
       <StorefrontHeader />
 
       <main className="flex-1">
         {isTenantMode && isLoading ? (
           <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3">
-            <div className="w-10 h-10 border-3 border-orange-200 border-t-orange-600 rounded-full animate-spin" />
-            <p className="text-sm text-gray-500 font-medium">Resolving restaurant...</p>
+            <div className="w-10 h-10 border-[3px] border-muted border-t-primary rounded-full animate-spin" />
+            <p className="text-sm text-muted-foreground font-medium">Resolving restaurant...</p>
           </div>
         ) : isTenantMode && isError ? (
           <RestaurantNotFound

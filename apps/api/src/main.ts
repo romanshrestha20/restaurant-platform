@@ -10,6 +10,7 @@ import { AppModule } from './app.module';
 import { AppEnvironment } from './config/env';
 import { getLogLevels, logStartup } from './config/logger';
 import { createSameOriginMiddleware } from './common/security/same-origin.middleware';
+import { createOriginPolicy } from './common/security/origin-policy';
 import { RealtimeIoAdapter } from './common/realtime';
 import { requestIdMiddleware } from './common/http/request-id.middleware';
 
@@ -22,10 +23,15 @@ async function bootstrap(): Promise<void> {
   const config = app.get<ConfigService<AppEnvironment, true>>(ConfigService);
   const port = config.get('PORT', { infer: true }) ?? 3001;
   const clientUrl = config.get('CLIENT_URL', { infer: true });
-  const clientOrigins = [clientUrl];
-  if (clientUrl.includes('localhost')) {
-    clientOrigins.push(clientUrl.replace('localhost', '127.0.0.1'));
-  }
+  const isAllowedOrigin = createOriginPolicy({
+    clientUrl,
+    platformDomain: config.get('PLATFORM_DOMAIN', { infer: true }),
+    customDomains: config.get('CUSTOM_DOMAINS', { infer: true }),
+    isProduction: environment === 'production',
+  });
+  // Storefronts reach the API through their own /api rewrite, so the client IP
+  // used for throttling and login history arrives in X-Forwarded-For.
+  app.set('trust proxy', config.get('TRUST_PROXY_HOPS', { infer: true }));
 
   app.setGlobalPrefix('api');
   app.enableVersioning({
@@ -40,12 +46,13 @@ async function bootstrap(): Promise<void> {
     }),
   );
   app.enableCors({
-    origin: clientOrigins,
+    origin: (origin, callback) =>
+      callback(null, !origin || isAllowedOrigin(origin)),
     credentials: true,
   });
   app.use(requestIdMiddleware);
-  app.useWebSocketAdapter(new RealtimeIoAdapter(app, clientUrl));
-  app.use(createSameOriginMiddleware(clientOrigins));
+  app.useWebSocketAdapter(new RealtimeIoAdapter(app, isAllowedOrigin));
+  app.use(createSameOriginMiddleware(isAllowedOrigin));
   app.use(helmet());
   app.use(compression());
   app.use(cookieParser());

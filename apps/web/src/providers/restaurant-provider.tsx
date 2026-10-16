@@ -3,9 +3,9 @@
 import React, {
   createContext,
   useContext,
-  useEffect,
   useState,
   useMemo,
+  useSyncExternalStore,
   type ReactNode,
 } from "react";
 import { useSearchParams } from "next/navigation";
@@ -29,6 +29,8 @@ export interface RestaurantContextValue {
   setDevSlug: (slug: string | null) => void;
 }
 
+const subscribeToHostname = () => () => {};
+
 const RestaurantContext = createContext<RestaurantContextValue | undefined>(
   undefined,
 );
@@ -48,15 +50,13 @@ export function RestaurantProvider({
   const querySlug = searchParams?.get("restaurant") || null;
 
   const [devSlug, setDevSlug] = useState<string | null>(initialSlug || null);
-  const [hostname, setHostname] = useState<string>(
-    initialHostname || "localhost",
+  // The hostname never changes during a page's lifetime, so there is nothing
+  // to subscribe to. The server snapshot keeps hydration consistent.
+  const hostname = useSyncExternalStore(
+    subscribeToHostname,
+    () => window.location.hostname,
+    () => initialHostname || "localhost",
   );
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      setHostname(window.location.hostname);
-    }
-  }, []);
 
   const activeSlugOverride = querySlug || devSlug;
 

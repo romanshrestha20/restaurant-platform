@@ -17,6 +17,7 @@ import { MenuAvailabilityService } from '../menu/menu-availability.service';
 import { PaymentsService } from '../payments/payments.service';
 import type {
   CheckoutDto,
+  CustomerOrderFilterDto,
   OrderFilterDto,
   UpdateOrderStatusDto,
 } from './dto/order.dto';
@@ -479,8 +480,8 @@ export class OrdersService {
     return this.serializeOrder(fullOrder);
   }
 
-  async getCustomerOrders(userId: string, filter: OrderFilterDto = {}) {
-    const where: Prisma.OrderWhereInput = { userId, ...(filter.status ? { status: filter.status } : {}), ...(filter.from || filter.to ? { createdAt: { ...(filter.from ? { gte: filter.from } : {}), ...(filter.to ? { lte: filter.to } : {}) } } : {}) };
+  async getCustomerOrders(userId: string, filter: CustomerOrderFilterDto = {}) {
+    const where: Prisma.OrderWhereInput = { userId, ...(filter.restaurantId ? { restaurantId: filter.restaurantId } : {}), ...(filter.status ? { status: filter.status } : {}), ...(filter.from || filter.to ? { createdAt: { ...(filter.from ? { gte: filter.from } : {}), ...(filter.to ? { lte: filter.to } : {}) } } : {}) };
     const limit = filter.limit ?? 20;
     const offset = filter.offset ?? 0;
     const orders = await this.prisma.order.findMany({

@@ -5,10 +5,9 @@ import { MenuModule } from '../menu/menu.module';
 import { PaymentsModule } from '../payments/payments.module';
 import { OrdersController } from './orders.controller';
 import { OrdersService } from './orders.service';
-import { RestaurantsModule } from '../restaurants/restaurants.module';
 
 @Module({
-  imports: [PrismaModule, RealtimeModule, MenuModule, PaymentsModule, RestaurantsModule],
+  imports: [PrismaModule, RealtimeModule, MenuModule, PaymentsModule],
   controllers: [OrdersController],
   providers: [OrdersService],
   exports: [OrdersService],

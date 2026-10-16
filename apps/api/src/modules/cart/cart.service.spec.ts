@@ -226,5 +226,14 @@ describe('CartService', () => {
       prismaMock.cart.create.mockRejectedValue({ code: 'P2002' });
       await expect(service.getOrCreate('user-1', 'rest-1')).resolves.toMatchObject({ id: 'cart-2' });
     });
+
+    it('creates the cart for the requested restaurant using its canonical id', async () => {
+      const created = { id: 'cart-3', restaurantId: 'rest-2', subtotal: new Prisma.Decimal('0'), tax: new Prisma.Decimal('0'), discount: new Prisma.Decimal('0'), total: new Prisma.Decimal('0'), items: [] };
+      prismaMock.cart.findFirst.mockResolvedValue(null);
+      prismaMock.restaurant.findFirst.mockResolvedValue({ id: 'rest-2', currency: 'EUR', settings: { acceptsOrders: true } });
+      prismaMock.cart.create.mockResolvedValue(created);
+      await expect(service.getOrCreate('user-1', 'burger-house')).resolves.toMatchObject({ id: 'cart-3', restaurantId: 'rest-2' });
+      expect(prismaMock.cart.create).toHaveBeenCalledWith(expect.objectContaining({ data: { userId: 'user-1', restaurantId: 'rest-2', currency: 'EUR' } }));
+    });
   });
 });

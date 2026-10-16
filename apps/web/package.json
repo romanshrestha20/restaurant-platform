@@ -10,8 +10,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@restaurant/ui": "workspace:*",
     "@hookform/resolvers": "^5.9.1",
+    "@restaurant/ui": "workspace:*",
     "@tanstack/react-query": "^5.102.8",
     "axios": "^1.20.0",
     "clsx": "^2.1.1",
@@ -29,6 +29,8 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "16.2.12",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

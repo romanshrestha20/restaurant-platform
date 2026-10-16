@@ -1,8 +1,14 @@
 import type { NextFunction, Request, Response } from 'express';
+import { createOriginPolicy } from './origin-policy';
 import { createSameOriginMiddleware } from './same-origin.middleware';
 
 describe('createSameOriginMiddleware', () => {
-  const middleware = createSameOriginMiddleware('https://app.example.com');
+  const middleware = createSameOriginMiddleware(
+    createOriginPolicy({
+      clientUrl: 'https://app.example.com',
+      isProduction: true,
+    }),
+  );
 
   const run = (method: string, origin?: string) => {
     const request = {

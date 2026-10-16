@@ -318,6 +318,36 @@ Authorization
 Restaurant Resource
 ```
 
+### Browser Access to the API
+
+Storefronts call the API through their own origin:
+
+```text
+www.pizzahouse.fi/api/v1/*
+        ↓
+Next.js rewrite (next.config.ts, API_PROXY_TARGET)
+        ↓
+NestJS API /api/v1/*
+```
+
+This keeps the httpOnly refresh cookie first-party on every storefront domain.
+A cross-site API call from a custom domain would depend on third-party cookies,
+which Safari and Firefox block. Sessions are therefore per storefront domain.
+
+The API accepts browser origins from `CLIENT_URL`, `PLATFORM_DOMAIN` and its
+subdomains, and `CUSTOM_DOMAINS` (see `common/security/origin-policy.ts`). The
+same policy drives CORS, the CSRF origin check and Socket.IO.
+
+Deployment notes:
+
+* `API_PROXY_TARGET` is read when the web app is built.
+* The Next.js rewrite forwards `X-Forwarded-For` unchanged and does not append
+  the client IP. Set `TRUST_PROXY_HOPS=1` only when a load balancer or CDN that
+  appends the client IP sits in front of the web app; otherwise clients could
+  spoof their IP past login throttling.
+* `CUSTOM_DOMAINS` mirrors the web's `NEXT_PUBLIC_VERIFIED_CUSTOM_DOMAINS` until a
+  `RestaurantDomain` model exists.
+
 ## 15. Customer Access
 
 A customer can reach a restaurant in two ways.

@@ -9,6 +9,8 @@ const configValues: AppEnvironment = {
   PORT: 3001,
   DATABASE_URL: 'postgresql://test:test@localhost:5432/test',
   CLIENT_URL: 'http://localhost:3000',
+  CUSTOM_DOMAINS: '',
+  TRUST_PROXY_HOPS: 0,
   JWT_ACCESS_SECRET: 'a'.repeat(64),
   JWT_REFRESH_SECRET: 'b'.repeat(64),
   JWT_ACCESS_TTL_SECONDS: 900,

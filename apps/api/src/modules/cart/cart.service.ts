@@ -60,13 +60,17 @@ export class CartService {
 
     try {
       const cart = await this.prisma.cart.create({
-        data: { userId, restaurantId, currency: restaurant.currency },
+        data: {
+          userId,
+          restaurantId: restaurant.id,
+          currency: restaurant.currency,
+        },
         include: cartInclude,
       });
       return this.serialize(cart);
     } catch (error) {
       if (this.isUniqueConflict(error)) {
-        const cart = await this.findActive(userId, restaurantId);
+        const cart = await this.findActive(userId, restaurant.id);
         if (cart) return this.serialize(cart);
       }
       throw error;
