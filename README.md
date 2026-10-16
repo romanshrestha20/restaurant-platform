@@ -1,51 +1,71 @@
 # Restaurant Platform
 
-A multi-tenant SaaS platform for restaurants, built as a TypeScript monorepo.
+A multi-tenant restaurant platform built as a TypeScript monorepo. The project is intended to give restaurants customer-facing storefronts and management tools backed by a shared API and PostgreSQL database.
 
-The project provides the foundation for restaurant storefronts, restaurant administration, authentication, menus, carts, orders, payments, reservations, and tenant-aware domain routing.
+> Project status: active development. The repository contains working application foundations and domain modules, but a complete production-ready multi-tenant ordering journey has not yet been verified end to end. Read the implementation status below before assuming a capability is production-ready.
 
-## Current status
+## Contents
 
-This project is under active development.
+- [Overview](#overview)
+- [Technology](#technology)
+- [Repository structure](#repository-structure)
+- [Implemented foundations](#implemented-foundations)
+- [Important gaps](#important-gaps)
+- [Getting started](#getting-started)
+- [Environment configuration](#environment-configuration)
+- [Development commands](#development-commands)
+- [Architecture and security](#architecture-and-security)
+- [Documentation](#documentation)
+- [Development principles](#development-principles)
 
-The repository already contains a working application architecture with:
+## Overview
 
-- A Next.js customer storefront
-- A NestJS API
-- PostgreSQL and Prisma database infrastructure
-- Restaurant and catalog APIs
-- Menu management APIs
-- Authentication and role-based authorization
-- Cart, order, payment, and reservation modules
-- Tenant-aware restaurant resolution
-- Shared UI and database packages
+The intended product includes:
+
+- A public restaurant discovery experience.
+- Restaurant-specific storefronts and menus.
+- Restaurant staff and management workflows.
+- Customer accounts, carts, checkout, orders, and reservations.
+- Payment provider integration.
+- A shared API and database with tenant-aware authorization.
+- A reusable UI package and consistent design system.
+
+These are product goals, not a statement that every flow is complete. Check the source, tests, and deployment configuration for the current implementation of each feature.
+
+## Technology
+
+- TypeScript
 - pnpm workspaces and Turborepo
+- Next.js and React for the web applications
+- NestJS for the API
+- PostgreSQL
+- Prisma ORM, with schema files organized under `packages/database/prisma`
+- Tailwind CSS v4
+- TanStack Query in the customer web application
+- WebSockets for supported realtime functionality
+- Docker Compose configuration under `docker/`
 
-Some product areas and production infrastructure are still being expanded.
+Use the exact versions declared by the repository's package files and lockfile. Do not infer runtime compatibility from this list alone.
 
-## Architecture
-
-The platform is organized as a monorepo:
+## Repository structure
 
 ```text
 restaurant-platform/
 ├── apps/
-│   ├── web/                 # Customer-facing Next.js application
-│   ├── api/                 # NestJS backend API
-│   └── admin/               # Restaurant/platform administration
-│
+│   ├── api/                 # NestJS API
+│   ├── web/                 # Customer discovery and storefront
+│   └── admin/               # Administration application
 ├── packages/
-│   ├── database/            # Prisma client and database infrastructure
-│   ├── auth/                # Shared authentication package
+│   ├── database/            # Prisma schema, migrations, seeds, shared DB code
+│   ├── auth/                # Shared authentication code, where applicable
+│   ├── types/               # Shared types
 │   ├── validation/          # Shared validation
-│   ├── types/               # Shared TypeScript types
 │   ├── typescript-config/   # Shared TypeScript configuration
-│   └── ui/                  # Shared React UI components
-│
+│   └── ui/                  # Shared React UI primitives
 ├── docs/
 │   ├── architecture.md
-│   └── domain-routing.md
-│
+│   ├── domain-routing.md
+│   └── DESIGN.md
 ├── docker/
 ├── AGENTS.md
 ├── package.json
@@ -53,474 +73,118 @@ restaurant-platform/
 └── turbo.json
 ```
 
-## Technology stack
+Some package responsibilities and application features may still be evolving. Inspect each package before adding a new one.
 
-### Frontend
+## Implemented foundations
 
-- Next.js 16
-- React 19
-- TypeScript
-- Tailwind CSS 4
-- TanStack Query
-- React Hook Form
-- Zod
-- Axios
-- Lucide React
+The current source includes:
 
-### Backend
+- A pnpm/Turborepo monorepo with API, customer web, admin, and shared packages.
+- A NestJS API with modules for authentication, restaurants, catalog, menus, carts, orders, payments, reservations, profile, and health.
+- A split Prisma schema containing restaurant, membership, address, opening-hours, settings, menu, cart, order, payment, reservation, and related domain models.
+- Restaurant creation and membership-aware management endpoints with role and permission checks in restaurant-related API routes.
+- Public restaurant catalog endpoints.
+- Customer web restaurant discovery and storefront components.
+- A hostname resolver in the customer web application, including development overrides and configured custom-domain mappings.
+- Shared UI primitives such as buttons, badges, cards, inputs, dialogs, separators, skeletons, and text areas.
+- API bootstrap configuration for request validation, CORS, security middleware, request IDs, compression, cookie parsing, shutdown hooks, and versioned API routes.
+- A Stripe-related payment provider and webhook endpoint.
 
-- NestJS 11
-- TypeScript
-- Express
-- Prisma
-- PostgreSQL
-- JWT
-- Passport
-- Socket.IO
-- Jest
-- Supertest
+These observations are based on source inspection. They do not independently prove that the complete application builds, all services start, external integrations work, or the production deployment is secure.
 
-### Platform infrastructure
+## Important gaps
 
-- pnpm 12
-- Turborepo
-- Docker
-- Cloudinary for configurable image storage
-- Stripe provider integration
-- SMTP email support
+Treat these as explicit follow-up work, not completed capabilities:
 
-## Applications
+1. **End-to-end tenant enforcement.** The frontend has hostname resolution logic, but the inspected database schema does not define the planned `RestaurantDomain` model. Several customer cart, checkout, delivery-quote, and reservation controller paths use `PrimaryRestaurantService`. This is not equivalent to resolving and enforcing the tenant from the incoming storefront domain.
+2. **Domain lifecycle.** Custom domain verification, activation, uniqueness, ownership checks, canonical domain behavior, and API-side domain resolution need a complete implementation and tests before custom domains can be described as production-ready.
+3. **Full customer journey.** Verify catalog, menu selection, cart, checkout, payment, order tracking, and reservation flows together against a live database and API.
+4. **Admin completeness.** Inspect the actual routes, API integration, permission handling, and tests in `apps/admin` before claiming that all listed administration workflows are available.
+5. **Operational verification.** A successful unit test or typecheck is not proof of successful migrations, database connectivity, payment webhook delivery, realtime behavior, or production deployment.
 
-### Customer web
+Prioritize tenant consistency and isolation before adding advanced features. See [Architecture](docs/architecture.md) and [Domain routing](docs/domain-routing.md).
 
-`apps/web`
+## Getting started
 
-The web application is the customer-facing storefront.
+Prerequisites:
 
-The current architecture supports:
+- A Node.js version supported by the repository's `.node-version` and package configuration.
+- The pnpm version declared by the root package configuration.
+- Docker with Docker Compose, or a separately managed PostgreSQL instance.
+- Environment variables required by the API and applications.
 
-- Restaurant discovery
-- Restaurant storefronts
-- Restaurant information and branding
-- Menu browsing
-- Category navigation
-- Cart functionality
-- Checkout flows
-- Customer authentication
-- Customer account and order flows
-
-The storefront is designed to be tenant-aware. Restaurant identity can be resolved from the request hostname rather than requiring the customer to supply a restaurant ID.
-
-Example domains:
-
-```text
-pizza-house.yourplatform.com
-www.pizzahouse.fi
-```
-
-### API
-
-`apps/api`
-
-The API is the central business-logic and security boundary.
-
-Implemented NestJS modules include:
-
-- Health
-- Authentication
-- Profile
-- Restaurants
-- Menu
-- Catalog
-- Cart
-- Orders
-- Payments
-- Reservations
-- Realtime/WebSockets
-
-The API also includes:
-
-- Request validation
-- Global exception handling
-- Rate limiting
-- CORS configuration
-- Same-origin protection
-- Helmet security headers
-- Compression
-- Request IDs
-- Cookie parsing
-- Configurable file uploads
-
-### Admin
-
-`apps/admin`
-
-The repository contains a separate Next.js admin application intended for restaurant and platform administration.
-
-The admin application communicates with the API rather than accessing PostgreSQL directly.
-
-The administration surface is still under development.
-
-## Multi-tenant architecture
-
-The core tenant is the restaurant.
-
-Conceptually:
-
-```text
-Restaurant
-├── Restaurant domains
-├── Restaurant members
-├── Menus
-├── Categories
-├── Menu items
-├── Carts
-├── Orders
-└── Reservations
-```
-
-The domain is an entry point to a tenant. It is not the tenant itself.
-
-The intended resolution flow is:
-
-```text
-Hostname
-   ↓
-Restaurant domain
-   ↓
-Restaurant
-   ↓
-Restaurant context
-   ↓
-Tenant-aware application request
-```
-
-This allows the same application to serve multiple restaurants while keeping restaurant-specific data isolated.
-
-Detailed routing rules are documented in `docs/domain-routing.md`.
-
-## Authentication and authorization
-
-Authentication and authorization are handled by the API.
-
-The authentication module currently includes:
-
-- Access tokens
-- Refresh tokens
-- JWT strategies
-- Password handling
-- Account recovery
-- Email verification/recovery support
-- Authentication guards
-- Platform permission checks
-- Restaurant role checks
-
-The architecture separates:
-
-```text
-Authentication
-Who is the user?
-
-Authorization
-What can the user access or change?
-```
-
-Restaurant authorization is scoped to the restaurant membership rather than relying on frontend checks.
-
-## Restaurant catalog and menus
-
-The API contains separate restaurant, catalog, and menu modules.
-
-The customer storefront can load restaurant-specific catalog data through the API.
-
-Menu functionality includes support for:
-
-- Menus
-- Categories
-- Menu items
-- Menu availability
-- Menu repositories and services
-- Image uploads
-- Realtime integration
-
-The web application uses feature-oriented frontend code rather than putting restaurant business logic directly into page components.
-
-## Cart, orders, payments, and reservations
-
-The API contains dedicated modules for the customer ordering lifecycle.
-
-```text
-Restaurant
-   ↓
-Menu
-   ↓
-Cart
-   ↓
-Checkout
-   ↓
-Order
-   ↓
-Payment
-```
-
-Orders integrate with menu availability, restaurants, payments, and realtime functionality.
-
-The payment layer supports a provider abstraction. A no-op provider is available when Stripe credentials are not configured, while the Stripe provider can be selected when a Stripe secret key is present.
-
-Reservations are implemented as a separate API module.
-
-## Database
-
-PostgreSQL is the primary database.
-
-Prisma is used for database access through:
-
-```text
-packages/database/
-```
-
-The database package provides:
-
-- Prisma client
-- PostgreSQL adapter
-- Database migration commands
-- Database deployment commands
-- Seed commands
-- Prisma Studio support
-
-Applications should access the database through the shared database package and the API boundary.
-
-## Security
-
-Security is enforced primarily at the API boundary.
-
-The current API bootstrap includes:
-
-- Global request validation
-- Whitelisted DTO properties
-- Rejection of non-whitelisted properties
-- CORS with credentials
-- Same-origin middleware
-- Helmet
-- Request throttling
-- Secure authentication guards
-- Global exception handling
-
-Tenant isolation is a core architectural requirement.
-
-Client-provided restaurant identifiers and frontend authorization decisions must not be treated as security boundaries.
-
-## Realtime
-
-The backend includes Socket.IO and a custom NestJS realtime adapter.
-
-Realtime functionality is integrated into the application architecture for areas such as menu and order workflows.
-
-## File uploads
-
-The API supports configurable upload storage.
-
-Supported providers are:
-
-- Cloudinary
-- Local filesystem storage
-
-Cloudinary is the default storage provider outside test environments when the required credentials are configured.
-
-## Project commands
-
-Install dependencies:
+Clone the repository and install dependencies:
 
 ```bash
+git clone https://github.com/romanshrestha20/restaurant-platform.git
+cd restaurant-platform
 pnpm install
 ```
 
-Run the monorepo in development:
+Review each app's package scripts and environment validation before starting services. Start the database using the repository's current Docker Compose configuration, then configure the database connection and required secrets.
 
-```bash
-pnpm dev
-```
-
-Build all applications and packages:
-
-```bash
-pnpm build
-```
-
-Run linting:
-
-```bash
-pnpm lint
-```
-
-Run type checking:
-
-```bash
-pnpm typecheck
-```
-
-Run tests:
-
-```bash
-pnpm test
-```
-
-Clean build outputs:
-
-```bash
-pnpm clean
-```
-
-Run an individual application:
-
-```bash
-pnpm --filter web dev
-pnpm --filter api dev
-pnpm --filter admin dev
-```
-
-## Database commands
-
-Database commands are provided by `@restaurant/database`.
-
-Generate the Prisma client:
-
-```bash
-pnpm --filter @restaurant/database generate
-```
-
-Create and apply a development migration:
-
-```bash
-pnpm --filter @restaurant/database migrate
-```
-
-Deploy migrations:
-
-```bash
-pnpm --filter @restaurant/database deploy
-```
-
-Seed the database:
-
-```bash
-pnpm --filter @restaurant/database seed
-```
-
-Open Prisma Studio:
-
-```bash
-pnpm --filter @restaurant/database studio
-```
+The root scripts delegate to Turborepo. Use the individual package scripts when you need to run one application in isolation. Exact commands and environment variables can change, so inspect the current `package.json` files and application configuration rather than copying an outdated command.
 
 ## Environment configuration
 
-The API validates its environment configuration at startup.
+Do not commit secrets. Use local environment files that are ignored by Git and provide a separate secret-management mechanism in deployed environments.
 
-Core configuration includes:
+Before starting an application, inspect its environment schema and example files. Configure, as applicable:
 
-```text
-NODE_ENV
-PORT
-DATABASE_URL
-CLIENT_URL
+- PostgreSQL connection settings.
+- API port and customer client origin.
+- Authentication/JWT secrets and token settings.
+- Frontend API base URL.
+- Upload storage provider and local storage path, if local uploads are enabled.
+- Payment provider credentials and webhook configuration.
+- Realtime origins and any other integration-specific settings.
 
-JWT_ACCESS_SECRET
-JWT_REFRESH_SECRET
-JWT_ACCESS_TTL_SECONDS
-JWT_REFRESH_TTL_SECONDS
+Do not invent placeholder values for required secrets and assume the app is ready. Use strong local-only secrets and the exact variable names required by the current source.
 
-MAIL_MODE
-MAIL_FROM
-SMTP_HOST
-SMTP_PORT
-SMTP_SECURE
-SMTP_USER
-SMTP_PASSWORD
+## Development commands
 
-UPLOAD_STORAGE_PROVIDER
-UPLOAD_LOCAL_DIR
-UPLOAD_PUBLIC_URL
+The root package currently defines these commands:
 
-CLOUDINARY_CLOUD_NAME
-CLOUDINARY_API_KEY
-CLOUDINARY_API_SECRET
-
-STRIPE_SECRET_KEY
-STRIPE_PUBLISHABLE_KEY
-STRIPE_WEBHOOK_SECRET
+```bash
+pnpm dev
+pnpm build
+pnpm lint
+pnpm test
+pnpm typecheck
+pnpm clean
 ```
 
-Database access and JWT secrets are required.
+These commands delegate to workspace tasks through Turborepo. Check the relevant package's `package.json` to confirm which tasks it implements. Run the checks relevant to your change before opening a pull request.
 
-Cloudinary, SMTP, and Stripe configuration depends on the features and environment being used.
+For database changes, inspect the database package scripts and Prisma configuration first. Back up important data before migrations, never reset a shared database casually, and do not edit generated Prisma client files by hand.
 
-Do not commit real secrets to Git.
+## Architecture and security
 
-## Development architecture
+- The API is the business logic and authorization boundary.
+- The database package owns the shared Prisma schema, migrations, and database integration.
+- The customer web and admin applications call the API. They must not access the database directly.
+- Every tenant-owned read and write must be scoped to the authorized restaurant on the server.
+- Never trust a client-provided restaurant ID, role, price, permission, or tenant identity without server-side validation.
+- Tenant context must be consistent across catalog, cart, checkout, payment, orders, reservations, uploads, realtime subscriptions, and caching.
+- Payment webhooks must verify signatures and handle retries safely.
+- Validate external input and return consistent errors without exposing secrets or internal stack traces.
+- Use tests to prove both allowed access and denied cross-tenant access.
 
-The intended request flow is:
-
-```text
-Browser
-   ↓
-Restaurant/domain resolution
-   ↓
-Next.js feature
-   ↓
-API client
-   ↓
-NestJS controller
-   ↓
-Guards and validation
-   ↓
-NestJS service
-   ↓
-Database package
-   ↓
-Prisma
-   ↓
-PostgreSQL
-```
-
-The API remains the main business-logic and authorization boundary.
+Read [docs/architecture.md](docs/architecture.md), [docs/domain-routing.md](docs/domain-routing.md), [docs/DESIGN.md](docs/DESIGN.md), and [AGENTS.md](AGENTS.md) before making broad changes.
 
 ## Documentation
 
-Architecture documentation:
+- [Architecture](docs/architecture.md): system boundaries, domain modules, tenant model, and current gaps.
+- [Domain routing](docs/domain-routing.md): hostname normalization and the intended domain resolution lifecycle.
+- [Design system](docs/DESIGN.md): tokens, component rules, accessibility, and UI implementation standards.
+- [Agent instructions](AGENTS.md): repository-level instructions for coding agents.
 
-`docs/architecture.md`
+## Development principles
 
-Domain and tenant routing:
-
-`docs/domain-routing.md`
-
-Frontend development rules:
-
-`AGENTS.md`
-
-These documents describe architectural boundaries and development conventions in more detail.
-
-## Roadmap
-
-The architecture is being developed toward a complete restaurant SaaS platform.
-
-Planned and expanding areas include:
-
-- Complete restaurant administration
-- Restaurant domain management
-- Custom domain verification
-- Restaurant branding and settings
-- Complete ordering and checkout experience
-- Production payment flows
-- Reservation management
-- Restaurant analytics
-- SEO and restaurant-specific metadata
-- Production deployment and infrastructure
-- Expanded automated test coverage
-
-These items represent the development direction. They should not be interpreted as already implemented features.
-
-## License
-
-This project is currently under development. License and distribution terms will be defined before a public production release.
+- Inspect before implementing.
+- Keep changes focused and preserve unrelated work.
+- Reuse existing packages, components, validation, and API clients.
+- Add tests for behavior changes and security boundaries.
+- Update documentation when implementation or contracts change.
+- Distinguish implemented behavior from proposed architecture.
+- Do not call a feature complete until its real flow and failure cases have been verified.
