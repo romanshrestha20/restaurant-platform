@@ -32,7 +32,7 @@ function OrderDetailsView({ order }: { order: Order }) {
   const isDelivery = order.type === 'DELIVERY';
 
   return (
-    <main className="mx-auto max-w-2xl px-4 py-10 sm:px-6">
+    <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6">
       <Link href="/orders" className="text-sm font-medium text-muted-foreground hover:text-foreground">← All orders</Link>
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
@@ -74,7 +74,7 @@ function OrderDetailsView({ order }: { order: Order }) {
           </ol>
         </section>
       )}
-    </main>
+    </div>
   );
 }
 

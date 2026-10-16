@@ -37,7 +37,7 @@ export function OrderHistory() {
   const pageCount = Math.ceil(list.total / ORDERS_PAGE_SIZE);
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
+    <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
       <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">{restaurant.name}</p>
       <h1 className="mt-2 text-4xl font-black tracking-tight">Your orders</h1>
 
@@ -52,7 +52,7 @@ export function OrderHistory() {
           <Button variant="outline" disabled={page + 1 >= pageCount || ordersQuery.isPlaceholderData} onClick={() => setPage((current) => current + 1)}>Older</Button>
         </nav>
       )}
-    </main>
+    </div>
   );
 }
 

@@ -52,7 +52,7 @@ export function CartPage() {
     : null;
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">{restaurant.name}</p>
@@ -101,7 +101,7 @@ export function CartPage() {
           </Card>
         </aside>
       </div>
-    </main>
+    </div>
   );
 }
 
@@ -120,5 +120,5 @@ function CartLine({ item, currency, disabled, onDecrease, onIncrease, onRemove }
 
 function SelectionSummary({ item }: { item: CartItem }) { const labels = [...item.variantOptions.map(({ option }) => `${option.variant.name}: ${option.name}`), ...item.addOns.map(({ addOn, quantity }) => `${quantity > 1 ? `${quantity}× ` : ''}${addOn.name}`)]; return labels.length ? <p className="mt-1 text-sm text-muted-foreground">{labels.join(' · ')}</p> : null; }
 function SummaryRow({ label, value, muted = false }: { label: string; value: string; muted?: boolean }) { return <div className={muted ? 'flex justify-between text-muted-foreground' : 'flex justify-between'}><dt>{label}</dt><dd>{value}</dd></div>; }
-function CartMessage({ title, body, action, href, onAction }: { title: string; body: string; action: string; href?: string; onAction?: () => void }) { return <main className="mx-auto flex min-h-[60vh] max-w-xl items-center px-4 py-16 text-center"><Card className="w-full p-10"><h1 className="text-3xl font-bold">{title}</h1><p className="mt-3 text-muted-foreground">{body}</p>{href ? <Link href={href} className="mt-6 inline-flex h-10 items-center justify-center rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">{action}</Link> : <Button className="mt-6" onClick={onAction}>{action}</Button>}</Card></main>; }
-function CartLoading() { return <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8"><Skeleton className="h-10 w-40" /><div className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,1fr)_22rem]"><div className="space-y-6">{Array.from({ length: 3 }).map((_, index) => <div key={index} className="flex gap-4"><Skeleton className="h-28 w-28" /><div className="flex-1 space-y-3"><Skeleton className="h-5 w-1/3" /><Skeleton className="h-4 w-2/3" /><Skeleton className="h-9 w-24" /></div></div>)}</div><Skeleton className="h-72 w-full" /></div></main>; }
+function CartMessage({ title, body, action, href, onAction }: { title: string; body: string; action: string; href?: string; onAction?: () => void }) { return <div className="mx-auto flex min-h-[60vh] max-w-xl items-center px-4 py-16 text-center"><Card className="w-full p-10"><h1 className="text-3xl font-bold">{title}</h1><p className="mt-3 text-muted-foreground">{body}</p>{href ? <Link href={href} className="mt-6 inline-flex h-10 items-center justify-center rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">{action}</Link> : <Button className="mt-6" onClick={onAction}>{action}</Button>}</Card></div>; }
+function CartLoading() { return <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8"><Skeleton className="h-10 w-40" /><div className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,1fr)_22rem]"><div className="space-y-6">{Array.from({ length: 3 }).map((_, index) => <div key={index} className="flex gap-4"><Skeleton className="h-28 w-28" /><div className="flex-1 space-y-3"><Skeleton className="h-5 w-1/3" /><Skeleton className="h-4 w-2/3" /><Skeleton className="h-9 w-24" /></div></div>)}</div><Skeleton className="h-72 w-full" /></div></div>; }

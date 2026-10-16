@@ -1,5 +1,6 @@
 "use client";
 
+import { formatMoney } from "@/features/menu/components/menu-item-card";
 import React from "react";
 import Link from "next/link";
 import { useRestaurantsList } from "../hooks/use-restaurant";
@@ -129,8 +130,8 @@ function RestaurantCard({ restaurant }: { restaurant: RestaurantSummary }) {
               Prep: ~{restaurant.settings?.estimatedPrepMinutes ?? 30}m
             </span>
             <span>
-              Delivery: €
-              {Number(restaurant.settings?.deliveryFee ?? 0).toFixed(2)}
+              Delivery:{" "}
+              {formatMoney(restaurant.settings?.deliveryFee ?? 0, restaurant.currency)}
             </span>
             {restaurant.itemCount != null && (
               <span className="font-medium text-foreground">

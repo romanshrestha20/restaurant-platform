@@ -4,9 +4,10 @@ import React from "react";
 import Link from "next/link";
 import { useRestaurant } from "@/providers/restaurant-provider";
 import { Badge, Button, Card } from "@restaurant/ui";
+import { formatMoney } from "@/features/menu/components/menu-item-card";
 
 export function StorefrontLanding() {
-  const { restaurant } = useRestaurant();
+  const { restaurant, currency } = useRestaurant();
 
   if (!restaurant) return null;
 
@@ -57,7 +58,6 @@ export function StorefrontLanding() {
           )}
 
           <div className="text-white">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-[0.28em] text-[#e7c46b]">Helsinki · seasonal kitchen</p>
             <h1 className="max-w-3xl text-4xl font-black tracking-[-0.04em] sm:text-7xl">
               {restaurant.name}
             </h1>
@@ -85,7 +85,7 @@ export function StorefrontLanding() {
             {restaurant.settings?.deliveryFee != null && (
               <div className="flex items-center gap-1.5">
                 <span className="font-semibold text-foreground">
-                  €{Number(restaurant.settings.deliveryFee).toFixed(2)}
+                  {formatMoney(restaurant.settings.deliveryFee, currency)}
                 </span>
                 <span>delivery</span>
               </div>
@@ -93,7 +93,7 @@ export function StorefrontLanding() {
             {restaurant.settings?.minimumOrder != null && (
               <div className="flex items-center gap-1.5">
                 <span className="font-semibold text-foreground">
-                  €{Number(restaurant.settings.minimumOrder).toFixed(2)}
+                  {formatMoney(restaurant.settings.minimumOrder, currency)}
                 </span>
                 <span>min order</span>
               </div>
@@ -183,7 +183,7 @@ export function StorefrontLanding() {
 
                     <div className="mt-4 pt-3 border-t border-border flex items-center justify-between">
                         <span className="font-extrabold text-foreground text-base">
-                        €{Number(item.basePrice).toFixed(2)}
+                        {formatMoney(item.basePrice, currency)}
                       </span>
                       <Link href="/menu">
                         <Button variant="secondary" size="sm">
